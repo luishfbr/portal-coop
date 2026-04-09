@@ -21,6 +21,11 @@ import {
   userGroups,
   userGroupsRelations,
 } from "./rbac-schema";
+import { analyticsReports } from "./analytics-schema";
+
+export * from "./auth-schema";
+export * from "./rbac-schema";
+export * from "./analytics-schema";
 
 export const schema = {
   users,
@@ -42,4 +47,5 @@ export const schema = {
   permissionsRelations,
   userGroups,
   userGroupsRelations,
+  analyticsReports,
 };

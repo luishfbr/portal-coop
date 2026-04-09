@@ -4,20 +4,28 @@ import Elysia from "elysia";
 let _schema: ReturnType<typeof auth.api.generateOpenAPISchema>;
 const getSchema = async () => (_schema ??= auth.api.generateOpenAPISchema());
 
-export const betterAuthPlugin = new Elysia({
-  name: "better-auth",
-})
+export const betterAuthPlugin = new Elysia({ name: "better-auth" })
   .mount(auth.handler)
   .macro({
     auth: {
       async resolve({ status, request: { headers } }) {
-        const session = await auth.api.getSession({
-          headers,
-        });
-
-        if (!session) return status(401, "Unauthorized!");
-
-        return session;
+        const session = await auth.api.getSession({ headers });
+        if (!session) return status(401, "Unauthorized");
+        return {
+          user: session.user,
+          session: session.session,
+        };
+      },
+    },
+    adminOnly: {
+      async resolve({ status, request: { headers } }) {
+        const session = await auth.api.getSession({ headers });
+        if (!session) return status(401, "Unauthorized");
+        if (session.user.role !== "admin") return status(403, "Forbidden");
+        return {
+          user: session.user,
+          session: session.session,
+        };
       },
     },
   });

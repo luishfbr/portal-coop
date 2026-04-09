@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l /c/luis/projects/portal-coop/api/src/**/*.ts)",
+      "Bash(git -C /c/luis/projects/portal-coop/api log --oneline)",
+      "Bash(bun run:*)",
+      "Bash(bun add:*)",
+      "Bash(bun build:*)",
+      "Bash(grep -r \"sql\\\\`\" /c/luis/projects/portal-coop/api/src/)",
+      "Bash(grep -E \"^xlsx$|^exceljs$|^sheet\")",
+      "Bash(node -e \"const elysia = require\\('/c/luis/projects/portal-coop/api/node_modules/elysia'\\); console.log\\(Object.keys\\(elysia\\)\\)\")",
+      "Bash(bunx tsc:*)"
+    ]
+  }
+}
