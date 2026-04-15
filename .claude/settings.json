@@ -4,7 +4,8 @@
       "Bash(grep -E \"\\\\\\\\.tsx$\")",
       "Bash(grep -E \"\\\\.tsx$\")",
       "WebFetch(domain:better-auth.com)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(NODE_DEBUG=module bunx --bun kubb generate --config packages/api-contract/kubb.config.ts)"
     ]
   }
 }

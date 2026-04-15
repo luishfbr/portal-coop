@@ -4,7 +4,6 @@ import cors from "@elysiajs/cors";
 import openapi from "@elysiajs/openapi";
 import { betterAuthPlugin, OpenAPI } from "./http/plugins/better-auth";
 import { rbacController } from "./http/controllers/rbac";
-import { analyticsController } from "./http/controllers/analytics";
 
 const app = new Elysia()
   .use(
@@ -25,7 +24,6 @@ const app = new Elysia()
   )
   .use(betterAuthPlugin)
   .use(rbacController)
-  .use(analyticsController)
   .listen(env.PORT);
 
 console.log(
