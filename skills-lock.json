@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "turborepo": {
+      "source": "vercel/turborepo",
+      "sourceType": "github",
+      "computedHash": "00417414a514e57846ff0e007381468699da2ac0e913d2c7faa05b6f133abd3a"
+    }
+  }
+}

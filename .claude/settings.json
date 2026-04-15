@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"\\\\\\\\.tsx$\")",
+      "Bash(grep -E \"\\\\.tsx$\")",
+      "WebFetch(domain:better-auth.com)",
+      "WebSearch"
+    ]
+  }
+}

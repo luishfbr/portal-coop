@@ -1,0 +1,34 @@
+{
+  "name": "@portal-coop/api",
+  "version": "1.0.50",
+  "scripts": {
+    "build": "bun build ./src/index.ts --outdir ./dist --target bun",
+    "dev": "bun run --watch src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "bunx --bun drizzle-kit generate",
+    "db:migrate": "bunx --bun drizzle-kit migrate",
+    "db:seed": "bun run ./src/db/seed.ts",
+    "auth:generate": "bunx --bun auth@latest generate --output ./src/db/schema/auth-schema.ts"
+  },
+  "dependencies": {
+    "@elysiajs/cors": "^1.4.1",
+    "@elysiajs/openapi": "^1.4.14",
+    "@types/nodemailer": "^8.0.0",
+    "better-auth": "^1.6.2",
+    "drizzle-orm": "^0.45.2",
+    "drizzle-zod": "^0.8.3",
+    "elysia": "latest",
+    "nodemailer": "^8.0.5",
+    "pg": "^8.20.0",
+    "xlsx": "^0.18.5",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@portal-coop/typescript-config": "workspace:*",
+    "@types/pg": "^8.20.0",
+    "bun-types": "latest",
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.21.0"
+  },
+  "module": "src/index.js"
+}

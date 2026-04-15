@@ -1,0 +1,9 @@
+{
+  "extends": "@portal-coop/typescript-config/bun.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src"]
+}

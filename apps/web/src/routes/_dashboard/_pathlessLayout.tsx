@@ -1,0 +1,103 @@
+import { AppSidebar } from "@/components/app-sidebar"
+import {
+  EnableTwoFactorPage,
+  UnauthorizedPage,
+} from "@/components/customs-pages/errors-page"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
+import { modules } from "@/lib/modules-types"
+import {
+  createFileRoute,
+  Outlet,
+  useRouter,
+  useRouterState,
+} from "@tanstack/react-router"
+import { Cog } from "lucide-react"
+
+export const Route = createFileRoute("/_dashboard/_pathlessLayout")({
+  component: RouteComponent,
+})
+
+function RouteComponent() {
+  const path = useRouterState().location.pathname
+  const router = useRouter()
+  const user = router.options.context.auth.user
+
+  if (!user) {
+    return <UnauthorizedPage />
+  } else if (!user.twoFactorEnabled) {
+    return <EnableTwoFactorPage />
+  } else {
+    return (
+      <SidebarProvider>
+        <AppSidebar user={user} />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 flex-row items-center justify-between gap-2 px-4">
+            <div className="flex items-center gap-2">
+              <SidebarTrigger className="-ml-1" />
+              <Separator orientation="vertical" className="mr-2" />
+              <Breadcrumb>
+                {(() => {
+                  const direct = modules.find((m) => m.url === path)
+                  if (direct) {
+                    return (
+                      <BreadcrumbList>
+                        <BreadcrumbItem>
+                          <BreadcrumbPage>{direct.label}</BreadcrumbPage>
+                        </BreadcrumbItem>
+                      </BreadcrumbList>
+                    )
+                  }
+
+                  for (const module of modules) {
+                    const menuItem = module.menu?.find((m) => m.url === path)
+                    if (menuItem) {
+                      return (
+                        <BreadcrumbList>
+                          <BreadcrumbItem className="hidden md:block">
+                            <BreadcrumbLink href={module.url}>
+                              {module.label}
+                            </BreadcrumbLink>
+                          </BreadcrumbItem>
+                          <BreadcrumbSeparator className="hidden md:block" />
+                          <BreadcrumbItem>
+                            <BreadcrumbPage>{menuItem.label}</BreadcrumbPage>
+                          </BreadcrumbItem>
+                        </BreadcrumbList>
+                      )
+                    }
+                  }
+
+                  return null
+                })()}
+              </Breadcrumb>
+            </div>
+            {user.role === "admin" && (
+              <Button variant={"outline"} render={<a href="/administracao" />}>
+                <Cog />
+                <span className="hidden md:flex">Administração</span>
+              </Button>
+            )}
+          </header>
+          <Separator />
+          <div className="flex flex-1 flex-col gap-4 p-4">
+            <Outlet />
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    )
+  }
+}
