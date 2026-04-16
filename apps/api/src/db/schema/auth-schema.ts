@@ -1,6 +1,5 @@
 import { relations } from "drizzle-orm";
 import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
-import { userGroups } from "./rbac-schema";
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
@@ -87,6 +86,7 @@ export const twoFactors = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    verified: boolean("verified").default(true),
   },
   (table) => [
     index("twoFactors_secret_idx").on(table.secret),
@@ -98,7 +98,6 @@ export const usersRelations = relations(users, ({ many }) => ({
   sessions: many(sessions),
   accounts: many(accounts),
   twoFactors: many(twoFactors),
-  userGroups: many(userGroups),
 }));
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({

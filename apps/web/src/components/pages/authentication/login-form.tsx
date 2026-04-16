@@ -22,7 +22,6 @@ import { authClient } from "@/lib/auth-client"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { useNavigate } from "@tanstack/react-router"
-import { persistOtpState } from "@/lib/otp-state"
 
 export const LoginForm = () => {
   const navigate = useNavigate()
@@ -43,18 +42,7 @@ export const LoginForm = () => {
           toast.error(context.error.message)
         },
         onSuccess: async (ctx) => {
-          if (ctx.data.twoFactorRedirect) {
-            await authClient.twoFactor.sendOtp({
-              fetchOptions: {
-                onError(context) {
-                  toast.error(context.error.message)
-                },
-                onSuccess() {
-                  persistOtpState({ attempts: 0, tokenIssuedAt: Date.now(), lastResendAt: null })
-                },
-              },
-            })
-          } else {
+          if (!ctx.data.twoFactorRedirect) {
             navigate({
               to: "/",
             })

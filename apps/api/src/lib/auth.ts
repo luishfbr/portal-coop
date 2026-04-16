@@ -7,6 +7,7 @@ import { admin, openAPI, twoFactor } from "better-auth/plugins";
 import { env } from "./env";
 
 export const auth = betterAuth({
+  appName: "Portal Coop",
   basePath: "/auth",
   trustedOrigins: [env.VITE_URL || "http://localhost:3000"],
   database: drizzleAdapter(db, {
@@ -38,17 +39,7 @@ export const auth = betterAuth({
   },
   plugins: [
     twoFactor({
-      skipVerificationOnEnable: true,
-      otpOptions: {
-        allowedAttempts: 5,
-        period: 60 * 5,
-        sendOTP: async (data) => {
-          await SendOtpEmail({
-            email: data.user.email,
-            otp: data.otp,
-          });
-        },
-      },
+      issuer: "Portal Coop",
     }),
     admin(),
     openAPI(),

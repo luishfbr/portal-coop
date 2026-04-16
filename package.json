@@ -12,7 +12,9 @@
     "apps/*",
     "packages/*"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "react-qr-code": "^2.0.18"
+  },
   "devDependencies": {
     "turbo": "^2.9.6"
   },

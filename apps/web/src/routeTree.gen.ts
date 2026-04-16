@@ -13,7 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardPathlessLayoutRouteImport } from './routes/_dashboard/_pathlessLayout'
 import { Route as AuthPathlessLayoutRouteImport } from './routes/_auth/_pathlessLayout'
 import { Route as DashboardPathlessLayoutPaginaInicialRouteImport } from './routes/_dashboard/_pathlessLayout/pagina-inicial'
-import { Route as AuthPathlessLayoutVerificacao2faRouteImport } from './routes/_auth/_pathlessLayout/verificacao-2fa'
+import { Route as AuthPathlessLayoutVerificar2faRouteImport } from './routes/_auth/_pathlessLayout/verificar-2fa'
 import { Route as AuthPathlessLayoutRedefinirSenhaRouteImport } from './routes/_auth/_pathlessLayout/redefinir-senha'
 import { Route as AuthPathlessLayoutRedefinicaoDeSenhaRouteImport } from './routes/_auth/_pathlessLayout/redefinicao-de-senha'
 import { Route as AuthPathlessLayoutLoginRouteImport } from './routes/_auth/_pathlessLayout/login'
@@ -43,10 +43,10 @@ const DashboardPathlessLayoutPaginaInicialRoute =
     path: '/pagina-inicial',
     getParentRoute: () => DashboardPathlessLayoutRoute,
   } as any)
-const AuthPathlessLayoutVerificacao2faRoute =
-  AuthPathlessLayoutVerificacao2faRouteImport.update({
-    id: '/verificacao-2fa',
-    path: '/verificacao-2fa',
+const AuthPathlessLayoutVerificar2faRoute =
+  AuthPathlessLayoutVerificar2faRouteImport.update({
+    id: '/verificar-2fa',
+    path: '/verificar-2fa',
     getParentRoute: () => AuthPathlessLayoutRoute,
   } as any)
 const AuthPathlessLayoutRedefinirSenhaRoute =
@@ -111,7 +111,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof AuthPathlessLayoutLoginRoute
   '/redefinicao-de-senha': typeof AuthPathlessLayoutRedefinicaoDeSenhaRoute
   '/redefinir-senha': typeof AuthPathlessLayoutRedefinirSenhaRoute
-  '/verificacao-2fa': typeof AuthPathlessLayoutVerificacao2faRoute
+  '/verificar-2fa': typeof AuthPathlessLayoutVerificar2faRoute
   '/pagina-inicial': typeof DashboardPathlessLayoutPaginaInicialRoute
   '/administracao/usuarios': typeof DashboardPathlessLayoutAdministracaoUsuariosRoute
   '/governanca-analitica/atualizar-relatorios': typeof DashboardPathlessLayoutGovernancaAnaliticaAtualizarRelatoriosRoute
@@ -125,7 +125,7 @@ export interface FileRoutesByTo {
   '/login': typeof AuthPathlessLayoutLoginRoute
   '/redefinicao-de-senha': typeof AuthPathlessLayoutRedefinicaoDeSenhaRoute
   '/redefinir-senha': typeof AuthPathlessLayoutRedefinirSenhaRoute
-  '/verificacao-2fa': typeof AuthPathlessLayoutVerificacao2faRoute
+  '/verificar-2fa': typeof AuthPathlessLayoutVerificar2faRoute
   '/pagina-inicial': typeof DashboardPathlessLayoutPaginaInicialRoute
   '/administracao/usuarios': typeof DashboardPathlessLayoutAdministracaoUsuariosRoute
   '/governanca-analitica/atualizar-relatorios': typeof DashboardPathlessLayoutGovernancaAnaliticaAtualizarRelatoriosRoute
@@ -142,7 +142,7 @@ export interface FileRoutesById {
   '/_auth/_pathlessLayout/login': typeof AuthPathlessLayoutLoginRoute
   '/_auth/_pathlessLayout/redefinicao-de-senha': typeof AuthPathlessLayoutRedefinicaoDeSenhaRoute
   '/_auth/_pathlessLayout/redefinir-senha': typeof AuthPathlessLayoutRedefinirSenhaRoute
-  '/_auth/_pathlessLayout/verificacao-2fa': typeof AuthPathlessLayoutVerificacao2faRoute
+  '/_auth/_pathlessLayout/verificar-2fa': typeof AuthPathlessLayoutVerificar2faRoute
   '/_dashboard/_pathlessLayout/pagina-inicial': typeof DashboardPathlessLayoutPaginaInicialRoute
   '/_dashboard/_pathlessLayout/administracao/usuarios': typeof DashboardPathlessLayoutAdministracaoUsuariosRoute
   '/_dashboard/_pathlessLayout/governanca-analitica/atualizar-relatorios': typeof DashboardPathlessLayoutGovernancaAnaliticaAtualizarRelatoriosRoute
@@ -158,7 +158,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/redefinicao-de-senha'
     | '/redefinir-senha'
-    | '/verificacao-2fa'
+    | '/verificar-2fa'
     | '/pagina-inicial'
     | '/administracao/usuarios'
     | '/governanca-analitica/atualizar-relatorios'
@@ -172,7 +172,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/redefinicao-de-senha'
     | '/redefinir-senha'
-    | '/verificacao-2fa'
+    | '/verificar-2fa'
     | '/pagina-inicial'
     | '/administracao/usuarios'
     | '/governanca-analitica/atualizar-relatorios'
@@ -188,7 +188,7 @@ export interface FileRouteTypes {
     | '/_auth/_pathlessLayout/login'
     | '/_auth/_pathlessLayout/redefinicao-de-senha'
     | '/_auth/_pathlessLayout/redefinir-senha'
-    | '/_auth/_pathlessLayout/verificacao-2fa'
+    | '/_auth/_pathlessLayout/verificar-2fa'
     | '/_dashboard/_pathlessLayout/pagina-inicial'
     | '/_dashboard/_pathlessLayout/administracao/usuarios'
     | '/_dashboard/_pathlessLayout/governanca-analitica/atualizar-relatorios'
@@ -233,11 +233,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardPathlessLayoutPaginaInicialRouteImport
       parentRoute: typeof DashboardPathlessLayoutRoute
     }
-    '/_auth/_pathlessLayout/verificacao-2fa': {
-      id: '/_auth/_pathlessLayout/verificacao-2fa'
-      path: '/verificacao-2fa'
-      fullPath: '/verificacao-2fa'
-      preLoaderRoute: typeof AuthPathlessLayoutVerificacao2faRouteImport
+    '/_auth/_pathlessLayout/verificar-2fa': {
+      id: '/_auth/_pathlessLayout/verificar-2fa'
+      path: '/verificar-2fa'
+      fullPath: '/verificar-2fa'
+      preLoaderRoute: typeof AuthPathlessLayoutVerificar2faRouteImport
       parentRoute: typeof AuthPathlessLayoutRoute
     }
     '/_auth/_pathlessLayout/redefinir-senha': {
@@ -311,7 +311,7 @@ interface AuthPathlessLayoutRouteChildren {
   AuthPathlessLayoutLoginRoute: typeof AuthPathlessLayoutLoginRoute
   AuthPathlessLayoutRedefinicaoDeSenhaRoute: typeof AuthPathlessLayoutRedefinicaoDeSenhaRoute
   AuthPathlessLayoutRedefinirSenhaRoute: typeof AuthPathlessLayoutRedefinirSenhaRoute
-  AuthPathlessLayoutVerificacao2faRoute: typeof AuthPathlessLayoutVerificacao2faRoute
+  AuthPathlessLayoutVerificar2faRoute: typeof AuthPathlessLayoutVerificar2faRoute
 }
 
 const AuthPathlessLayoutRouteChildren: AuthPathlessLayoutRouteChildren = {
@@ -320,7 +320,7 @@ const AuthPathlessLayoutRouteChildren: AuthPathlessLayoutRouteChildren = {
   AuthPathlessLayoutRedefinicaoDeSenhaRoute:
     AuthPathlessLayoutRedefinicaoDeSenhaRoute,
   AuthPathlessLayoutRedefinirSenhaRoute: AuthPathlessLayoutRedefinirSenhaRoute,
-  AuthPathlessLayoutVerificacao2faRoute: AuthPathlessLayoutVerificacao2faRoute,
+  AuthPathlessLayoutVerificar2faRoute: AuthPathlessLayoutVerificar2faRoute,
 }
 
 const AuthPathlessLayoutRouteWithChildren =

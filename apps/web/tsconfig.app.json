@@ -5,8 +5,8 @@
     "types": ["vite/client"],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
-    }
+      "@/*": ["./src/*"],
+    },
   },
-  "include": ["src"]
+  "include": ["src", "src/components/pages/two-factor/verify-totp-form/.tsx"],
 }
