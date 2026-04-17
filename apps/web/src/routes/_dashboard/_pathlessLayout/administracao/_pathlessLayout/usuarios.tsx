@@ -4,7 +4,6 @@ import { UsersTable } from "@/components/pages/administracao/user/users-table"
 import { DefaultHeader } from "@/components/ui/header-component"
 import { useAdmin } from "@/hooks/use-admin"
 import { createFileRoute, useRouter } from "@tanstack/react-router"
-import { UserIcon } from "lucide-react"
 
 export const Route = createFileRoute(
   "/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuarios"
@@ -26,7 +25,6 @@ function RouteComponent() {
   return (
     <div className="flex h-full w-full flex-col gap-4">
       <DefaultHeader
-        icon={UserIcon}
         title="Usuários cadastrados no sistema"
         description="Gerencie contas, permissões e acesso ao sistema."
       />

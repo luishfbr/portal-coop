@@ -5,7 +5,7 @@ import { authClient } from "@/lib/auth-client"
 import { useQuery } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import { createFileRoute } from "@tanstack/react-router"
-import { ArrowLeft, PencilIcon } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 
 export const Route = createFileRoute(
   "/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuario/$userId"
@@ -57,9 +57,8 @@ function RouteComponent() {
   return (
     <div className="flex h-full w-full flex-col gap-4">
       <DefaultHeader
-        icon={PencilIcon}
-        title={`Painel de edição do usuário: ${user.name}`}
-        description="Gerencie contas, permissões e acesso ao sistema."
+        title={`Painel de Edição`}
+        description={`Gerencie a conta, permissões e acesso de ${user.name} ao sistema.`}
       />
     </div>
   )
