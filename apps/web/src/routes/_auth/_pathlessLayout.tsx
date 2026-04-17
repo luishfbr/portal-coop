@@ -19,7 +19,7 @@ function RouteComponent() {
       <div className="flex w-full max-w-100 flex-col gap-2">
         <div className="flex w-full flex-row items-center justify-center gap-2">
           <Logo />
-          <ToggleTheme />
+          <ToggleTheme size={"icon-lg"} />
         </div>
         <Outlet />
       </div>

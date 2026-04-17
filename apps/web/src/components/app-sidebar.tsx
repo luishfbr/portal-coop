@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/sidebar"
 import { LifeBuoyIcon, SendIcon, Goal } from "lucide-react"
 import { modules } from "@/lib/modules-types"
+import type { User } from "@/auth"
 const data = {
   navSecondary: [
     {
@@ -31,7 +32,7 @@ const data = {
   ],
 }
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  user: { name: string; email: string; image?: string | null }
+  user: User
 }
 
 export function AppSidebar({ user, ...props }: AppSidebarProps) {
@@ -57,7 +58,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={{ name: user.name, email: user.email, avatar: user.image ?? "" }} />
+        <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
   )

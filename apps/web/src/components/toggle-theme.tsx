@@ -15,7 +15,21 @@ const THEME_OPTIONS = [
   { value: "system", label: "Sistema", icon: MonitorIcon },
 ] as const
 
-export function ToggleTheme() {
+export function ToggleTheme({
+  size,
+}: {
+  size:
+    | "default"
+    | "xs"
+    | "sm"
+    | "lg"
+    | "icon"
+    | "icon-xs"
+    | "icon-sm"
+    | "icon-lg"
+    | null
+    | undefined
+}) {
   const { theme, setTheme } = useTheme()
 
   const current =
@@ -28,7 +42,7 @@ export function ToggleTheme() {
         aria-label="Alterar tema"
         title="Alterar tema"
         render={
-          <Button variant={"outline"} size={"icon-lg"}>
+          <Button variant={"outline"} size={size}>
             <Icon className="size-4" />
           </Button>
         }

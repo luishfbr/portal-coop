@@ -19,10 +19,12 @@ import { Route as AuthPathlessLayoutRedefinicaoDeSenhaRouteImport } from './rout
 import { Route as AuthPathlessLayoutLoginRouteImport } from './routes/_auth/_pathlessLayout/login'
 import { Route as AuthPathlessLayoutHabilitar2faRouteImport } from './routes/_auth/_pathlessLayout/habilitar-2fa'
 import { Route as DashboardPathlessLayoutGovernancaAnaliticaIndexRouteImport } from './routes/_dashboard/_pathlessLayout/governanca-analitica/index'
-import { Route as DashboardPathlessLayoutAdministracaoIndexRouteImport } from './routes/_dashboard/_pathlessLayout/administracao/index'
 import { Route as DashboardPathlessLayoutGovernancaAnaliticaFormatarPlanilhaRouteImport } from './routes/_dashboard/_pathlessLayout/governanca-analitica/formatar-planilha'
 import { Route as DashboardPathlessLayoutGovernancaAnaliticaAtualizarRelatoriosRouteImport } from './routes/_dashboard/_pathlessLayout/governanca-analitica/atualizar-relatorios'
-import { Route as DashboardPathlessLayoutAdministracaoUsuariosRouteImport } from './routes/_dashboard/_pathlessLayout/administracao/usuarios'
+import { Route as DashboardPathlessLayoutAdministracaoPathlessLayoutRouteImport } from './routes/_dashboard/_pathlessLayout/administracao/_pathlessLayout'
+import { Route as DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRouteImport } from './routes/_dashboard/_pathlessLayout/administracao/_pathlessLayout/index'
+import { Route as DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRouteImport } from './routes/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuarios'
+import { Route as DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRouteImport } from './routes/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuario.$userId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -78,12 +80,6 @@ const DashboardPathlessLayoutGovernancaAnaliticaIndexRoute =
     path: '/governanca-analitica/',
     getParentRoute: () => DashboardPathlessLayoutRoute,
   } as any)
-const DashboardPathlessLayoutAdministracaoIndexRoute =
-  DashboardPathlessLayoutAdministracaoIndexRouteImport.update({
-    id: '/administracao/',
-    path: '/administracao/',
-    getParentRoute: () => DashboardPathlessLayoutRoute,
-  } as any)
 const DashboardPathlessLayoutGovernancaAnaliticaFormatarPlanilhaRoute =
   DashboardPathlessLayoutGovernancaAnaliticaFormatarPlanilhaRouteImport.update({
     id: '/governanca-analitica/formatar-planilha',
@@ -98,12 +94,35 @@ const DashboardPathlessLayoutGovernancaAnaliticaAtualizarRelatoriosRoute =
       getParentRoute: () => DashboardPathlessLayoutRoute,
     } as any,
   )
-const DashboardPathlessLayoutAdministracaoUsuariosRoute =
-  DashboardPathlessLayoutAdministracaoUsuariosRouteImport.update({
-    id: '/administracao/usuarios',
-    path: '/administracao/usuarios',
+const DashboardPathlessLayoutAdministracaoPathlessLayoutRoute =
+  DashboardPathlessLayoutAdministracaoPathlessLayoutRouteImport.update({
+    id: '/administracao/_pathlessLayout',
+    path: '/administracao',
     getParentRoute: () => DashboardPathlessLayoutRoute,
   } as any)
+const DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRoute =
+  DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () =>
+      DashboardPathlessLayoutAdministracaoPathlessLayoutRoute,
+  } as any)
+const DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRoute =
+  DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRouteImport.update({
+    id: '/usuarios',
+    path: '/usuarios',
+    getParentRoute: () =>
+      DashboardPathlessLayoutAdministracaoPathlessLayoutRoute,
+  } as any)
+const DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRoute =
+  DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRouteImport.update(
+    {
+      id: '/usuario/$userId',
+      path: '/usuario/$userId',
+      getParentRoute: () =>
+        DashboardPathlessLayoutAdministracaoPathlessLayoutRoute,
+    } as any,
+  )
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -113,11 +132,13 @@ export interface FileRoutesByFullPath {
   '/redefinir-senha': typeof AuthPathlessLayoutRedefinirSenhaRoute
   '/verificar-2fa': typeof AuthPathlessLayoutVerificar2faRoute
   '/pagina-inicial': typeof DashboardPathlessLayoutPaginaInicialRoute
-  '/administracao/usuarios': typeof DashboardPathlessLayoutAdministracaoUsuariosRoute
+  '/administracao': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutRouteWithChildren
   '/governanca-analitica/atualizar-relatorios': typeof DashboardPathlessLayoutGovernancaAnaliticaAtualizarRelatoriosRoute
   '/governanca-analitica/formatar-planilha': typeof DashboardPathlessLayoutGovernancaAnaliticaFormatarPlanilhaRoute
-  '/administracao/': typeof DashboardPathlessLayoutAdministracaoIndexRoute
   '/governanca-analitica/': typeof DashboardPathlessLayoutGovernancaAnaliticaIndexRoute
+  '/administracao/usuarios': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRoute
+  '/administracao/': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRoute
+  '/administracao/usuario/$userId': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -127,11 +148,12 @@ export interface FileRoutesByTo {
   '/redefinir-senha': typeof AuthPathlessLayoutRedefinirSenhaRoute
   '/verificar-2fa': typeof AuthPathlessLayoutVerificar2faRoute
   '/pagina-inicial': typeof DashboardPathlessLayoutPaginaInicialRoute
-  '/administracao/usuarios': typeof DashboardPathlessLayoutAdministracaoUsuariosRoute
   '/governanca-analitica/atualizar-relatorios': typeof DashboardPathlessLayoutGovernancaAnaliticaAtualizarRelatoriosRoute
   '/governanca-analitica/formatar-planilha': typeof DashboardPathlessLayoutGovernancaAnaliticaFormatarPlanilhaRoute
-  '/administracao': typeof DashboardPathlessLayoutAdministracaoIndexRoute
   '/governanca-analitica': typeof DashboardPathlessLayoutGovernancaAnaliticaIndexRoute
+  '/administracao/usuarios': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRoute
+  '/administracao': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRoute
+  '/administracao/usuario/$userId': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -144,11 +166,13 @@ export interface FileRoutesById {
   '/_auth/_pathlessLayout/redefinir-senha': typeof AuthPathlessLayoutRedefinirSenhaRoute
   '/_auth/_pathlessLayout/verificar-2fa': typeof AuthPathlessLayoutVerificar2faRoute
   '/_dashboard/_pathlessLayout/pagina-inicial': typeof DashboardPathlessLayoutPaginaInicialRoute
-  '/_dashboard/_pathlessLayout/administracao/usuarios': typeof DashboardPathlessLayoutAdministracaoUsuariosRoute
+  '/_dashboard/_pathlessLayout/administracao/_pathlessLayout': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutRouteWithChildren
   '/_dashboard/_pathlessLayout/governanca-analitica/atualizar-relatorios': typeof DashboardPathlessLayoutGovernancaAnaliticaAtualizarRelatoriosRoute
   '/_dashboard/_pathlessLayout/governanca-analitica/formatar-planilha': typeof DashboardPathlessLayoutGovernancaAnaliticaFormatarPlanilhaRoute
-  '/_dashboard/_pathlessLayout/administracao/': typeof DashboardPathlessLayoutAdministracaoIndexRoute
   '/_dashboard/_pathlessLayout/governanca-analitica/': typeof DashboardPathlessLayoutGovernancaAnaliticaIndexRoute
+  '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuarios': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRoute
+  '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRoute
+  '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuario/$userId': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -160,11 +184,13 @@ export interface FileRouteTypes {
     | '/redefinir-senha'
     | '/verificar-2fa'
     | '/pagina-inicial'
-    | '/administracao/usuarios'
+    | '/administracao'
     | '/governanca-analitica/atualizar-relatorios'
     | '/governanca-analitica/formatar-planilha'
-    | '/administracao/'
     | '/governanca-analitica/'
+    | '/administracao/usuarios'
+    | '/administracao/'
+    | '/administracao/usuario/$userId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -174,11 +200,12 @@ export interface FileRouteTypes {
     | '/redefinir-senha'
     | '/verificar-2fa'
     | '/pagina-inicial'
-    | '/administracao/usuarios'
     | '/governanca-analitica/atualizar-relatorios'
     | '/governanca-analitica/formatar-planilha'
-    | '/administracao'
     | '/governanca-analitica'
+    | '/administracao/usuarios'
+    | '/administracao'
+    | '/administracao/usuario/$userId'
   id:
     | '__root__'
     | '/'
@@ -190,11 +217,13 @@ export interface FileRouteTypes {
     | '/_auth/_pathlessLayout/redefinir-senha'
     | '/_auth/_pathlessLayout/verificar-2fa'
     | '/_dashboard/_pathlessLayout/pagina-inicial'
-    | '/_dashboard/_pathlessLayout/administracao/usuarios'
+    | '/_dashboard/_pathlessLayout/administracao/_pathlessLayout'
     | '/_dashboard/_pathlessLayout/governanca-analitica/atualizar-relatorios'
     | '/_dashboard/_pathlessLayout/governanca-analitica/formatar-planilha'
-    | '/_dashboard/_pathlessLayout/administracao/'
     | '/_dashboard/_pathlessLayout/governanca-analitica/'
+    | '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuarios'
+    | '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/'
+    | '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuario/$userId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -275,13 +304,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardPathlessLayoutGovernancaAnaliticaIndexRouteImport
       parentRoute: typeof DashboardPathlessLayoutRoute
     }
-    '/_dashboard/_pathlessLayout/administracao/': {
-      id: '/_dashboard/_pathlessLayout/administracao/'
-      path: '/administracao'
-      fullPath: '/administracao/'
-      preLoaderRoute: typeof DashboardPathlessLayoutAdministracaoIndexRouteImport
-      parentRoute: typeof DashboardPathlessLayoutRoute
-    }
     '/_dashboard/_pathlessLayout/governanca-analitica/formatar-planilha': {
       id: '/_dashboard/_pathlessLayout/governanca-analitica/formatar-planilha'
       path: '/governanca-analitica/formatar-planilha'
@@ -296,12 +318,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardPathlessLayoutGovernancaAnaliticaAtualizarRelatoriosRouteImport
       parentRoute: typeof DashboardPathlessLayoutRoute
     }
-    '/_dashboard/_pathlessLayout/administracao/usuarios': {
-      id: '/_dashboard/_pathlessLayout/administracao/usuarios'
-      path: '/administracao/usuarios'
-      fullPath: '/administracao/usuarios'
-      preLoaderRoute: typeof DashboardPathlessLayoutAdministracaoUsuariosRouteImport
+    '/_dashboard/_pathlessLayout/administracao/_pathlessLayout': {
+      id: '/_dashboard/_pathlessLayout/administracao/_pathlessLayout'
+      path: '/administracao'
+      fullPath: '/administracao'
+      preLoaderRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutRouteImport
       parentRoute: typeof DashboardPathlessLayoutRoute
+    }
+    '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/': {
+      id: '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/'
+      path: '/'
+      fullPath: '/administracao/'
+      preLoaderRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRouteImport
+      parentRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutRoute
+    }
+    '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuarios': {
+      id: '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuarios'
+      path: '/usuarios'
+      fullPath: '/administracao/usuarios'
+      preLoaderRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRouteImport
+      parentRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutRoute
+    }
+    '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuario/$userId': {
+      id: '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuario/$userId'
+      path: '/usuario/$userId'
+      fullPath: '/administracao/usuario/$userId'
+      preLoaderRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRouteImport
+      parentRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutRoute
     }
   }
 }
@@ -326,12 +369,32 @@ const AuthPathlessLayoutRouteChildren: AuthPathlessLayoutRouteChildren = {
 const AuthPathlessLayoutRouteWithChildren =
   AuthPathlessLayoutRoute._addFileChildren(AuthPathlessLayoutRouteChildren)
 
+interface DashboardPathlessLayoutAdministracaoPathlessLayoutRouteChildren {
+  DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRoute
+  DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRoute
+  DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRoute
+}
+
+const DashboardPathlessLayoutAdministracaoPathlessLayoutRouteChildren: DashboardPathlessLayoutAdministracaoPathlessLayoutRouteChildren =
+  {
+    DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRoute:
+      DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRoute,
+    DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRoute:
+      DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRoute,
+    DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRoute:
+      DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRoute,
+  }
+
+const DashboardPathlessLayoutAdministracaoPathlessLayoutRouteWithChildren =
+  DashboardPathlessLayoutAdministracaoPathlessLayoutRoute._addFileChildren(
+    DashboardPathlessLayoutAdministracaoPathlessLayoutRouteChildren,
+  )
+
 interface DashboardPathlessLayoutRouteChildren {
   DashboardPathlessLayoutPaginaInicialRoute: typeof DashboardPathlessLayoutPaginaInicialRoute
-  DashboardPathlessLayoutAdministracaoUsuariosRoute: typeof DashboardPathlessLayoutAdministracaoUsuariosRoute
+  DashboardPathlessLayoutAdministracaoPathlessLayoutRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutRouteWithChildren
   DashboardPathlessLayoutGovernancaAnaliticaAtualizarRelatoriosRoute: typeof DashboardPathlessLayoutGovernancaAnaliticaAtualizarRelatoriosRoute
   DashboardPathlessLayoutGovernancaAnaliticaFormatarPlanilhaRoute: typeof DashboardPathlessLayoutGovernancaAnaliticaFormatarPlanilhaRoute
-  DashboardPathlessLayoutAdministracaoIndexRoute: typeof DashboardPathlessLayoutAdministracaoIndexRoute
   DashboardPathlessLayoutGovernancaAnaliticaIndexRoute: typeof DashboardPathlessLayoutGovernancaAnaliticaIndexRoute
 }
 
@@ -339,14 +402,12 @@ const DashboardPathlessLayoutRouteChildren: DashboardPathlessLayoutRouteChildren
   {
     DashboardPathlessLayoutPaginaInicialRoute:
       DashboardPathlessLayoutPaginaInicialRoute,
-    DashboardPathlessLayoutAdministracaoUsuariosRoute:
-      DashboardPathlessLayoutAdministracaoUsuariosRoute,
+    DashboardPathlessLayoutAdministracaoPathlessLayoutRoute:
+      DashboardPathlessLayoutAdministracaoPathlessLayoutRouteWithChildren,
     DashboardPathlessLayoutGovernancaAnaliticaAtualizarRelatoriosRoute:
       DashboardPathlessLayoutGovernancaAnaliticaAtualizarRelatoriosRoute,
     DashboardPathlessLayoutGovernancaAnaliticaFormatarPlanilhaRoute:
       DashboardPathlessLayoutGovernancaAnaliticaFormatarPlanilhaRoute,
-    DashboardPathlessLayoutAdministracaoIndexRoute:
-      DashboardPathlessLayoutAdministracaoIndexRoute,
     DashboardPathlessLayoutGovernancaAnaliticaIndexRoute:
       DashboardPathlessLayoutGovernancaAnaliticaIndexRoute,
   }

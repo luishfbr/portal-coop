@@ -1,12 +1,12 @@
-import { UserHome } from "@/components/pages/administracao/user/user-home"
 import { createFileRoute } from "@tanstack/react-router"
+import { AdminHome } from "@/components/pages/administracao/admin-home"
 
 export const Route = createFileRoute(
-  "/_dashboard/_pathlessLayout/administracao/usuarios"
+  "/_dashboard/_pathlessLayout/administracao/_pathlessLayout/"
 )({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  return <UserHome />
+  return <AdminHome />
 }

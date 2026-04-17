@@ -7,3 +7,11 @@ export const LoadingPage = () => {
     </div>
   )
 }
+
+export const LoadingComponent = () => {
+  return (
+    <div className="mx-auto flex h-full w-full items-center justify-center">
+      <Spinner />
+    </div>
+  )
+}

@@ -23,3 +23,9 @@ export const code = z
   .regex(/^\d+$/, "O código deve conter apenas números")
 
 export type LoginType = z.infer<typeof loginSchema>
+
+export const codeSchema = z.object({
+  code,
+})
+
+export type CodeType = z.infer<typeof codeSchema>

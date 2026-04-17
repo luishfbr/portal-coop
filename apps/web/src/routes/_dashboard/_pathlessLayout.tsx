@@ -3,6 +3,7 @@ import {
   EnableTwoFactorPage,
   UnauthorizedPage,
 } from "@/components/customs-pages/errors-page"
+import { ToggleTheme } from "@/components/toggle-theme"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -22,6 +23,7 @@ import { modules } from "@/lib/modules-types"
 import {
   createFileRoute,
   Outlet,
+  useNavigate,
   useRouter,
   useRouterState,
 } from "@tanstack/react-router"
@@ -34,6 +36,7 @@ export const Route = createFileRoute("/_dashboard/_pathlessLayout")({
 function RouteComponent() {
   const path = useRouterState().location.pathname
   const router = useRouter()
+  const navigate = useNavigate()
   const user = router.options.context.auth.user
 
   if (!user) {
@@ -81,20 +84,61 @@ function RouteComponent() {
                     }
                   }
 
+                  for (const module of modules) {
+                    for (const menuItem of module.menu ?? []) {
+                      const subItem = menuItem.submenu?.find((s) =>
+                        s.pattern.test(path),
+                      )
+                      if (subItem) {
+                        return (
+                          <BreadcrumbList>
+                            <BreadcrumbItem className="hidden md:block">
+                              <BreadcrumbLink href={module.url}>
+                                {module.label}
+                              </BreadcrumbLink>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator className="hidden md:block" />
+                            <BreadcrumbItem className="hidden md:block">
+                              <BreadcrumbLink href={menuItem.url}>
+                                {menuItem.label}
+                              </BreadcrumbLink>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator className="hidden md:block" />
+                            <BreadcrumbItem>
+                              <BreadcrumbPage>{subItem.label}</BreadcrumbPage>
+                            </BreadcrumbItem>
+                          </BreadcrumbList>
+                        )
+                      }
+                    }
+                  }
+
                   return null
                 })()}
               </Breadcrumb>
             </div>
-            {user.role === "admin" && (
-              <Button variant={"outline"} render={<a href="/administracao" />}>
-                <Cog />
-                <span className="hidden md:flex">Administração</span>
-              </Button>
-            )}
+            <div className="flex flex-row items-center gap-2">
+              <ToggleTheme size={"icon"} />
+              {user.role === "admin" && (
+                <Button
+                  variant={"outline"}
+                  onClick={() => {
+                    navigate({
+                      to: "/administracao",
+                    })
+                  }}
+                >
+                  <Cog />
+                  <span className="hidden md:flex">Administração</span>
+                </Button>
+              )}
+            </div>
           </header>
           <Separator />
           <div className="flex flex-1 flex-col gap-4 p-4">
-            <Outlet />
+            <div className="mx-auto h-full w-full md:max-w-7xl">
+              <Outlet />
+            </div>
           </div>
         </SidebarInset>
       </SidebarProvider>

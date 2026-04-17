@@ -6,7 +6,7 @@ import type {
 } from "better-auth/client/plugins"
 import { LoadingPage } from "./components/customs-pages/loading-page"
 
-type User = UserWithRole & UserWithTwoFactor
+export type User = UserWithRole & UserWithTwoFactor
 
 export interface AuthContext {
   isAuthenticated: boolean

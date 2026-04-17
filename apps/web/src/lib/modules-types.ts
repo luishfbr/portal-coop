@@ -18,6 +18,10 @@ export interface ModulesProps {
         url: string
         icon: LucideIcon
         description: string
+        submenu?: {
+          label: string
+          pattern: RegExp
+        }[]
       }[]
     | null
 }
@@ -62,6 +66,12 @@ export const modules: ModulesProps[] = [
         icon: Upload,
         description:
           "Gerencie os usuários do sistema: cadastre novos membros, edite dados cadastrais, redefina senhas e desative contas.",
+        submenu: [
+          {
+            label: "Editar Usuário",
+            pattern: /^\/administracao\/usuario\/[^/]+$/,
+          },
+        ],
       },
     ],
   },

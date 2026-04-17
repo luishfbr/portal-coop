@@ -14,6 +14,10 @@ export const Route = createFileRoute("/_auth/_pathlessLayout/redefinir-senha")({
       throw redirect({
         to: "/redefinicao-de-senha",
       })
+    } else if (ctx.context.auth.isAuthenticated) {
+      throw redirect({
+        to: "/pagina-inicial",
+      })
     }
   },
 })
