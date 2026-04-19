@@ -4,7 +4,6 @@ import { RouterProvider, createRouter } from "@tanstack/react-router"
 
 import { routeTree } from "./routeTree.gen"
 import "./index.css"
-import { ThemeProvider } from "@/components/theme-provider.tsx"
 import { AuthProvider, useAuth } from "./auth"
 import { Toaster } from "./components/ui/sonner"
 import {
@@ -13,6 +12,7 @@ import {
 } from "./components/customs-pages/errors-page"
 import { LoadingPage } from "./components/customs-pages/loading-page"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { ThemeProvider } from "./components/theme-provider"
 
 const queryClient = new QueryClient()
 
@@ -44,14 +44,12 @@ function InnerApp() {
 
 function App() {
   return (
-    <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <InnerApp />
-          <Toaster closeButton position="top-right" />
-        </AuthProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <InnerApp />
+        <Toaster closeButton position="top-right" />
+      </AuthProvider>
+    </QueryClientProvider>
   )
 }
 

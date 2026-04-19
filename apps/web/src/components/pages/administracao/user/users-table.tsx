@@ -24,9 +24,11 @@ import { useNavigate } from "@tanstack/react-router"
 export const UsersTable = ({
   users,
   loggedUser,
+  deleteUser,
 }: {
   users: UserWithRole[] | undefined
   loggedUser: User
+  deleteUser: (userId: string) => Promise<any>
 }) => {
   const navigate = useNavigate()
   return (
@@ -93,6 +95,7 @@ export const UsersTable = ({
                     <DropdownMenuItem
                       variant="destructive"
                       disabled={user.id === loggedUser.id}
+                      onClick={() => deleteUser(user.id)}
                     >
                       <Trash /> Excluir Usuário
                     </DropdownMenuItem>

@@ -1,6 +1,7 @@
 import type { User } from "@/auth"
 import { LoadingComponent } from "@/components/customs-pages/loading-page"
 import { UsersTable } from "@/components/pages/administracao/user/users-table"
+import { UsersToolsBar } from "@/components/pages/administracao/user/users-tools-bar"
 import { DefaultHeader } from "@/components/ui/header-component"
 import { useAdmin } from "@/hooks/use-admin"
 import { createFileRoute, useRouter } from "@tanstack/react-router"
@@ -14,9 +15,17 @@ export const Route = createFileRoute(
 function RouteComponent() {
   const loggedUser = useRouter().options.context.auth.user
 
-  const { fetchingUsers, totalUsers, users } = useAdmin()
+  const {
+    fetchingUsers,
+    totalUsers,
+    users,
+    createUser,
+    addingUser,
+    deletingUser,
+    deleteUser,
+  } = useAdmin()
 
-  const loading = fetchingUsers
+  const loading = fetchingUsers || addingUser || deletingUser
 
   if (loading) {
     return <LoadingComponent />
@@ -28,10 +37,12 @@ function RouteComponent() {
         title="Usuários cadastrados no sistema"
         description="Gerencie contas, permissões e acesso ao sistema."
       />
-      <span className="text-xs text-muted-foreground">
-        Total de usuários cadastrados: {totalUsers}
-      </span>
-      <UsersTable users={users} loggedUser={loggedUser as User} />
+      <UsersToolsBar totalUsers={totalUsers ?? 0} createUser={createUser} />
+      <UsersTable
+        users={users}
+        loggedUser={loggedUser as User}
+        deleteUser={deleteUser}
+      />
     </div>
   )
 }

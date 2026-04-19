@@ -1,4 +1,3 @@
-import { ToggleTheme } from "@/components/toggle-theme"
 import { Logo } from "@/components/ui/logo"
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router"
 
@@ -17,10 +16,7 @@ function RouteComponent() {
   return (
     <div className="mx-auto flex h-screen w-full flex-col items-center justify-center">
       <div className="flex w-full max-w-100 flex-col gap-2">
-        <div className="flex w-full flex-row items-center justify-center gap-2">
-          <Logo />
-          <ToggleTheme size={"icon-lg"} />
-        </div>
+        <Logo />
         <Outlet />
       </div>
       <span className="fixed bottom-2 text-xs text-muted-foreground">

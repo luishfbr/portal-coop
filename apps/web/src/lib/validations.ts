@@ -12,6 +12,8 @@ export const password = z
   .regex(/[0-9]/, "A senha deve conter pelo menos um número")
   .regex(/[^a-zA-Z0-9]/, "A senha deve conter pelo menos um caractere especial")
 
+export const role = z.enum(["admin", "user"])
+
 export const loginSchema = z.object({
   email,
   password,
@@ -29,3 +31,18 @@ export const codeSchema = z.object({
 })
 
 export type CodeType = z.infer<typeof codeSchema>
+
+export const searchSchema = z.object({
+  search: z.string().trim().min(1),
+})
+
+export type SearchType = z.infer<typeof searchSchema>
+
+export const addUserSchema = z.object({
+  name,
+  email,
+  password,
+  role,
+})
+
+export type AddUser = z.infer<typeof addUserSchema>

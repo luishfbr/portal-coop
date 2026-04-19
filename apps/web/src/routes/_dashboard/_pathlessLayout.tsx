@@ -3,7 +3,6 @@ import {
   EnableTwoFactorPage,
   UnauthorizedPage,
 } from "@/components/customs-pages/errors-page"
-import { ToggleTheme } from "@/components/toggle-theme"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -87,7 +86,7 @@ function RouteComponent() {
                   for (const module of modules) {
                     for (const menuItem of module.menu ?? []) {
                       const subItem = menuItem.submenu?.find((s) =>
-                        s.pattern.test(path),
+                        s.pattern.test(path)
                       )
                       if (subItem) {
                         return (
@@ -117,22 +116,19 @@ function RouteComponent() {
                 })()}
               </Breadcrumb>
             </div>
-            <div className="flex flex-row items-center gap-2">
-              <ToggleTheme size={"icon"} />
-              {user.role === "admin" && (
-                <Button
-                  variant={"outline"}
-                  onClick={() => {
-                    navigate({
-                      to: "/administracao",
-                    })
-                  }}
-                >
-                  <Cog />
-                  <span className="hidden md:flex">Administração</span>
-                </Button>
-              )}
-            </div>
+            {user.role === "admin" && (
+              <Button
+                variant={"outline"}
+                onClick={() => {
+                  navigate({
+                    to: "/administracao",
+                  })
+                }}
+              >
+                <Cog />
+                <span className="hidden md:flex">Administração</span>
+              </Button>
+            )}
           </header>
           <Separator />
           <div className="flex flex-1 flex-col gap-4 p-4">
