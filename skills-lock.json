@@ -1,6 +1,16 @@
 {
   "version": 1,
   "skills": {
+    "tanstack-router-best-practices": {
+      "source": "deckardger/tanstack-agent-skills",
+      "sourceType": "github",
+      "computedHash": "090ae367732367c6a9a693dde029072e0eda8463e2a1047da76a4ec9b7d58b63"
+    },
+    "tanstack-table": {
+      "source": "tanstack-skills/tanstack-skills",
+      "sourceType": "github",
+      "computedHash": "5527e42e541ac26fc1157e49d58c399b95e44eb276ef3caa7576ab138558d593"
+    },
     "turborepo": {
       "source": "vercel/turborepo",
       "sourceType": "github",

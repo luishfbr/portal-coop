@@ -1,6 +1,8 @@
 import { LoadingComponent } from "@/components/customs-pages/loading-page"
+import { EditUser } from "@/components/pages/administracao/user/edit-user"
 import { Button } from "@/components/ui/button"
 import { DefaultHeader } from "@/components/ui/header-component"
+import { useAdmin } from "@/hooks/use-admin"
 import { authClient } from "@/lib/auth-client"
 import { useQuery } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
@@ -16,6 +18,7 @@ export const Route = createFileRoute(
 function RouteComponent() {
   const { userId } = Route.useParams()
   const navigate = useNavigate()
+  const { updateUser, updatingUser } = useAdmin()
 
   const { data: userData, isPending } = useQuery({
     queryKey: ["user", userId],
@@ -60,6 +63,7 @@ function RouteComponent() {
         title={`Painel de Edição`}
         description={`Gerencie a conta, permissões e acesso de ${user.name} ao sistema.`}
       />
+      <EditUser user={user} updateUser={updateUser} updatingUser={updatingUser} />
     </div>
   )
 }

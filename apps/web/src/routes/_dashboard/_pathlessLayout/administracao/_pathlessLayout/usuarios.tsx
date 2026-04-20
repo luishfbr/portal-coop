@@ -4,16 +4,24 @@ import { UsersTable } from "@/components/pages/administracao/user/users-table"
 import { UsersToolsBar } from "@/components/pages/administracao/user/users-tools-bar"
 import { DefaultHeader } from "@/components/ui/header-component"
 import { useAdmin } from "@/hooks/use-admin"
-import { createFileRoute, useRouter } from "@tanstack/react-router"
+import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router"
+import { z } from "zod"
+
+const usuariosSearchSchema = z.object({
+  search: z.string().optional().catch(undefined),
+})
 
 export const Route = createFileRoute(
   "/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuarios"
 )({
+  validateSearch: (search) => usuariosSearchSchema.parse(search),
   component: RouteComponent,
 })
 
 function RouteComponent() {
   const loggedUser = useRouter().options.context.auth.user
+  const { search } = Route.useSearch()
+  const navigate = useNavigate({ from: Route.fullPath })
 
   const {
     fetchingUsers,
@@ -23,12 +31,16 @@ function RouteComponent() {
     addingUser,
     deletingUser,
     deleteUser,
-  } = useAdmin()
+    banningUser,
+    banUser,
+  } = useAdmin({ search })
 
-  const loading = fetchingUsers || addingUser || deletingUser
+  const loading = fetchingUsers || addingUser || deletingUser || banningUser
 
-  if (loading) {
-    return <LoadingComponent />
+  const handleSearch = (value: string) => {
+    navigate({
+      search: (prev) => ({ ...prev, search: value || undefined }),
+    })
   }
 
   return (
@@ -37,12 +49,17 @@ function RouteComponent() {
         title="Usuários cadastrados no sistema"
         description="Gerencie contas, permissões e acesso ao sistema."
       />
-      <UsersToolsBar totalUsers={totalUsers ?? 0} createUser={createUser} />
-      <UsersTable
-        users={users}
-        loggedUser={loggedUser as User}
-        deleteUser={deleteUser}
-      />
+      <UsersToolsBar createUser={createUser} onSearch={handleSearch} />
+      {loading ? (
+        <LoadingComponent />
+      ) : (
+        <UsersTable
+          totalUsers={totalUsers || 0}
+          users={users}
+          loggedUser={loggedUser as User}
+          deleteUser={deleteUser}
+        />
+      )}
     </div>
   )
 }

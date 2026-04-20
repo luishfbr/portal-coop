@@ -46,3 +46,15 @@ export const addUserSchema = z.object({
 })
 
 export type AddUser = z.infer<typeof addUserSchema>
+
+export const editUserSchema = z.object({
+  name,
+  email,
+  role,
+  banned: z.boolean(),
+  banReason: z.string().trim().optional(),
+  banExpires: z.string().optional(),
+  image: z.string().trim().optional(),
+})
+
+export type EditUserType = z.infer<typeof editUserSchema>

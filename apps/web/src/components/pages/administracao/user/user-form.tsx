@@ -45,7 +45,7 @@ export function UserForm({
   })
 
   async function onSubmit(data: AddUser) {
-    await createUser(data)
+    await createUser(data).finally(() => form.reset())
   }
 
   return (

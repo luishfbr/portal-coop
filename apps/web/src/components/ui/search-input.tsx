@@ -1,11 +1,8 @@
-import { ArrowRightIcon, SearchIcon } from "lucide-react"
-import { useId } from "react"
+import { ArrowRight, SearchIcon, X } from "lucide-react"
 
 import { Input } from "@/components/ui/input"
-import { Controller, useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { searchSchema, type SearchType } from "@/lib/validations"
-import { Field, FieldGroup } from "./field"
+import { useState } from "react"
+import { Button } from "./button"
 
 export default function SearchInput({
   polaceholder,
@@ -14,59 +11,34 @@ export default function SearchInput({
   polaceholder: string | undefined
   onSubmit: (e: string) => void
 }) {
-  const id = useId()
-
-  const form = useForm<SearchType>({
-    resolver: zodResolver(searchSchema),
-    defaultValues: {
-      search: "",
-    },
-  })
-
-  function submitSearch({ search }: SearchType) {
-    if (!search) {
-      return
-    } else {
-      onSubmit(search)
-    }
-  }
+  const [search, setSearch] = useState<string>("")
 
   return (
-    <form
-      className="0 relative flex w-full max-w-80 flex-row gap-2"
-      id="search-form"
-      onSubmit={form.handleSubmit(submitSearch)}
-      autoComplete="off"
-    >
-      <FieldGroup>
-        <Controller
-          control={form.control}
-          name="search"
-          render={({ field, fieldState }) => (
-            <Field aria-busy={fieldState.isDirty}>
-              <Input
-                className="peer ps-9 pe-9"
-                id={id}
-                placeholder={polaceholder}
-                type="search"
-                {...field}
-              />
-            </Field>
-          )}
+    <div className="flex w-full flex-row items-center gap-2">
+      <div className="0 relative flex w-full max-w-80 flex-row gap-2">
+        <Input
+          className="peer ps-9 pe-9"
+          placeholder={polaceholder}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
         />
-      </FieldGroup>
-      <div className="pointer-events-none absolute inset-y-0 inset-s-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
-        <SearchIcon size={16} />
+        <div className="pointer-events-none absolute inset-y-0 inset-s-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
+          <SearchIcon size={16} />
+        </div>
       </div>
-      <button
-        aria-label="Submit search"
-        className="absolute inset-y-0 inset-e-0 flex h-full w-9 items-center justify-center rounded-e-md text-muted-foreground/80 transition-[color,box-shadow] outline-none hover:text-foreground focus:z-10 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
-        type="submit"
-        form="search-form"
-        disabled={form.formState.disabled || !form.watch("search")}
-      >
-        <ArrowRightIcon aria-hidden="true" size={16} />
-      </button>
-    </form>
+      {search && (
+        <Button
+          onClick={() => {
+            setSearch("")
+            onSubmit("")
+          }}
+        >
+          <X />
+        </Button>
+      )}
+      <Button disabled={!search} onClick={() => onSubmit(search)}>
+        <ArrowRight />
+      </Button>
+    </div>
   )
 }
