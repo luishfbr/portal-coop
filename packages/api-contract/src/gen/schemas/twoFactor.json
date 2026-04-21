@@ -1,1 +1,0 @@
-{"type":"object","properties":{"id":{"type":"string"},"secret":{"type":"string"},"backupCodes":{"type":"string"},"userId":{"type":"string"},"verified":{"type":"boolean","default":true,"readOnly":true}},"required":["secret","backupCodes","userId"],"x-readme-ref-name":"TwoFactor"}

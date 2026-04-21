@@ -10,22 +10,10 @@ export const betterAuthPlugin = new Elysia({ name: "better-auth" })
     auth: {
       async resolve({ status, request: { headers } }) {
         const session = await auth.api.getSession({ headers });
+        
         if (!session) return status(401, "Unauthorized");
-        return {
-          user: session.user,
-          session: session.session,
-        };
-      },
-    },
-    adminOnly: {
-      async resolve({ status, request: { headers } }) {
-        const session = await auth.api.getSession({ headers });
-        if (!session) return status(401, "Unauthorized");
-        if (session.user.role !== "admin") return status(403, "Forbidden");
-        return {
-          user: session.user,
-          session: session.session,
-        };
+
+        return session;
       },
     },
   });

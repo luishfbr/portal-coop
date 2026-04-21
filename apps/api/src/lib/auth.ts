@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db/client";
 import { randomUUIDv7 } from "bun";
-import { SendOtpEmail, SendResetPasswordEmail } from "./emails-template";
+import { SendResetPasswordEmail } from "./emails-template";
 import { admin, openAPI, twoFactor } from "better-auth/plugins";
 import { env } from "./env";
 
