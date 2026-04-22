@@ -21,9 +21,11 @@ import {
   userGroups,
   userGroupsRelations,
 } from "./rbac-schema";
+import { siteConfig } from "./config-schema";
 
 export * from "./auth-schema";
 export * from "./rbac-schema";
+export * from "./config-schema";
 
 export const schema = {
   users,
@@ -45,4 +47,5 @@ export const schema = {
   permissionsRelations,
   userGroups,
   userGroupsRelations,
+  siteConfig,
 };

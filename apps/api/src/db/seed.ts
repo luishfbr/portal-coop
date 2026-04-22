@@ -2,6 +2,7 @@ import { env } from "@/lib/env";
 import { db } from "./client";
 import { and, eq } from "drizzle-orm";
 import { users } from "./schema/auth-schema";
+import { siteConfig } from "./schema/config-schema";
 import { auth } from "@/lib/auth";
 
 async function main() {
@@ -38,6 +39,11 @@ async function main() {
       console.log("Fail on set role admin.");
       return;
     }
+  }
+
+  const existingConfig = await db.query.siteConfig.findFirst();
+  if (!existingConfig) {
+    await db.insert(siteConfig).values({ companyName: "Sicoob Uberaba" });
   }
 
   console.log("Seed finished!");

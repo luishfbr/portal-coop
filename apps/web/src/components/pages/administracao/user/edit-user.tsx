@@ -174,7 +174,7 @@ function AccountStatusCard({
   banUser: (data: {
     userId: string
     banReason: string | undefined
-    banExpires: Date | undefined
+    banExpiresIn: number | undefined
   }) => Promise<unknown>
   banningUser: boolean
   unbanUser: (userId: string) => Promise<unknown>
@@ -446,7 +446,7 @@ export function EditUser({
   banUser: (data: {
     userId: string
     banReason: string | undefined
-    banExpires: Date | undefined
+    banExpiresIn: number | undefined
   }) => Promise<unknown>
   banningUser: boolean
   unbanUser: (userId: string) => Promise<unknown>

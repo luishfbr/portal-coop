@@ -82,6 +82,13 @@ export const userStatusSchema = z
     message: "Informe a data de retorno",
     path: ["statusExpires"],
   })
+  .refine(
+    (d) =>
+      d.statusType === "desligamento" ||
+      !d.statusExpires ||
+      new Date(d.statusExpires) > new Date(),
+    { message: "A data de retorno deve ser no futuro", path: ["statusExpires"] }
+  )
 
 export type UserStatusType = z.infer<typeof userStatusSchema>
 

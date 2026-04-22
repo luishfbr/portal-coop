@@ -62,7 +62,7 @@ declare module "@tanstack/react-table" {
     banUser: (data: {
       userId: string
       banReason: string | undefined
-      banExpires: Date | undefined
+      banExpiresIn: number | undefined
     }) => Promise<unknown>
     unbanUser: (userId: string) => Promise<unknown>
     banningUser: boolean

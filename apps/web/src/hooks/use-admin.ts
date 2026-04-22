@@ -76,7 +76,7 @@ export function useAdmin({
     mutationFn: async (data: {
       userId: string
       banReason: string | undefined
-      banExpires: Date | undefined
+      banExpiresIn: number | undefined
     }) => {
       return await authClient.admin.banUser(
         { ...data },

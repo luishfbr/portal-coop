@@ -3,6 +3,7 @@ import { env } from "./lib/env";
 import cors from "@elysiajs/cors";
 import openapi from "@elysiajs/openapi";
 import { betterAuthPlugin, OpenAPI } from "./http/plugins/better-auth";
+import { siteConfigController } from "./http/controllers/config";
 
 const app = new Elysia()
   .use(
@@ -22,6 +23,7 @@ const app = new Elysia()
     }),
   )
   .use(betterAuthPlugin)
+  .use(siteConfigController)
   .listen(env.PORT);
 
 console.log(

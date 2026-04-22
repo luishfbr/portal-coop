@@ -98,7 +98,7 @@ function AlterStatusDialog({
   banUser: (data: {
     userId: string
     banReason: string | undefined
-    banExpires: Date | undefined
+    banExpiresIn: number | undefined
   }) => Promise<unknown>
   banningUser: boolean
 }) {
@@ -113,10 +113,14 @@ function AlterStatusDialog({
   const isPermanent = statusType === "desligamento"
 
   async function onSubmit(data: UserStatusType) {
+    const banExpiresIn = data.statusExpires
+      ? Math.floor((new Date(data.statusExpires).getTime() - Date.now()) / 1000)
+      : undefined
+
     await banUser({
       userId: user.id,
       banReason: data.statusType,
-      banExpires: data.statusExpires ? new Date(data.statusExpires) : undefined,
+      banExpiresIn,
     })
     form.reset()
     setOpen(false)
@@ -228,7 +232,7 @@ export function UserStatusDialog({
   banUser: (data: {
     userId: string
     banReason: string | undefined
-    banExpires: Date | undefined
+    banExpiresIn: number | undefined
   }) => Promise<unknown>
   unbanUser: (userId: string) => Promise<unknown>
   banningUser: boolean
