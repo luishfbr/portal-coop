@@ -5,7 +5,7 @@ import { DefaultHeader } from "@/components/ui/header-component"
 import { useAdmin } from "@/hooks/use-admin"
 import { authClient } from "@/lib/auth-client"
 import { useQuery } from "@tanstack/react-query"
-import { useNavigate } from "@tanstack/react-router"
+import { useNavigate, useRouter } from "@tanstack/react-router"
 import { createFileRoute } from "@tanstack/react-router"
 import { ArrowLeft } from "lucide-react"
 
@@ -18,15 +18,30 @@ export const Route = createFileRoute(
 function RouteComponent() {
   const { userId } = Route.useParams()
   const navigate = useNavigate()
-  const { updateUser, updatingUser } = useAdmin()
+  const loggedUser = useRouter().options.context.auth.user
+
+  const {
+    updateUser,
+    updatingUser,
+    banUser,
+    banningUser,
+    unbanUser,
+    unbanningUser,
+    setUserPassword,
+    settingPassword,
+    userSessions,
+    fetchingSessions,
+    revokeUserSession,
+    revokingSession,
+    revokeUserSessions,
+    revokingAllSessions,
+  } = useAdmin({ userId })
 
   const { data: userData, isPending } = useQuery({
     queryKey: ["user", userId],
     queryFn: async () => {
       return await authClient.admin.getUser({
-        query: {
-          id: userId,
-        },
+        query: { id: userId },
       })
     },
   })
@@ -44,9 +59,7 @@ function RouteComponent() {
           <h1>Usuário não encontrado!</h1>
           <Button
             onClick={() => {
-              navigate({
-                to: "/administracao/usuarios",
-              })
+              navigate({ to: "/administracao/usuarios" })
             }}
           >
             <ArrowLeft />
@@ -60,10 +73,27 @@ function RouteComponent() {
   return (
     <div className="flex h-full w-full flex-col gap-4">
       <DefaultHeader
-        title={`Painel de Edição`}
+        title="Painel de Edição"
         description={`Gerencie a conta, permissões e acesso de ${user.name} ao sistema.`}
       />
-      <EditUser user={user} updateUser={updateUser} updatingUser={updatingUser} />
+      <EditUser
+        user={user}
+        isOwnProfile={loggedUser?.id === user.id}
+        updateUser={updateUser}
+        updatingUser={updatingUser}
+        banUser={banUser}
+        banningUser={banningUser}
+        unbanUser={unbanUser}
+        unbanningUser={unbanningUser}
+        setUserPassword={setUserPassword}
+        settingPassword={settingPassword}
+        userSessions={userSessions}
+        fetchingSessions={fetchingSessions}
+        revokeUserSession={revokeUserSession}
+        revokingSession={revokingSession}
+        revokeUserSessions={revokeUserSessions}
+        revokingAllSessions={revokingAllSessions}
+      />
     </div>
   )
 }

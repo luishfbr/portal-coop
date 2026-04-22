@@ -12,7 +12,6 @@ import {
 } from "./components/customs-pages/errors-page"
 import { LoadingPage } from "./components/customs-pages/loading-page"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { ThemeProvider } from "./components/theme-provider"
 
 const queryClient = new QueryClient()
 

@@ -32,7 +32,7 @@ import { Controller, useForm } from "react-hook-form"
 export function UserForm({
   createUser,
 }: {
-  createUser: (data: AddUser) => Promise<any>
+  createUser: (data: AddUser) => Promise<unknown>
 }) {
   const form = useForm<AddUser>({
     resolver: zodResolver(addUserSchema),

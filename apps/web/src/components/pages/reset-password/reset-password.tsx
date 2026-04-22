@@ -42,6 +42,7 @@ type NewPass = z.infer<typeof newPasswordSchema>
 
 export const ResetPasswordForm = ({ token }: { token: string }) => {
   const navigate = useNavigate()
+  // eslint-disable-next-line react-compiler/react-compiler
   const tokenIssuedAt = useRef(Date.now())
   const [, tick] = useState(0)
 
@@ -50,6 +51,7 @@ export const ResetPasswordForm = ({ token }: { token: string }) => {
     return () => clearInterval(interval)
   }, [])
 
+  // eslint-disable-next-line react-compiler/react-compiler
   const now = Date.now()
   const tokenRemainingMs = Math.max(
     0,

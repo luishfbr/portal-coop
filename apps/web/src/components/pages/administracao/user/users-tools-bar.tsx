@@ -6,7 +6,7 @@ export const UsersToolsBar = ({
   createUser,
   onSearch,
 }: {
-  createUser: (data: AddUser) => Promise<any>
+  createUser: (data: AddUser) => Promise<unknown>
   onSearch: (value: string) => void
 }) => {
   return (

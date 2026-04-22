@@ -52,12 +52,21 @@ import {
 } from "@/components/ui/table"
 import { useNavigate } from "@tanstack/react-router"
 import { DeleteAlert } from "@/components/ui/delete-alert"
-import { BanUser } from "./ban-user"
+import { UserStatusDialog } from "./ban-user"
+import { USER_STATUS_TYPES } from "@/lib/validations"
 
 declare module "@tanstack/react-table" {
-  interface TableMeta<TData extends RowData> {
+  interface TableMeta<_TData extends RowData> {
     loggedUser: User
     deleteUser: (userId: string) => Promise<unknown>
+    banUser: (data: {
+      userId: string
+      banReason: string | undefined
+      banExpires: Date | undefined
+    }) => Promise<unknown>
+    unbanUser: (userId: string) => Promise<unknown>
+    banningUser: boolean
+    unbanningUser: boolean
   }
 }
 
@@ -105,10 +114,15 @@ const columns: ColumnDef<UserWithRole>[] = [
   },
   {
     accessorKey: "banReason",
-    cell: ({ row }) => row.original.banReason ?? "--",
+    cell: ({ row }) => {
+      const reason = row.original.banReason
+      return (
+        USER_STATUS_TYPES.find((t) => t.value === reason)?.label ?? "--"
+      )
+    },
     enableSorting: false,
-    header: "Descrição Status",
-    size: 160,
+    header: "Situação",
+    size: 140,
   },
   {
     accessorKey: "banExpires",
@@ -117,7 +131,7 @@ const columns: ColumnDef<UserWithRole>[] = [
         ? new Date(row.original.banExpires).toLocaleDateString("pt-BR")
         : "--",
     enableSorting: false,
-    header: "Termina em",
+    header: "Retorno em",
     size: 120,
   },
   {
@@ -129,12 +143,17 @@ const columns: ColumnDef<UserWithRole>[] = [
   },
   {
     cell: ({ row, table }) => {
-      const { loggedUser, deleteUser } = table.options.meta!
+      const { loggedUser, deleteUser, banUser, unbanUser, banningUser, unbanningUser } =
+        table.options.meta!
       return (
         <ActionsCell
           user={row.original}
           loggedUser={loggedUser}
           deleteUser={deleteUser}
+          banUser={banUser}
+          unbanUser={unbanUser}
+          banningUser={banningUser}
+          unbanningUser={unbanningUser}
         />
       )
     },
@@ -149,10 +168,22 @@ function ActionsCell({
   user,
   loggedUser,
   deleteUser,
+  banUser,
+  unbanUser,
+  banningUser,
+  unbanningUser,
 }: {
   user: UserWithRole
   loggedUser: User
   deleteUser: (userId: string) => Promise<unknown>
+  banUser: (data: {
+    userId: string
+    banReason: string | undefined
+    banExpires: Date | undefined
+  }) => Promise<unknown>
+  unbanUser: (userId: string) => Promise<unknown>
+  banningUser: boolean
+  unbanningUser: boolean
 }) {
   const navigate = useNavigate()
   return (
@@ -180,7 +211,14 @@ function ActionsCell({
             <Pencil />
             Editar Usuário
           </Button>
-          <BanUser />
+          <UserStatusDialog
+            user={user}
+            banUser={banUser}
+            unbanUser={unbanUser}
+            banningUser={banningUser}
+            unbanningUser={unbanningUser}
+            disabled={user.id === loggedUser.id}
+          />
           <DropdownMenuSeparator />
           <DeleteAlert
             variant="destructive-outline"
@@ -199,11 +237,23 @@ export const UsersTable = ({
   users,
   loggedUser,
   deleteUser,
+  banUser,
+  unbanUser,
+  banningUser,
+  unbanningUser,
 }: {
   totalUsers: number
   users: UserWithRole[] | undefined
   loggedUser: User
   deleteUser: (userId: string) => Promise<unknown>
+  banUser: (data: {
+    userId: string
+    banReason: string | undefined
+    banExpires: Date | undefined
+  }) => Promise<unknown>
+  unbanUser: (userId: string) => Promise<unknown>
+  banningUser: boolean
+  unbanningUser: boolean
 }) => {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -220,7 +270,7 @@ export const UsersTable = ({
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    meta: { loggedUser, deleteUser },
+    meta: { loggedUser, deleteUser, banUser, unbanUser, banningUser, unbanningUser },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     rowCount: totalUsers,

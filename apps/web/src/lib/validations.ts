@@ -58,3 +58,41 @@ export const editUserSchema = z.object({
 })
 
 export type EditUserType = z.infer<typeof editUserSchema>
+
+export const USER_STATUS_TYPES = [
+  { value: "ferias", label: "Férias" },
+  { value: "licenca", label: "Licença" },
+  { value: "afastamento", label: "Afastamento" },
+  { value: "desligamento", label: "Desligamento" },
+] as const
+
+export type UserStatusValue = (typeof USER_STATUS_TYPES)[number]["value"]
+
+export const userStatusSchema = z
+  .object({
+    statusType: z.enum([
+      "ferias",
+      "licenca",
+      "afastamento",
+      "desligamento",
+    ] as const),
+    statusExpires: z.string().optional(),
+  })
+  .refine((d) => d.statusType === "desligamento" || !!d.statusExpires, {
+    message: "Informe a data de retorno",
+    path: ["statusExpires"],
+  })
+
+export type UserStatusType = z.infer<typeof userStatusSchema>
+
+export const setPasswordSchema = z
+  .object({
+    newPassword: password,
+    confirmPassword: password,
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: "As senhas não coincidem",
+    path: ["confirmPassword"],
+  })
+
+export type SetPasswordType = z.infer<typeof setPasswordSchema>

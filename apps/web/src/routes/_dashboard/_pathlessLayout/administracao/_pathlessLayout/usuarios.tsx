@@ -31,11 +31,13 @@ function RouteComponent() {
     addingUser,
     deletingUser,
     deleteUser,
-    banningUser,
     banUser,
+    banningUser,
+    unbanUser,
+    unbanningUser,
   } = useAdmin({ search })
 
-  const loading = fetchingUsers || addingUser || deletingUser || banningUser
+  const loading = fetchingUsers || addingUser || deletingUser || banningUser || unbanningUser
 
   const handleSearch = (value: string) => {
     navigate({
@@ -58,6 +60,10 @@ function RouteComponent() {
           users={users}
           loggedUser={loggedUser as User}
           deleteUser={deleteUser}
+          banUser={banUser}
+          unbanUser={unbanUser}
+          banningUser={banningUser}
+          unbanningUser={unbanningUser}
         />
       )}
     </div>

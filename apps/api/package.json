@@ -1,9 +1,13 @@
 {
   "name": "@portal-coop/api",
   "version": "1.0.50",
+  "private": true,
+  "type": "module",
   "scripts": {
     "build": "bun build ./src/index.ts --outdir ./dist --target bun",
     "dev": "bun run --watch src/index.ts",
+    "lint": "eslint .",
+    "format": "prettier --write \"**/*.ts\"",
     "typecheck": "tsc --noEmit",
     "db:generate": "bunx --bun drizzle-kit generate",
     "db:migrate": "bunx --bun drizzle-kit migrate",
@@ -24,10 +28,13 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@portal-coop/eslint-config": "workspace:*",
     "@portal-coop/typescript-config": "workspace:*",
     "@types/pg": "^8.20.0",
     "bun-types": "latest",
     "drizzle-kit": "^0.31.10",
+    "eslint": "^9.39.4",
+    "prettier": "^3.8.1",
     "tsx": "^4.21.0"
   },
   "module": "src/index.js"

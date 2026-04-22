@@ -26,11 +26,14 @@ export const OpenAPI = {
         const key = prefix + path;
         reference[key] = paths[path];
         for (const method of Object.keys(paths[path])) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const operation = (reference[key] as any)[method];
           operation.tags = ["Better Auth"];
         }
       }
       return reference;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }) as Promise<any>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   components: getSchema().then(({ components }) => components) as Promise<any>,
 } as const;

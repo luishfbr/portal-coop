@@ -6,15 +6,13 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "typecheck": "turbo run typecheck",
-    "lint": "turbo run lint"
+    "lint": "turbo run lint",
+    "format": "turbo run format"
   },
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
-  "dependencies": {
-    "react-qr-code": "^2.0.18"
-  },
   "devDependencies": {
     "turbo": "^2.9.6"
   },
