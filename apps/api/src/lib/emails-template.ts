@@ -15,18 +15,3 @@ export async function SendResetPasswordEmail({
     text: `Clique no seguinte link para redefinir sua senha. ${url}`,
   });
 }
-
-export async function SendOtpEmail({
-  email,
-  otp,
-}: {
-  email: string;
-  otp: string;
-}) {
-  await transporter.sendMail({
-    from: env.SMTP_MAIL_FROM,
-    to: email,
-    subject: "Código de Acesso - Portal Coop",
-    text: `Segue código de acesso ao portal. ${otp}`,
-  });
-}

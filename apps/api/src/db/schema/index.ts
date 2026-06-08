@@ -8,24 +8,10 @@ import {
   twoFactors,
   twoFactorsRelations,
   verifications,
+  rateLimits,
 } from "./auth-schema";
-import {
-  groups,
-  groupPermissions,
-  groupPermissionsRelations,
-  groupsRelations,
-  modules,
-  modulesRelations,
-  permissions,
-  permissionsRelations,
-  userGroups,
-  userGroupsRelations,
-} from "./rbac-schema";
-import { siteConfig } from "./config-schema";
-
-export * from "./auth-schema";
-export * from "./rbac-schema";
-export * from "./config-schema";
+export * from "./modules-schema";
+import { modules } from "./modules-schema";
 
 export const schema = {
   users,
@@ -37,15 +23,6 @@ export const schema = {
   twoFactors,
   twoFactorsRelations,
   verifications,
-  groups,
-  groupPermissions,
-  groupPermissionsRelations,
-  groupsRelations,
+  rateLimits,
   modules,
-  modulesRelations,
-  permissions,
-  permissionsRelations,
-  userGroups,
-  userGroupsRelations,
-  siteConfig,
 };

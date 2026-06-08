@@ -11,7 +11,7 @@ Backend da aplicação Portal Coop. API REST construída com ElysiaJS + Bun, Pos
 | **Drizzle ORM** | ^0.45 | ORM + query builder |
 | **drizzle-zod** | ^0.8 | Geração de schemas Zod a partir das tabelas Drizzle |
 | **Zod** | ^4 | Validação de schemas |
-| **Better Auth** | ^1.6 | Autenticação (email/senha, 2FA, admin, OpenAPI) |
+| **Better Auth** | ^1.6 | Autenticação (email/senha, 2FA TOTP, admin, OpenAPI) |
 | **PostgreSQL (Neon)** | — | Banco de dados |
 | **@elysiajs/cors** | ^1.4 | CORS |
 | **@elysiajs/openapi** | ^1.4 | Documentação OpenAPI automática |
@@ -20,7 +20,7 @@ Backend da aplicação Portal Coop. API REST construída com ElysiaJS + Bun, Pos
 ## Estrutura de diretórios
 
 ```
-src/  
+src/
 ├── index.ts                          # Entry point — monta a app Elysia
 ├── lib/
 │   ├── auth.ts                       # Configuração do Better Auth
@@ -29,21 +29,40 @@ src/
 │   └── transporter.ts                # Configuração Nodemailer (SMTP)
 ├── db/
 │   ├── client.ts                     # Instância do Drizzle (db)
-│   ├── seed.ts                       # Seed: cria usuário admin inicial
+│   ├── seed.ts                       # Seed: admin inicial + módulos iniciais
 │   └── schema/
-│       ├── index.ts                  # Re-exporta tabelas + exporta schema combinado
-│       ├── auth-schema.ts            # Tabelas do Better Auth (users, sessions, etc.)
-│       └── rbac-schema.ts            # Tabelas de RBAC (groups, modules, permissions, etc.)
+│       ├── index.ts                  # Importa tabelas + exporta schema combinado
+│       ├── auth-schema.ts            # Tabelas do Better Auth (não editar manualmente)
+│       ├── modules-schema.ts         # Tabela de módulos do sistema
+│       └── <feature>-schema.ts       # Uma por feature de negócio
 └── http/
     ├── plugins/
     │   └── better-auth.ts            # Plugin Elysia com macros auth e adminOnly
     └── controllers/
+        ├── modules/                  # Módulos do sistema (ativação/inativação)
+        │   ├── index.ts
+        │   ├── model.ts
+        │   └── service.ts
         └── <feature>/                # Uma pasta por feature
             ├── index.ts              # Controller: instância Elysia com rotas
             ├── model.ts              # Schemas Zod via drizzle-zod + tipos exportados
             ├── service.ts            # Lógica de negócio (abstract class, métodos static)
             └── <sub-feature>/        # Sub-recursos seguem o mesmo padrão recursivamente
 ```
+
+## Rotas da API
+
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| `GET` | `/health` | público | Health check — retorna `{ status, uptime }` |
+| `*` | `/auth/*` | — | Rotas do Better Auth (login, 2FA, reset, admin) |
+| `GET` | `/api/v1/modules/active` | `auth` | Lista módulos ativos (para sidebar) |
+| `GET` | `/api/v1/modules` | `adminOnly` | Lista todos os módulos (ativos e inativos) |
+| `PATCH` | `/api/v1/modules/:id/toggle` | `adminOnly` | Alterna `isActive` do módulo |
+
+> Ao adicionar novas features, registrar as rotas nesta tabela.
+
+---
 
 ## Convenções de feature
 
@@ -70,14 +89,123 @@ As rotas do Better Auth ficam em `/auth/*` (montadas automaticamente).
 
 ---
 
+## Autenticação e Autorização
+
+### Plugins Better Auth ativos
+
+| Plugin | Configuração relevante |
+|---|---|
+| `emailAndPassword` | habilitado, hash via `Bun.password`, min 8 / max 32 chars, reset de senha em 30 min |
+| `twoFactor` | **somente TOTP** (aplicativo autenticador), backup codes criptografados, cookie 2FA expira em 10 min |
+| `admin` | gerenciamento de usuários pelo painel admin |
+| `openAPI` | documentação gerada automaticamente em `/auth/reference` |
+
+### Configurações de sessão
+
+- Expiração: **7 dias** (`expiresIn: 60 * 60 * 24 * 7`)
+- Renovação automática: a cada 24h de uso (`updateAge`)
+- Cookie cache: 5 min, estratégia `"compact"`
+- Cookies seguros: habilitado automaticamente em `NODE_ENV=production`
+
+### Rate limiting (storage: database)
+
+| Endpoint | Janela | Máximo |
+|---|---|---|
+| `/sign-in/email` | 60s | 5 tentativas |
+| `/sign-up/email` | 60s | 3 tentativas |
+| `/forget-password` | 60s | 3 tentativas |
+
+### Macros disponíveis
+
+Definidos em `src/http/plugins/better-auth.ts`:
+
+| Macro | Quem pode chamar | Injeta no contexto |
+|---|---|---|
+| `auth: true` | Qualquer usuário autenticado | `user`, `session` |
+| `adminOnly: true` | Usuários com `role === "admin"` | `user`, `session` |
+
+### Uso das macros
+
+```typescript
+// Rota individual
+.get("/perfil", ({ user }) => user, { auth: true })
+
+// Bloco de rotas — preferir .guard()
+.guard({ adminOnly: true }, (app) =>
+  app
+    .post("/", ...)
+    .delete("/:id", ...)
+)
+```
+
+### Adicionar novo nível de acesso
+
+Adicionar um novo macro em `src/http/plugins/better-auth.ts`:
+
+```typescript
+.macro({
+  auth: { ... },       // já existe
+  adminOnly: { ... },  // já existe
+
+  minhaRole: {
+    async resolve({ status, request: { headers } }) {
+      const session = await auth.api.getSession({ headers });
+      if (!session) return status(401, "Unauthorized");
+      if (session.user.role !== "minha-role") return status(403, "Forbidden");
+      return { user: session.user, session: session.session };
+    },
+  },
+})
+```
+
+---
+
 ## Schema (Drizzle)
 
 ### Localização
-- `src/db/schema/auth-schema.ts` — tabelas gerenciadas pelo Better Auth (não editar manualmente)
-- `src/db/schema/rbac-schema.ts` — tabelas de RBAC customizadas
-- Novas tabelas de negócio → criar um novo arquivo `src/db/schema/<feature>-schema.ts` e registrar em `index.ts`
 
-### Padrões obrigatórios para toda tabela
+- `src/db/schema/auth-schema.ts` — tabelas gerenciadas pelo Better Auth (**não editar manualmente**)
+- `src/db/schema/modules-schema.ts` — tabela de módulos do sistema
+- `src/db/schema/<feature>-schema.ts` — tabelas de negócio (uma por feature)
+- `src/db/schema/index.ts` — registra todas as tabelas no objeto `schema`
+
+### Tabelas do Better Auth (`auth-schema.ts`)
+
+Geradas por `bun run auth:generate`. Não editar. Tabelas atuais:
+
+| Tabela | Propósito |
+|---|---|
+| `users` | Usuários (+ campos `role`, `banned`, `twoFactorEnabled`) |
+| `sessions` | Sessões ativas |
+| `accounts` | Provedores de conta (email/senha, OAuth) |
+| `verifications` | Tokens de verificação (reset de senha) |
+| `twoFactors` | Segredos TOTP e backup codes |
+| `rateLimits` | Contadores de rate limiting |
+
+**Após rodar `bun run auth:generate`:** verificar se novas tabelas foram adicionadas e incluí-las manualmente no `schema/index.ts`.
+
+### Tabelas de negócio
+
+| Tabela | Arquivo | Propósito |
+|---|---|---|
+| `modules` | `modules-schema.ts` | Módulos do sistema (ativação/inativação por admins) |
+
+#### `modules`
+
+| Coluna | Tipo | Observação |
+|---|---|---|
+| `id` | `text` PK | UUID v7 gerado em app |
+| `name` | `text` | Nome exibível do módulo |
+| `description` | `text` | Descrição do módulo |
+| `slug` | `text` UNIQUE | Chave de rota (ex: `dashboards-internos`) |
+| `icon` | `text` | Nome do ícone lucide-react (ex: `LayoutDashboard`) |
+| `is_active` | `boolean` | Visibilidade do módulo — padrão `true` |
+| `created_at` | `timestamp` | Gerado em app via `$defaultFn` |
+| `updated_at` | `timestamp` | Atualizado via `$onUpdate` |
+
+> Módulos são injetados via seed pelos desenvolvedores. Admins só podem alternar `isActive`.
+
+### Padrões obrigatórios para toda tabela de negócio
 
 ```typescript
 import { randomUUIDv7 } from "bun";
@@ -124,11 +252,11 @@ Sempre re-exportar as tabelas e adicionar ao objeto `schema`:
 
 ```typescript
 export * from "./<feature>-schema";
+import { minhaTabela } from "./<feature>-schema";
 
 export const schema = {
   // ... existentes
   minhaTabela,
-  minhaJuncao,
 };
 ```
 
@@ -239,8 +367,9 @@ export abstract class MinhaService {
 **Regras:**
 - `abstract class` com métodos `static` — nunca instanciar
 - `return status(code, message)` para erros — importar de `"elysia"`
-- Nunca receber `Context` do Elysia como parâmetro — apenas tipos derivados dos models
+- Nunca receber `Context` do Elysia como parâmetro — extrair apenas os dados necessários inline
 - Verificar existência antes de update/delete com `columns: { id: true }` (busca mínima)
+- Para inverter um booleano diretamente no banco: `.set({ campo: not(tabela.campo) })` da `drizzle-orm`
 
 ---
 
@@ -254,33 +383,32 @@ import { MinhaModel } from "./model";
 
 export const minhaController = new Elysia({
   name: "minha-feature",      // ✅ sempre nomear para deduplicação
-  prefix: "/minha-feature",
+  prefix: "/api/v1/minha-feature",
 })
   .use(betterAuthPlugin)      // ✅ declarar dependência explicitamente
   .onError(({ code, error, status }) => {
     if (code === "VALIDATION") return status(422, { message: error.message });
   })
 
-  // ── Rotas públicas ────────────────────────────────────────────────────────
-  .get("/", () => MinhaService.findAll(), {
-    detail: { summary: "List all", tags: ["Minha Feature"] },
-  })
-  .get("/:id", ({ params: { id } }) => MinhaService.findById(id), {
-    params: MinhaModel.params,
-    detail: { summary: "Get by id", tags: ["Minha Feature"] },
+  // ── Rotas com acesso individual (auth ou público) ─────────────────────────
+  .get("/active", () => MinhaService.findActive(), {
+    auth: true,
+    detail: { summary: "List active", tags: ["Minha Feature"] },
   })
 
   // ── Rotas protegidas — usar .guard() para agrupar ─────────────────────────
   .guard({ adminOnly: true }, (app) =>
     app
+      .get("/", () => MinhaService.findAll(), {
+        detail: { summary: "List all", tags: ["Minha Feature"] },
+      })
       .post("/", ({ body }) => MinhaService.create(body), {
         body: MinhaModel.create,
         detail: { summary: "Create", tags: ["Minha Feature"] },
       })
-      .put("/:id", ({ params: { id }, body }) => MinhaService.update(id, body), {
+      .patch("/:id/toggle", ({ params: { id } }) => MinhaService.toggle(id), {
         params: MinhaModel.params,
-        body: MinhaModel.update,
-        detail: { summary: "Update", tags: ["Minha Feature"] },
+        detail: { summary: "Toggle status", tags: ["Minha Feature"] },
       })
       .delete("/:id", ({ params: { id } }) => MinhaService.remove(id), {
         params: MinhaModel.params,
@@ -290,61 +418,38 @@ export const minhaController = new Elysia({
 ```
 
 **Regras:**
-- Sempre `name` único no construtor — formato `"<dominio>.<recurso>"` (ex: `"rbac.groups"`)
+- Sempre `name` único no construtor (ex: `"modules"`, `"goals"`, `"goals.entries"`)
 - Sempre `.use(betterAuthPlugin)` — dependência explícita, nunca global
-- Rotas públicas antes das protegidas
-- Rotas com segmento literal antes de rotas parametrizadas (ex: `/by-module/:id` antes de `/:id`)
-- `detail.tags` agrupam rotas no OpenAPI — usar o padrão `"Domínio - Recurso"`
+- Rotas com macro individual (`auth: true`) antes do `.guard()` adminOnly
+- Rotas com segmento literal antes de rotas parametrizadas (ex: `/active` antes de `/:id`)
+- `detail.tags` agrupam rotas no OpenAPI
 - Inline handlers — nunca passar `Context` para o service
 
 ---
 
-## Autenticação e Autorização
+## Seed (`src/db/seed.ts`)
 
-Definidos em `src/http/plugins/better-auth.ts` como macros do Elysia.
+O seed é idempotente — pode ser re-executado sem duplicar dados.
 
-### Macros disponíveis
+**O que é seedado:**
 
-| Macro | Descrição | Injeta no contexto |
-|---|---|---|
-| `auth: true` | Requer sessão ativa | `user`, `session` |
-| `adminOnly: true` | Requer sessão + `role === "admin"` | `user`, `session` |
+1. **Usuário admin** — lido de `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` no `.env`. Cria via `auth.api.signUpEmail()` e eleva `role` para `"admin"`. Verifica existência antes de criar.
 
-### Uso por rota
+2. **Módulos do sistema** — inseridos com `onConflictDoNothing({ target: modules.slug })`. Adicionar novos módulos ao array `initialModules` no seed e re-executar.
 
-```typescript
-// Rota individual
-.get("/perfil", ({ user }) => user, { auth: true })
-
-// Bloco de rotas — preferir .guard()
-.guard({ adminOnly: true }, (app) =>
-  app
-    .post("/", ...)
-    .delete("/:id", ...)
-)
-```
-
-### Adicionar novo nível de acesso
-
-Adicionar um novo macro em `src/http/plugins/better-auth.ts`:
+**Para adicionar um novo módulo ao sistema:**
 
 ```typescript
-.macro({
-  // macro existente...
-  auth: { ... },
-  adminOnly: { ... },
-
-  // novo nível:
-  minhaRole: {
-    async resolve({ status, request: { headers } }) {
-      const session = await auth.api.getSession({ headers });
-      if (!session) return status(401, "Unauthorized");
-      if (session.user.role !== "minha-role") return status(403, "Forbidden");
-      return { user: session.user, session: session.session };
-    },
-  },
-})
+// Em src/db/seed.ts — adicionar ao array initialModules:
+{
+  name: "Nome do Módulo",
+  description: "Descrição do módulo",
+  slug: "slug-do-modulo",          // deve bater com a URL da rota no frontend
+  icon: "NomeDoIconeLucide",        // string — mapeada para componente no frontend
+},
 ```
+
+Após editar, rodar `bun run db:seed`.
 
 ---
 
@@ -369,9 +474,13 @@ export const dominioController = new Elysia({ prefix: "/api/v1/<dominio>" })
 import { dominioController } from "./http/controllers/<dominio>";
 
 const app = new Elysia()
-  // ...plugins existentes
-  .use(rbacController)
-  .use(dominioController)   // ← adicionar aqui
+  .onError(...)
+  .get("/health", ...)
+  .use(cors(...))
+  .use(openapi(...))
+  .use(betterAuthPlugin)
+  .use(modulesController)     // já existe
+  .use(dominioController)     // ← adicionar aqui
   .listen(env.PORT);
 ```
 
@@ -387,8 +496,8 @@ const envSchema = z.object({
   PORT: z.string().transform((e) => Number(e)),
   NODE_ENV: z.string().trim().min(1),
   DATABASE_URL: z.url().startsWith("postgresql://"),
-  BETTER_AUTH_SECRET: z.string().min(1),
-  BETTER_AUTH_URL: z.url(),
+  BETTER_AUTH_SECRET: z.string().min(32),  // mínimo 32 chars — gerar com: openssl rand -base64 32
+  BETTER_AUTH_URL: z.url(),                // URL base da API (ex: http://localhost:8080)
   SMTP_HOST: z.string().trim().min(1),
   SMTP_PORT: z.string().transform((e) => Number(e)),
   SMTP_USER: z.string().trim().min(1),
@@ -408,11 +517,12 @@ Usar via `import { env } from "@/lib/env"` — nunca `process.env` diretamente.
 ## Scripts
 
 ```bash
-bun run dev          # servidor com watch mode
-bun run db:generate  # gera migration após mudança no schema
-bun run db:migrate   # aplica migrations pendentes
-bun run db:seed      # cria usuário admin (ADMIN_* do .env)
+bun run dev           # servidor com watch mode
+bun run db:generate   # gera migration após mudança no schema
+bun run db:migrate    # aplica migrations pendentes
+bun run db:seed       # cria admin + insere módulos iniciais
 bun run auth:generate # regenera auth-schema.ts a partir do Better Auth
+                      # ⚠️ após rodar: verificar se novas tabelas precisam ser adicionadas ao schema/index.ts
 ```
 
 ---
@@ -439,3 +549,6 @@ import { betterAuthPlugin } from "@/http/plugins/better-auth";
 - **Sempre nomear plugins Elysia** — `new Elysia({ name: "..." })` para deduplicação
 - **Sempre usar `columns: { id: true }`** em verificações de existência antes de update/delete
 - **Nomes de tabelas SQL sem hífen** — usar underscore (`user_groups`, não `user-groups`)
+- **Nunca editar `auth-schema.ts` manualmente** — regenerar com `bun run auth:generate`
+- **2FA é somente TOTP** — não configurar OTP por e-mail (plugin não está ativo)
+- **Módulos não são criados/editados/excluídos por admins** — apenas seedados por devs e ativados/inativados via `toggle`

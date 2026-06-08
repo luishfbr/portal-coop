@@ -9,6 +9,7 @@ import { z } from "zod"
 
 const usuariosSearchSchema = z.object({
   search: z.string().optional().catch(undefined),
+  page: z.number().int().min(1).optional().catch(1),
 })
 
 export const Route = createFileRoute(
@@ -20,7 +21,7 @@ export const Route = createFileRoute(
 
 function RouteComponent() {
   const loggedUser = useRouter().options.context.auth.user
-  const { search } = Route.useSearch()
+  const { search, page = 1 } = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
 
   const {
@@ -35,13 +36,19 @@ function RouteComponent() {
     banningUser,
     unbanUser,
     unbanningUser,
-  } = useAdmin({ search })
+  } = useAdmin({ search, page })
 
   const loading = fetchingUsers || addingUser || deletingUser || banningUser || unbanningUser
 
   const handleSearch = (value: string) => {
     navigate({
-      search: (prev) => ({ ...prev, search: value || undefined }),
+      search: (prev) => ({ ...prev, search: value || undefined, page: 1 }),
+    })
+  }
+
+  const handlePageChange = (newPage: number) => {
+    navigate({
+      search: (prev) => ({ ...prev, page: newPage }),
     })
   }
 
@@ -59,6 +66,8 @@ function RouteComponent() {
           totalUsers={totalUsers || 0}
           users={users}
           loggedUser={loggedUser as User}
+          page={page}
+          onPageChange={handlePageChange}
           deleteUser={deleteUser}
           banUser={banUser}
           unbanUser={unbanUser}

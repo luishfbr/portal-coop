@@ -2,7 +2,7 @@ import { env } from "@/lib/env";
 import { db } from "./client";
 import { and, eq } from "drizzle-orm";
 import { users } from "./schema/auth-schema";
-import { siteConfig } from "./schema/config-schema";
+import { modules } from "./schema/modules-schema";
 import { auth } from "@/lib/auth";
 
 async function main() {
@@ -41,10 +41,19 @@ async function main() {
     }
   }
 
-  const existingConfig = await db.query.siteConfig.findFirst();
-  if (!existingConfig) {
-    await db.insert(siteConfig).values({ companyName: "Sicoob Uberaba" });
-  }
+  const initialModules = [
+    {
+      name: "Dashboards Internos",
+      description: "Criação, edição e visualização de dashboards internos",
+      slug: "dashboards-internos",
+      icon: "LayoutDashboard",
+    },
+  ];
+
+  await db
+    .insert(modules)
+    .values(initialModules)
+    .onConflictDoNothing({ target: modules.slug });
 
   console.log("Seed finished!");
 }

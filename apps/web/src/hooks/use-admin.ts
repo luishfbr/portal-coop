@@ -6,16 +6,18 @@ import { toast } from "sonner"
 export function useAdmin({
   search,
   userId,
-}: { search?: string; userId?: string } = {}) {
+  page = 1,
+}: { search?: string; userId?: string; page?: number } = {}) {
   const queryClient = useQueryClient()
   const limit = 10
 
   const { data: usersData, isPending: fetchingUsers } = useQuery({
-    queryKey: ["data-users", search],
+    queryKey: ["data-users", search, page],
     queryFn: async () => {
       return await authClient.admin.listUsers({
         query: {
           limit,
+          offset: (page - 1) * limit,
           sortBy: "name",
           sortDirection: "asc",
           ...(search && {

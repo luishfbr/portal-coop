@@ -2,7 +2,6 @@ import {
   type ColumnDef,
   flexRender,
   getCoreRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   type PaginationState,
   type RowData,
@@ -68,6 +67,7 @@ declare module "@tanstack/react-table" {
     banningUser: boolean
     unbanningUser: boolean
   }
+
 }
 
 const columns: ColumnDef<UserWithRole>[] = [
@@ -179,7 +179,7 @@ function ActionsCell({
   banUser: (data: {
     userId: string
     banReason: string | undefined
-    banExpires: Date | undefined
+    banExpiresIn: number | undefined
   }) => Promise<unknown>
   unbanUser: (userId: string) => Promise<unknown>
   banningUser: boolean
@@ -236,6 +236,8 @@ export const UsersTable = ({
   totalUsers,
   users,
   loggedUser,
+  page,
+  onPageChange,
   deleteUser,
   banUser,
   unbanUser,
@@ -245,19 +247,22 @@ export const UsersTable = ({
   totalUsers: number
   users: UserWithRole[] | undefined
   loggedUser: User
+  page: number
+  onPageChange: (page: number) => void
   deleteUser: (userId: string) => Promise<unknown>
   banUser: (data: {
     userId: string
     banReason: string | undefined
-    banExpires: Date | undefined
+    banExpiresIn: number | undefined
   }) => Promise<unknown>
   unbanUser: (userId: string) => Promise<unknown>
   banningUser: boolean
   unbanningUser: boolean
 }) => {
+  const pageSize = 10
   const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
+    pageIndex: page - 1,
+    pageSize,
   })
   const [sorting, setSorting] = useState<SortingState>([
     { desc: false, id: "name" },
@@ -268,11 +273,16 @@ export const UsersTable = ({
     data: users ?? [],
     enableSortingRemoval: false,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    manualPagination: true,
     meta: { loggedUser, deleteUser, banUser, unbanUser, banningUser, unbanningUser },
-    onPaginationChange: setPagination,
+    onPaginationChange: (updater) => {
+      const next = typeof updater === "function" ? updater(pagination) : updater
+      setPagination(next)
+      onPageChange(next.pageIndex + 1)
+    },
     onSortingChange: setSorting,
+    pageCount: Math.ceil(totalUsers / pageSize),
     rowCount: totalUsers,
     state: { pagination, sorting },
   })

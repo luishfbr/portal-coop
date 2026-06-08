@@ -4,6 +4,8 @@ const envSchema = z.object({
   PORT: z.string().transform((e) => Number(e)),
   DATABASE_URL: z.url().startsWith("postgresql://"),
   NODE_ENV: z.string().trim().min(1),
+  BETTER_AUTH_SECRET: z.string().min(32),
+  BETTER_AUTH_URL: z.url(),
   SMTP_HOST: z.string().trim().min(1),
   SMTP_PORT: z.string().transform((e) => Number(e)),
   SMTP_USER: z.string().trim().min(1),

@@ -5,7 +5,9 @@
       "Bash(grep -E \"\\\\.tsx$\")",
       "WebFetch(domain:better-auth.com)",
       "WebSearch",
-      "Bash(NODE_DEBUG=module bunx --bun kubb generate --config packages/api-contract/kubb.config.ts)"
+      "Bash(NODE_DEBUG=module bunx --bun kubb generate --config packages/api-contract/kubb.config.ts)",
+      "Bash(npx skills *)",
+      "Bash(bun run *)"
     ]
   }
 }
