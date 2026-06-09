@@ -162,7 +162,7 @@ function RouteComponent() {
 
 ### Passo 8 — Web: Sidebar (se aplicável)
 
-- [ ] Adicionar entrada no array `navMain` em `web/src/components/app-sidebar.tsx`
+- [ ] Adicionar entrada no array em `web/src/lib/modules-types.ts` (interface `ModulesProps`)
 
 ---
 
@@ -292,6 +292,7 @@ const user = ctx.context.auth.user
 | Layout do dashboard (guard de auth) | `web/src/routes/_dashboard/_pathlessLayout.tsx` |
 | Layout de auth (redireciona se autenticado) | `web/src/routes/_auth/_pathlessLayout.tsx` |
 | Navegação lateral | `web/src/components/app-sidebar.tsx` |
+| Configuração de módulos/sidebar | `web/src/lib/modules-types.ts` |
 | Entry point da API | `api/src/index.ts` |
 | Macros `auth` e `adminOnly` | `api/src/http/plugins/better-auth.ts` |
 | Schema do banco — índice | `api/src/db/schema/index.ts` |

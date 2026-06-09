@@ -177,6 +177,15 @@ export function AgenciesTable({
                   <TableHead
                     key={header.id}
                     style={columnSize ? { width: `${columnSize}px` } : undefined}
+                    aria-sort={
+                      header.column.getCanSort()
+                        ? header.column.getIsSorted() === "asc"
+                          ? "ascending"
+                          : header.column.getIsSorted() === "desc"
+                            ? "descending"
+                            : "none"
+                        : undefined
+                    }
                   >
                     {header.isPlaceholder ? null : header.column.getCanSort() ? (
                       <div

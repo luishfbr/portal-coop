@@ -1,6 +1,7 @@
 import { LoadingComponent } from "@/components/customs-pages/loading-page"
 import { DefaultHeader } from "@/components/ui/header-component"
 import { useSectors } from "@/hooks/use-sectors"
+import { AreaCreateHeaderButton } from "./area-form"
 import { SectorCreateButton } from "./sector-form"
 import { SectorsTable } from "./sectors-table"
 
@@ -34,6 +35,11 @@ export function SectorsHome() {
       />
       <div className="flex w-full flex-row items-center gap-2">
         <SectorCreateButton onSubmit={createSector} loading={creatingSector} />
+        <AreaCreateHeaderButton
+          sectors={sectors}
+          onSubmit={createArea}
+          loading={creatingArea}
+        />
       </div>
       {fetchingSectors ? (
         <LoadingComponent />
@@ -46,8 +52,6 @@ export function SectorsHome() {
           togglingSector={togglingSector}
           removeSector={removeSector}
           removingSector={removingSector}
-          createArea={createArea}
-          creatingArea={creatingArea}
           updateArea={updateArea}
           updatingArea={updatingArea}
           toggleArea={toggleArea}

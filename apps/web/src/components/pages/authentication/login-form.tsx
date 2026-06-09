@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+﻿import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -74,7 +74,7 @@ export const LoginForm = () => {
               name="email"
               control={form.control}
               render={({ field, fieldState }) => (
-                <Field aria-busy={fieldState.isDirty}>
+                <Field>
                   <FieldLabel htmlFor="email">Email</FieldLabel>
                   <Input
                     id="email"
@@ -91,7 +91,7 @@ export const LoginForm = () => {
               name="password"
               control={form.control}
               render={({ field, fieldState }) => (
-                <Field aria-busy={fieldState.isDirty}>
+                <Field>
                   <FieldLabel htmlFor="password">Senha</FieldLabel>
                   <Input id="password" {...field} type="password" />
                   {fieldState.error && (

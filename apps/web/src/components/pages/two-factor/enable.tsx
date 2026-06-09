@@ -23,7 +23,8 @@ import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 import z from "zod"
 import { VerifyTotpFormToEnable } from "./verify-totp-form-to-enable.tsx"
-import { useRouter } from "@tanstack/react-router"
+
+const STORAGE_KEY = "2fa-totp-uri"
 
 const enableSchema = z.object({
   password,
@@ -32,13 +33,11 @@ const enableSchema = z.object({
 type EnableType = z.infer<typeof enableSchema>
 
 export const EnableTwoFactor = () => {
-  const router = useRouter()
-  const user = router.options.context.auth.user
-
-  const storageKey = `totp-uri-${user!.email}`
   const [totpURI, setTotpURI] = useState<string | null>(() =>
-    localStorage.getItem(storageKey)
+    sessionStorage.getItem(STORAGE_KEY)
   )
+  const [backupCodes, setBackupCodes] = useState<string[]>([])
+
   const form = useForm<EnableType>({
     resolver: zodResolver(enableSchema),
     defaultValues: {
@@ -55,12 +54,19 @@ export const EnableTwoFactor = () => {
         },
         onSuccess: (context) => {
           if (context.data.totpURI) {
-            localStorage.setItem(storageKey, context.data.totpURI)
+            sessionStorage.setItem(STORAGE_KEY, context.data.totpURI)
             setTotpURI(context.data.totpURI)
+          }
+          if (context.data.backupCodes) {
+            setBackupCodes(context.data.backupCodes)
           }
         },
       },
     })
+  }
+
+  function handleSuccess() {
+    sessionStorage.removeItem(STORAGE_KEY)
   }
 
   return (
@@ -87,7 +93,7 @@ export const EnableTwoFactor = () => {
                   name="password"
                   control={form.control}
                   render={({ field, fieldState }) => (
-                    <Field aria-busy={fieldState.isDirty}>
+                    <Field>
                       <FieldLabel htmlFor="pass">
                         1° - Insira sua senha
                       </FieldLabel>
@@ -106,7 +112,7 @@ export const EnableTwoFactor = () => {
               <LoadingButton
                 disabled={form.formState.disabled}
                 form="enable-two-factor-form"
-                label="Habilitar"
+                label="Continuar"
                 loading={form.formState.isSubmitting}
               />
             </Field>
@@ -115,7 +121,8 @@ export const EnableTwoFactor = () => {
       ) : (
         <VerifyTotpFormToEnable
           totpURI={totpURI}
-          onSuccess={() => localStorage.removeItem(storageKey)}
+          backupCodes={backupCodes}
+          onSuccess={handleSuccess}
         />
       )}
     </Card>

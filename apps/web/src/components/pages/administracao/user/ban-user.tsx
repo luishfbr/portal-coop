@@ -1,4 +1,4 @@
-import {
+﻿import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -152,7 +152,7 @@ function AlterStatusDialog({
               control={form.control}
               name="statusType"
               render={({ field, fieldState }) => (
-                <Field aria-busy={fieldState.isDirty}>
+                <Field>
                   <FieldLabel htmlFor="statusType">Situação</FieldLabel>
                   <Select
                     name={field.name}
@@ -181,7 +181,7 @@ function AlterStatusDialog({
                 control={form.control}
                 name="statusExpires"
                 render={({ field, fieldState }) => (
-                  <Field aria-busy={fieldState.isDirty}>
+                  <Field>
                     <FieldLabel htmlFor="statusExpires">
                       Data de retorno
                     </FieldLabel>

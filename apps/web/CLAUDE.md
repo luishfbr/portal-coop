@@ -17,6 +17,7 @@ SPA React com roteamento file-based, server state via TanStack Query e autentica
 | @base-ui/react | 1.4 |
 | Tailwind CSS | 4.2 |
 | Better Auth client | 1.6 |
+| Axios | 1.x |
 | Sonner | 2.0 |
 
 ---
@@ -51,7 +52,7 @@ src/
 │               └── funcoes.tsx       # CRUD de funções/cargos
 │
 ├── components/
-│   ├── app-sidebar.tsx               # Sidebar principal (logo + NavProjects + NavUser)
+│   ├── app-sidebar.tsx               # Sidebar principal — filtra módulos pelo status ativo do backend
 │   ├── nav-projects.tsx              # Navegação por módulos (usa lib/modules-types.ts)
 │   ├── nav-main.tsx                  # Itens colapsáveis com subitems
 │   ├── nav-user.tsx                  # Dropdown de perfil no rodapé da sidebar
@@ -88,6 +89,7 @@ src/
 ├── hooks/
 │   ├── use-admin.ts          # Operações Better Auth (usuários, sessões, ban/unban)
 │   ├── use-mobile.ts         # Detecção de viewport mobile
+│   ├── use-active-modules.ts # GET /modules/active — slugs ativos para filtrar sidebar
 │   ├── use-modules-admin.ts  # GET /modules (todos) + PATCH toggle
 │   ├── use-agencies.ts       # CRUD /agencies
 │   ├── use-sectors.ts        # CRUD /sectors + CRUD /sectors/:id/areas
@@ -96,9 +98,9 @@ src/
 │
 └── lib/
     ├── validations.ts        # Schemas Zod + tipos inferidos (única fonte de verdade)
-    ├── modules-types.ts      # Configuração de módulos/sidebar
+    ├── modules-types.ts      # Configuração estática de módulos/sidebar
     ├── auth-client.ts        # Instância do Better Auth client
-    ├── axios-client.ts       # Instância Axios (baseURL configurada)
+    ├── axios-client.ts       # Cliente Axios centralizado — withCredentials + interceptor de erros
     └── utils.ts              # cn() para merge de classes Tailwind
 ```
 
@@ -111,7 +113,7 @@ src/
 | Tipo de rota | Pasta |
 |---|---|
 | Página protegida (requer login + 2FA) | `routes/_dashboard/_pathlessLayout/` |
-| Página pública (login, reset) | `routes/_auth/_pathlessLayout/` |
+| Página pública (login, reset, habilitar 2FA) | `routes/_auth/_pathlessLayout/` |
 
 ### Rota simples
 
@@ -211,7 +213,7 @@ export function MinhaPage() {
               name="nome"
               control={form.control}
               render={({ field, fieldState }) => (
-                <Field aria-busy={fieldState.isDirty}>
+                <Field>
                   <FieldLabel htmlFor="nome">Nome</FieldLabel>
                   <Input id="nome" {...field} />
                   {fieldState.error && <FieldError errors={[fieldState.error]} />}
@@ -233,6 +235,8 @@ export function MinhaPage() {
   )
 }
 ```
+
+> Não adicionar `aria-busy` nos `<Field>` — não tem semântica ARIA correta para dirty state.
 
 ### Formulário em Dialog
 
@@ -274,6 +278,48 @@ async function onSubmit(data: MeuTipo) {
 
 ---
 
+## Cliente HTTP (`lib/axios-client.ts`)
+
+**Todo CRUD customizado usa `api` do axios-client** — nunca `fetch` direto.
+
+```typescript
+import { api } from "@/lib/axios-client"
+```
+
+O cliente já configura `baseURL`, `withCredentials: true` (equivalente a `credentials: "include"`) e um interceptor que normaliza mensagens de erro da API:
+
+```typescript
+export const api = axios.create({
+  baseURL: "http://localhost:8080/api/v1",
+  timeout: 10_000,
+  withCredentials: true,
+  headers: { "Content-Type": "application/json" },
+})
+
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    const message = err.response?.data?.message ?? err.message ?? "Erro desconhecido"
+    return Promise.reject(new Error(message))
+  },
+)
+```
+
+**Ações Better Auth** (login, logout, 2FA, reset de senha) — usar `authClient.*` com callbacks `fetchOptions`:
+
+```typescript
+await authClient.signIn.email({
+  email,
+  password,
+  fetchOptions: {
+    onError: (ctx) => toast.error(ctx.error.message),
+    onSuccess: () => { /* ... */ },
+  },
+})
+```
+
+---
+
 ## TanStack Query Hooks
 
 ### Localização: `src/hooks/use-<feature>.ts`
@@ -281,6 +327,7 @@ async function onSubmit(data: MeuTipo) {
 ```typescript
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { api } from "@/lib/axios-client"
 import type { MinhaType } from "@/lib/validations"
 
 export function useFeature() {
@@ -289,27 +336,14 @@ export function useFeature() {
   // Query
   const { data, isPending: carregando } = useQuery({
     queryKey: ["feature"],
-    queryFn: async () => {
-      const res = await fetch("http://localhost:8080/api/v1/feature", {
-        credentials: "include", // SEMPRE obrigatório
-      })
-      if (!res.ok) throw new Error(await res.text())
-      return res.json() as Promise<MinhaType[]>
-    },
+    queryFn: () => api.get<MinhaType[]>("/feature").then((r) => r.data),
+    staleTime: 60_000,
   })
 
   // Mutation
   const { mutateAsync: criar, isPending: criando } = useMutation({
-    mutationFn: async (dados: MinhaType) => {
-      const res = await fetch("http://localhost:8080/api/v1/feature", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(dados),
-      })
-      if (!res.ok) throw new Error(await res.text())
-      return res.json()
-    },
+    mutationFn: (dados: MinhaType) =>
+      api.post("/feature", dados).then((r) => r.data),
     onSuccess: () => {
       toast.success("Criado com sucesso!")
       queryClient.invalidateQueries({ queryKey: ["feature"] })
@@ -317,21 +351,39 @@ export function useFeature() {
     onError: (err) => toast.error(err.message),
   })
 
-  return {
-    itens: data,
-    carregando,
-    criar,
-    criando,
-  }
+  return { itens: data, carregando, criar, criando }
 }
 ```
 
 ### Regras dos hooks
 
-- Sempre retornar: dados + flags de loading (`isPending` renomeado para algo descritivo) + funções de mutação
-- Invalidar as queries corretas no `onSuccess` de cada mutation
+- Retornar dados + flags `isPending` renomeadas descritivamente + funções de mutação
+- Invalidar todas as queries relacionadas no `onSuccess` de cada mutation
 - `enabled: !!id` quando a query depende de um parâmetro opcional
 - Para operações Better Auth (admin), usar `authClient.admin.*` com `onError` via callback — ver `src/hooks/use-admin.ts`
+- Usar `staleTime` adequado: módulos ativos → `5 * 60 * 1000`, dados de lista → `60_000`
+
+### `use-active-modules.ts`
+
+Hook dedicado para a sidebar — consulta apenas os módulos com `isActive: true`:
+
+```typescript
+export function useActiveModules() {
+  const { data, isPending } = useQuery({
+    queryKey: ["modules", "active"],
+    queryFn: () => api.get<ModuleItem[]>("/modules/active").then((r) => r.data),
+    staleTime: 5 * 60 * 1000,
+  })
+  return { activeSlugs: data?.map((m) => m.slug) ?? null, isPending }
+}
+```
+
+Quando o admin alterna um módulo via `use-modules-admin.ts`, invalidar **ambas** as queries:
+
+```typescript
+queryClient.invalidateQueries({ queryKey: ["modules-admin"] })
+queryClient.invalidateQueries({ queryKey: ["modules", "active"] })
+```
 
 ---
 
@@ -361,8 +413,8 @@ const columns: ColumnDef<MeuTipo>[] = [
     id: "acoes",
     header: "",
     size: 60,
+    enableSorting: false,
     cell: ({ row, table }) => {
-      // Acesse callbacks via table.options.meta
       const { deletar } = table.options.meta!
       return <BotaoAcoes item={row.original} deletar={deletar} />
     },
@@ -376,7 +428,7 @@ declare module "@tanstack/react-table" {
   }
 }
 
-// 3. Componente da tabela
+// 3. Componente da tabela — incluindo o padrão aria-sort nos headers ordenáveis
 export function MinhaTabela({ itens, deletar }: Props) {
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
   const [sorting, setSorting] = useState<SortingState>([{ id: "nome", desc: false }])
@@ -387,6 +439,7 @@ export function MinhaTabela({ itens, deletar }: Props) {
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    enableSortingRemoval: false,
     meta: { deletar },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
@@ -398,9 +451,44 @@ export function MinhaTabela({ itens, deletar }: Props) {
       <Table variant="card">
         <TableHeader>
           {table.getHeaderGroups().map((hg) => (
-            <TableRow key={hg.id}>
+            <TableRow className="hover:bg-transparent" key={hg.id}>
               {hg.headers.map((h) => (
-                <TableHead key={h.id}>{flexRender(h.column.columnDef.header, h.getContext())}</TableHead>
+                <TableHead
+                  key={h.id}
+                  style={h.column.getSize() ? { width: `${h.column.getSize()}px` } : undefined}
+                  aria-sort={
+                    h.column.getCanSort()
+                      ? h.column.getIsSorted() === "asc"
+                        ? "ascending"
+                        : h.column.getIsSorted() === "desc"
+                          ? "descending"
+                          : "none"
+                      : undefined
+                  }
+                >
+                  {h.isPlaceholder ? null : h.column.getCanSort() ? (
+                    <div
+                      className="flex h-full cursor-pointer items-center justify-between gap-2 select-none"
+                      onClick={h.column.getToggleSortingHandler()}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault()
+                          h.column.getToggleSortingHandler()?.(e)
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      {flexRender(h.column.columnDef.header, h.getContext())}
+                      {{
+                        asc: <ChevronUpIcon aria-hidden="true" className="size-4 shrink-0 opacity-80" />,
+                        desc: <ChevronDownIcon aria-hidden="true" className="size-4 shrink-0 opacity-80" />,
+                      }[h.column.getIsSorted() as string] ?? null}
+                    </div>
+                  ) : (
+                    flexRender(h.column.columnDef.header, h.getContext())
+                  )}
+                </TableHead>
               ))}
             </TableRow>
           ))}
@@ -601,13 +689,29 @@ toast.loading("Carregando...")
 
 ## Módulos & Sidebar
 
-Para adicionar uma nova seção ao menu lateral, editar `src/lib/modules-types.ts`:
+### Conexão com o backend
+
+A sidebar exibe apenas módulos com `isActive: true` no banco. O `app-sidebar.tsx` usa `useActiveModules()` para obter os slugs ativos e filtrar o array estático de `modules-types.ts`:
 
 ```typescript
-// Interface completa — respeitar todos os campos
+const { activeSlugs, isPending } = useActiveModules()
+const visibleModules = activeSlugs
+  ? modules.filter((m) => activeSlugs.includes(m.url.slice(1)))
+  : modules
+```
+
+- `m.url.slice(1)` remove o `/` inicial para comparar com o slug do backend (`"/pagina-inicial"` → `"pagina-inicial"`)
+- Enquanto `isPending`, exibir 3 `<Skeleton>` no lugar dos itens
+- Ao alternar um módulo via `/administracao/modulos`, invalidar `["modules", "active"]` para que a sidebar atualize imediatamente
+
+### Adicionar novo módulo ao menu
+
+Editar `src/lib/modules-types.ts`:
+
+```typescript
 export interface ModulesProps {
   label: string          // Texto exibido
-  url: string            // URL base do módulo
+  url: string            // URL base do módulo — deve corresponder ao slug no backend sem o "/"
   icon: LucideIcon       // Ícone lucide-react
   onSidebar: boolean     // true = aparece na sidebar principal; false = acessível só pelo header
   menu: {
@@ -615,22 +719,57 @@ export interface ModulesProps {
     url: string
     icon: LucideIcon
     description: string
-    submenu?: { label: string; pattern: RegExp }[]  // para subpáginas (ex: detalhe de item)
+    submenu?: { label: string; pattern: RegExp }[]
   }[] | null             // null = módulo sem submenu (ex: Página Inicial)
 }
 ```
 
 ### Módulos atuais
 
-| Módulo | `url` | `onSidebar` | Itens de menu |
-|---|---|---|---|
-| Página Inicial | `/pagina-inicial` | `true` | — |
-| Governança Analítica | `/governanca-analitica` | `true` | Atualizar Relatórios, Formatar Planilha |
-| Painel de Administração | `/administracao` | `false` | Usuários, Módulos, Agências, Setores, Funções |
+| Módulo | `url` | `slug` backend | `onSidebar` | Itens de menu |
+|---|---|---|---|---|
+| Página Inicial | `/pagina-inicial` | `pagina-inicial` | `true` | — |
+| Governança Analítica | `/governanca-analitica` | `governanca-analitica` | `true` | Atualizar Relatórios, Formatar Planilha |
+| Painel de Administração | `/administracao` | `administracao` | `false` | Usuários, Módulos, Agências, Setores, Funções |
 
 > `onSidebar: false` significa que o módulo aparece no header mas não na sidebar principal. Os itens do menu são exibidos na `AdminHome` como cards acessíveis.
 
 > O breadcrumb do dashboard é gerado automaticamente a partir deste array.
+
+---
+
+## Fluxo 2FA
+
+### Verificação de login (`verify.tsx`)
+
+- Título: "Verificar identidade"
+- Descrição: "Digite o código do seu aplicativo autenticador."
+- `<InputOTP>` com `aria-label="Código de autenticação de 6 dígitos"`
+
+### Habilitação inicial (`enable.tsx` + `verify-totp-form-to-enable.tsx`)
+
+O URI TOTP é armazenado em `sessionStorage` (não `localStorage`) com chave fixa `"2fa-totp-uri"`. Isso evita estado stale entre sessões — o `sessionStorage` é limpo automaticamente quando a aba é fechada.
+
+Fluxo completo:
+
+1. **Etapa 1** (`enable.tsx`): chama `authClient.twoFactor.enable()` → armazena URI no `sessionStorage` → captura `backupCodes` de `context.data.backupCodes` → passa para `VerifyTotpFormToEnable`
+2. **Etapa 2** (`verify-totp-form-to-enable.tsx`):
+   - Exibe QR code gerado a partir do URI do `sessionStorage`
+   - `<details>` colapsável "Não consigo escanear o QR code" → exibe o secret extraído do URI, formatado em grupos `XXXX XXXX XXXX XXXX`
+   - Após verificação TOTP com sucesso → exibe tela de backup codes (não redireciona imediatamente)
+3. **Tela de backup codes**: grid 2 colunas com os códigos em fonte mono, botão "Copiar todos" (`navigator.clipboard`), checkbox "Já salvei meus códigos de recuperação", botão "Continuar para o portal" (desabilitado até checkbox marcado)
+
+### Guard do layout de auth
+
+O guard em `routes/_auth/_pathlessLayout.tsx` redireciona **somente** usuários autenticados com 2FA habilitado:
+
+```typescript
+if (ctx.context.auth.user && ctx.context.auth.user.twoFactorEnabled) {
+  throw redirect({ to: "/" })
+}
+```
+
+Isso é intencional — usuários autenticados sem 2FA ainda precisam acessar `/habilitar-2fa` (que está sob este layout). Alterar para `if (user)` causaria loop infinito.
 
 ---
 
@@ -671,9 +810,11 @@ O formulário expõe dois componentes auxiliares:
 - `<DominioCreateButton>` — trigger "Novo X" para a toolbar
 - `<DominioEditButton>` — trigger ícone de lápis para o dropdown de ações
 
+O `formId` deve ser uma string fixa e única (ex: `"agency-edit-form"`), **não** derivado do `mode` — caso contrário o formulário sempre recebe o mesmo id independente do modo.
+
 ### Setores (com áreas)
 
-A tabela de setores usa `getExpandedRowModel` para exibir uma sub-tabela de áreas inline. O `declare module TableMeta` do arquivo inclui tanto as funções de setor quanto as de área, pois ambas são passadas via `meta`.
+A tabela de setores usa `getExpandedRowModel` para exibir uma sub-tabela de áreas inline. O `declare module TableMeta` inclui tanto as funções de setor quanto as de área, pois ambas são passadas via `meta`.
 
 As áreas chegam embutidas na resposta de `GET /api/v1/sectors` — não é necessária query separada para expandir.
 
@@ -697,11 +838,14 @@ A página `/administracao/usuario/$userId` renderiza um grid de 5 cards:
 |---|---|
 | Editar `routeTree.gen.ts` | Auto-gerado — será sobrescrito |
 | Usar `loading={form.formState.isLoading}` | Prop correta é `loading`, estado correto é `isSubmitting` |
-| Omitir `credentials: 'include'` no fetch customizado | O cookie de sessão não é enviado sem isso |
+| Usar `fetch` direto para CRUD customizado | Usar `api` de `@/lib/axios-client` — já configura `withCredentials` e normaliza erros |
+| Adicionar `aria-busy={fieldState.isDirty}` nos `<Field>` | `aria-busy` é para loading, não dirty state — não tem equivalente ARIA semântico |
 | Hardcodar cores (ex: `text-gray-700`) | Usar variantes `dark:` e tokens de design (ex: `text-muted-foreground`) |
 | Concatenar classes com string (`"btn " + variant`) | Usar `cn()` de `@/lib/utils` |
 | Criar interfaces TypeScript separadas para dados de formulário | Usar `z.infer<typeof schema>` |
 | Adicionar novos roles Better Auth para controle fino | Usar grupos RBAC |
 | Colocar rotas autenticadas fora de `_dashboard/_pathlessLayout/` | O guard de auth é herdado do layout |
 | Declarar schemas Zod manualmente para agências/setores/funções/áreas | Usar `catalogSchema` de `validations.ts` |
-| Criar formulários create/edit separados para catálogos | Usar o padrão `mode: "create" | "edit"` como em `agency-form.tsx` |
+| Criar formulários create/edit separados para catálogos | Usar o padrão `mode: "create" \| "edit"` como em `agency-form.tsx` |
+| Usar `localStorage` para armazenar URI TOTP | Usar `sessionStorage` — evita estado stale entre sessões de login diferentes |
+| Omitir invalidação de `["modules", "active"]` ao alternar módulos | A sidebar não atualiza sem ela |

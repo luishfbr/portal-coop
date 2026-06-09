@@ -1,3 +1,4 @@
+import { api } from "@/lib/axios-client"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
@@ -17,27 +18,16 @@ export function useModulesAdmin() {
 
   const { data: modules, isPending: fetchingModules } = useQuery({
     queryKey: ["modules-admin"],
-    queryFn: async () => {
-      const res = await fetch("http://localhost:8080/api/v1/modules", {
-        credentials: "include",
-      })
-      if (!res.ok) throw new Error(await res.text())
-      return res.json() as Promise<ModuleItem[]>
-    },
+    queryFn: () => api.get<ModuleItem[]>("/modules").then((r) => r.data),
   })
 
   const { mutateAsync: toggleModule, isPending: togglingModule } = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`http://localhost:8080/api/v1/modules/${id}/toggle`, {
-        method: "PATCH",
-        credentials: "include",
-      })
-      if (!res.ok) throw new Error(await res.text())
-      return res.json()
-    },
+    mutationFn: (id: string) =>
+      api.patch(`/modules/${id}/toggle`).then((r) => r.data),
     onSuccess: () => {
       toast.success("Status do módulo atualizado!")
       queryClient.invalidateQueries({ queryKey: ["modules-admin"] })
+      queryClient.invalidateQueries({ queryKey: ["modules", "active"] })
     },
     onError: (err) => toast.error(err.message),
   })

@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+﻿import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -49,7 +49,7 @@ export function AgencyForm(props: AgencyFormProps) {
     })
   }
 
-  const formId = props.mode === "create" ? "agency-create-form" : `agency-edit-form-${props.mode}`
+  const formId = props.mode === "create" ? "agency-create-form" : "agency-edit-form"
 
   return (
     <Dialog>
@@ -85,7 +85,7 @@ export function AgencyForm(props: AgencyFormProps) {
               control={form.control}
               name="name"
               render={({ field, fieldState }) => (
-                <Field aria-busy={fieldState.isDirty}>
+                <Field>
                   <FieldLabel htmlFor={`${formId}-name`}>Nome</FieldLabel>
                   <Input
                     id={`${formId}-name`}
@@ -102,7 +102,7 @@ export function AgencyForm(props: AgencyFormProps) {
               control={form.control}
               name="description"
               render={({ field, fieldState }) => (
-                <Field aria-busy={fieldState.isDirty}>
+                <Field>
                   <FieldLabel htmlFor={`${formId}-desc`}>
                     Descrição{" "}
                     <span className="text-muted-foreground font-normal">(opcional)</span>

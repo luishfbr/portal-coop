@@ -18,8 +18,8 @@ export const AreasModel = {
   create: _insert.omit({ id: true, sectorId: true, createdAt: true, updatedAt: true }),
   update: _update.omit({ id: true, sectorId: true, createdAt: true, updatedAt: true }),
   response: _select,
-  params: z.object({ sectorId: z.string(), id: z.string() }),
-  sectorParams: z.object({ sectorId: z.string() }),
+  params: z.object({ id: z.string(), areaId: z.string() }),
+  sectorParams: z.object({ id: z.string() }),
   errorResponse: z.object({ message: z.string() }),
   deletedResponse: z.object({ deleted: z.boolean() }),
 };

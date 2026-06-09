@@ -56,14 +56,19 @@ export function OrgProfileCard({ userId }: { userId: string }) {
     }
   }, [orgProfile, form])
 
-  // Reseta areaId quando sectorId muda
+  // Reseta areaId quando sectorId muda para um setor que não contém a área atual
   const watchedSectorId = useWatch({ control: form.control, name: "sectorId" })
   useEffect(() => {
-    form.setValue("areaId", null)
-  }, [watchedSectorId, form])
+    const currentAreaId = form.getValues("areaId")
+    const sectorHasArea = availableAreas.some((a) => a.id === currentAreaId)
+    if (!sectorHasArea) {
+      form.setValue("areaId", null)
+    }
+  }, [watchedSectorId, availableAreas, form])
 
-  const selectedSector = sectors?.find((s) => s.id === watchedSectorId)
-  const availableAreas = selectedSector?.areas ?? []
+  const activeSectors = sectors?.filter((s) => s.isActive) ?? []
+  const selectedSector = activeSectors.find((s) => s.id === watchedSectorId)
+  const availableAreas = selectedSector?.areas.filter((a) => a.isActive) ?? []
 
   async function onSubmit(data: OrgProfileType) {
     await saveOrgProfile(data)
@@ -140,7 +145,7 @@ export function OrgProfileCard({ userId }: { userId: string }) {
                       </SelectTrigger>
                       <SelectPopup>
                         <SelectItem value={NONE}>Nenhum</SelectItem>
-                        {sectors?.map((s) => (
+                        {activeSectors.map((s) => (
                           <SelectItem key={s.id} value={s.id}>
                             {s.name}
                           </SelectItem>

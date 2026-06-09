@@ -5,10 +5,10 @@ import { useState } from "react"
 import { Button } from "./button"
 
 export default function SearchInput({
-  polaceholder,
+  placeholder,
   onSubmit,
 }: {
-  polaceholder: string | undefined
+  placeholder: string | undefined
   onSubmit: (e: string) => void
 }) {
   const [search, setSearch] = useState<string>("")
@@ -18,7 +18,7 @@ export default function SearchInput({
       <div className="0 relative flex w-full max-w-80 flex-row gap-2">
         <Input
           className="peer ps-9 pe-9"
-          placeholder={polaceholder}
+          placeholder={placeholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />

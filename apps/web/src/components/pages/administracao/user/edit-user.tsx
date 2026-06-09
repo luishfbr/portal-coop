@@ -1,4 +1,4 @@
-import type { UserWithRole } from "better-auth/client/plugins"
+﻿import type { UserWithRole } from "better-auth/client/plugins"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -97,7 +97,7 @@ function BasicDataCard({
               control={form.control}
               name="name"
               render={({ field, fieldState }) => (
-                <Field aria-busy={fieldState.isDirty}>
+                <Field>
                   <FieldLabel htmlFor="edit-name">Nome Completo</FieldLabel>
                   <Input id="edit-name" {...field} />
                   {fieldState.error && (
@@ -110,7 +110,7 @@ function BasicDataCard({
               control={form.control}
               name="email"
               render={({ field, fieldState }) => (
-                <Field aria-busy={fieldState.isDirty}>
+                <Field>
                   <FieldLabel htmlFor="edit-email">E-mail</FieldLabel>
                   <Input id="edit-email" {...field} />
                   {fieldState.error && (
@@ -124,7 +124,7 @@ function BasicDataCard({
                 control={form.control}
                 name="role"
                 render={({ field, fieldState }) => (
-                  <Field aria-busy={fieldState.isDirty}>
+                  <Field>
                     <FieldLabel htmlFor="edit-role">Perfil</FieldLabel>
                     <Select
                       name={field.name}
@@ -279,7 +279,7 @@ function PasswordCard({
               control={form.control}
               name="newPassword"
               render={({ field, fieldState }) => (
-                <Field aria-busy={fieldState.isDirty}>
+                <Field>
                   <FieldLabel htmlFor="new-password">Nova senha</FieldLabel>
                   <Input id="new-password" type="password" {...field} />
                   {fieldState.error && (
@@ -292,7 +292,7 @@ function PasswordCard({
               control={form.control}
               name="confirmPassword"
               render={({ field, fieldState }) => (
-                <Field aria-busy={fieldState.isDirty}>
+                <Field>
                   <FieldLabel htmlFor="confirm-password">
                     Confirmar nova senha
                   </FieldLabel>

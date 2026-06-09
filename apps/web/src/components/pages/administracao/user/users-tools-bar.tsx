@@ -12,7 +12,7 @@ export const UsersToolsBar = ({
   return (
     <div className="flex w-full flex-row items-center gap-2">
       <UserForm createUser={createUser} />
-      <SearchInput polaceholder="Procure pelo nome..." onSubmit={onSearch} />
+      <SearchInput placeholder="Procure pelo nome..." onSubmit={onSearch} />
     </div>
   )
 }

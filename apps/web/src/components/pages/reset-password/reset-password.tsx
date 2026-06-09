@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+﻿import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -114,7 +114,7 @@ export const ResetPasswordForm = ({ token }: { token: string }) => {
               name="newPassword"
               control={form.control}
               render={({ field, fieldState }) => (
-                <Field aria-busy={fieldState.isDirty}>
+                <Field>
                   <FieldLabel htmlFor="new-pass">Nova Senha</FieldLabel>
                   <Input id="new-pass" {...field} type="password" />
                   {fieldState.error && (

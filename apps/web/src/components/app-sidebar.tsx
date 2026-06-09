@@ -9,14 +9,19 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroup,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useActiveModules } from "@/hooks/use-active-modules"
 import { LifeBuoyIcon, SendIcon, Goal } from "lucide-react"
 import { modules } from "@/lib/modules-types"
 import type { User } from "@/auth"
+
 const data = {
   navSecondary: [
     {
@@ -31,11 +36,18 @@ const data = {
     },
   ],
 }
+
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user: User
 }
 
 export function AppSidebar({ user, ...props }: AppSidebarProps) {
+  const { activeSlugs, isPending } = useActiveModules()
+
+  const visibleModules = activeSlugs
+    ? modules.filter((m) => activeSlugs.includes(m.url.slice(1)))
+    : modules
+
   return (
     <Sidebar variant="sidebar" collapsible="icon" {...props}>
       <SidebarHeader>
@@ -54,7 +66,20 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavProjects modules={modules} />
+        {isPending ? (
+          <SidebarGroup>
+            <SidebarGroupLabel>Módulos</SidebarGroupLabel>
+            <SidebarMenu>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <SidebarMenuItem key={i}>
+                  <Skeleton className="h-8 w-full rounded-md" />
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+        ) : (
+          <NavProjects modules={visibleModules} />
+        )}
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+﻿import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -75,7 +75,7 @@ export function UserForm({
               name="name"
               control={form.control}
               render={({ field, fieldState }) => (
-                <Field aria-busy={fieldState.isDirty}>
+                <Field>
                   <FieldLabel htmlFor="name">Nome Completo</FieldLabel>
                   <Input id="name" {...field} placeholder="ex: Fulano" />
                   {fieldState.error && (
@@ -88,7 +88,7 @@ export function UserForm({
               name="email"
               control={form.control}
               render={({ field, fieldState }) => (
-                <Field aria-busy={fieldState.isDirty}>
+                <Field>
                   <FieldLabel htmlFor="email">Email</FieldLabel>
                   <Input
                     id="email"
@@ -105,7 +105,7 @@ export function UserForm({
               name="password"
               control={form.control}
               render={({ field, fieldState }) => (
-                <Field aria-busy={fieldState.isDirty}>
+                <Field>
                   <FieldLabel htmlFor="password">Senha</FieldLabel>
                   <Input id="password" {...field} type="password" />
                   {fieldState.error && (
@@ -118,11 +118,11 @@ export function UserForm({
               name="role"
               control={form.control}
               render={({ field, fieldState }) => (
-                <Field aria-busy={fieldState.isDirty}>
-                  <FieldLabel htmlFor="role">Senha</FieldLabel>
+                <Field>
+                  <FieldLabel htmlFor="role">Perfil</FieldLabel>
                   <Select
                     name={field.name}
-                    value={field.value === "user" ? "Usuário" : "Administrador"}
+                    value={field.value}
                     onValueChange={field.onChange}
                   >
                     <SelectTrigger id="role" aria-invalid={fieldState.invalid}>

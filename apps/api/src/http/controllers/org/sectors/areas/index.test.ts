@@ -43,10 +43,11 @@ function req(method: string, path: string, body?: unknown) {
   );
 }
 
-const BASE = "/api/v1/sectors/sector-1/areas";
+// prefix do controller é /:id/areas (relativo) — standalone, o path começa em /sector-1/areas
+const BASE = "/sector-1/areas";
 
 describe("Areas Controller", () => {
-  describe("GET /api/v1/sectors/:sectorId/areas", () => {
+  describe("GET /:id/areas", () => {
     test("returns 401 when unauthenticated", async () => {
       mockGetSession.mockResolvedValueOnce(null);
       expect((await req("GET", BASE)).status).toBe(401);
@@ -78,7 +79,7 @@ describe("Areas Controller", () => {
     });
   });
 
-  describe("POST /api/v1/sectors/:sectorId/areas", () => {
+  describe("POST /:id/areas", () => {
     test("returns 200 and creates area", async () => {
       mockGetSession.mockResolvedValueOnce(ADMIN);
       spyOn(AreasService, "create").mockResolvedValue(makeArea());
@@ -98,7 +99,7 @@ describe("Areas Controller", () => {
     });
   });
 
-  describe("PATCH /api/v1/sectors/:sectorId/areas/:id", () => {
+  describe("PATCH /:id/areas/:areaId", () => {
     test("returns 200 when updating area", async () => {
       mockGetSession.mockResolvedValueOnce(ADMIN);
       spyOn(AreasService, "update").mockResolvedValue(makeArea({ name: "Updated" }));
@@ -113,7 +114,7 @@ describe("Areas Controller", () => {
     });
   });
 
-  describe("PATCH /api/v1/sectors/:sectorId/areas/:id/toggle", () => {
+  describe("PATCH /:id/areas/:areaId/toggle", () => {
     test("returns 200 with toggled area", async () => {
       mockGetSession.mockResolvedValueOnce(ADMIN);
       spyOn(AreasService, "toggle").mockResolvedValue(makeArea({ isActive: false }));
@@ -128,7 +129,7 @@ describe("Areas Controller", () => {
     });
   });
 
-  describe("DELETE /api/v1/sectors/:sectorId/areas/:id", () => {
+  describe("DELETE /:id/areas/:areaId", () => {
     test("returns 200 with { deleted: true }", async () => {
       mockGetSession.mockResolvedValueOnce(ADMIN);
       spyOn(AreasService, "remove").mockResolvedValue({ deleted: true });

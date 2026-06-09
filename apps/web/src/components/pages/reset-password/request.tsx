@@ -19,7 +19,8 @@ import { authClient } from "@/lib/auth-client"
 import { email } from "@/lib/validations"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate } from "@tanstack/react-router"
-import { LockIcon } from "lucide-react"
+import { CheckCircle2, LockIcon, MailIcon } from "lucide-react"
+import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -32,6 +33,7 @@ type SendReset = z.infer<typeof sendReset>
 
 export const RequestResetPassForm = () => {
   const navigate = useNavigate()
+  const [sent, setSent] = useState(false)
 
   const form = useForm({
     resolver: zodResolver(sendReset),
@@ -43,16 +45,56 @@ export const RequestResetPassForm = () => {
   async function onSubmit({ email }: SendReset) {
     await authClient.requestPasswordReset({
       email,
-      redirectTo: "http://localhost:3000/redefinir-senha",
+      redirectTo: `${window.location.origin}/redefinir-senha`,
       fetchOptions: {
         onError(context) {
           toast.error(context.error.message)
         },
         onSuccess: () => {
-          toast.success("Link enviado com sucesso!")
+          setSent(true)
         },
       },
     })
+  }
+
+  if (sent) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex flex-row items-center gap-2">
+            <CheckCircle2 className="text-emerald-500" />
+            <span>E-mail enviado</span>
+          </CardTitle>
+          <CardDescription>
+            Verifique sua caixa de entrada e clique no link de redefinição de
+            senha. O link expira em 30 minutos.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-muted flex items-center gap-3 rounded-md p-4">
+            <MailIcon className="text-muted-foreground size-5 shrink-0" />
+            <p className="text-muted-foreground text-sm">
+              Não recebeu? Verifique a pasta de spam ou{" "}
+              <button
+                className="text-foreground underline underline-offset-4"
+                onClick={() => setSent(false)}
+              >
+                tente novamente
+              </button>
+              .
+            </p>
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button
+            variant="link"
+            onClick={() => navigate({ to: "/login" })}
+          >
+            Retornar à página de login
+          </Button>
+        </CardFooter>
+      </Card>
+    )
   }
 
   return (
@@ -77,7 +119,7 @@ export const RequestResetPassForm = () => {
               name="email"
               control={form.control}
               render={({ field, fieldState }) => (
-                <Field aria-busy={fieldState.isDirty}>
+                <Field>
                   <FieldLabel htmlFor="email">Email</FieldLabel>
                   <Input
                     id="email"

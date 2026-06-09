@@ -92,11 +92,11 @@ src/
 | `PATCH` | `/api/v1/sectors/:id` | `adminOnly` | Atualiza setor |
 | `PATCH` | `/api/v1/sectors/:id/toggle` | `adminOnly` | Alterna `isActive` do setor |
 | `DELETE` | `/api/v1/sectors/:id` | `adminOnly` | Remove setor (áreas deletadas em cascade) |
-| `GET` | `/api/v1/sectors/:sectorId/areas` | `adminOnly` | Lista áreas de um setor |
-| `POST` | `/api/v1/sectors/:sectorId/areas` | `adminOnly` | Cria área no setor |
-| `PATCH` | `/api/v1/sectors/:sectorId/areas/:id` | `adminOnly` | Atualiza área |
-| `PATCH` | `/api/v1/sectors/:sectorId/areas/:id/toggle` | `adminOnly` | Alterna `isActive` da área |
-| `DELETE` | `/api/v1/sectors/:sectorId/areas/:id` | `adminOnly` | Remove área |
+| `GET` | `/api/v1/sectors/:id/areas` | `adminOnly` | Lista áreas de um setor |
+| `POST` | `/api/v1/sectors/:id/areas` | `adminOnly` | Cria área no setor |
+| `PATCH` | `/api/v1/sectors/:id/areas/:areaId` | `adminOnly` | Atualiza área |
+| `PATCH` | `/api/v1/sectors/:id/areas/:areaId/toggle` | `adminOnly` | Alterna `isActive` da área |
+| `DELETE` | `/api/v1/sectors/:id/areas/:areaId` | `adminOnly` | Remove área |
 | `GET` | `/api/v1/job-functions` | `adminOnly` | Lista funções |
 | `POST` | `/api/v1/job-functions` | `adminOnly` | Cria função |
 | `PATCH` | `/api/v1/job-functions/:id` | `adminOnly` | Atualiza função |
@@ -117,7 +117,9 @@ Cada nova feature segue obrigatoriamente o padrão **MVC por domínio**:
 src/http/controllers/<feature>/
 ├── model.ts
 ├── service.ts
-└── index.ts
+├── service.test.ts   # testes unitários do service (mock do db)
+├── index.ts
+└── index.test.ts     # testes de integração do controller (mock do auth + spyOn no service)
 ```
 
 Registrar o controller no plugin pai correspondente (ou em `src/index.ts` se for top-level).
@@ -712,7 +714,7 @@ describe("MinhaService", () => {
   test("returns 404 when item not found", async () => {
     findFirst.mockResolvedValueOnce(null);
     const result = await MinhaService.findById("bad-id");
-    expect(result).toMatchObject({ code: 404, response: "Item not found" });
+    expect(result).toMatchObject({ code: 404, response: { message: "Item not found" } });
   });
 
   test("returns item when found", async () => {

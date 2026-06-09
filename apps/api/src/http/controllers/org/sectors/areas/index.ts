@@ -6,12 +6,12 @@ import { AreasModel } from "./model";
 
 export const areasController = new Elysia({
   name: "org.sectors.areas",
-  prefix: "/api/v1/sectors/:sectorId/areas",
+  prefix: "/:id/areas",
 })
   .use(betterAuthPlugin)
   .guard({ adminOnly: true }, (app) =>
     app
-      .get("/", ({ params: { sectorId } }) => AreasService.findBySector(sectorId), {
+      .get("/", ({ params: { id } }) => AreasService.findBySector(id), {
         params: AreasModel.sectorParams,
         detail: {
           summary: "List areas of a sector",
@@ -25,7 +25,7 @@ export const areasController = new Elysia({
           404: AreasModel.errorResponse,
         },
       })
-      .post("/", ({ params: { sectorId }, body }) => AreasService.create(sectorId, body), {
+      .post("/", ({ params: { id }, body }) => AreasService.create(id, body), {
         params: AreasModel.sectorParams,
         body: AreasModel.create,
         detail: {
@@ -41,7 +41,7 @@ export const areasController = new Elysia({
           422: AreasModel.errorResponse,
         },
       })
-      .patch("/:id", ({ params: { sectorId, id }, body }) => AreasService.update(sectorId, id, body), {
+      .patch("/:areaId", ({ params: { id, areaId }, body }) => AreasService.update(id, areaId, body), {
         params: AreasModel.params,
         body: AreasModel.update,
         detail: { summary: "Update area", tags: ["Areas"] },
@@ -53,7 +53,7 @@ export const areasController = new Elysia({
           422: AreasModel.errorResponse,
         },
       })
-      .patch("/:id/toggle", ({ params: { sectorId, id } }) => AreasService.toggle(sectorId, id), {
+      .patch("/:areaId/toggle", ({ params: { id, areaId } }) => AreasService.toggle(id, areaId), {
         params: AreasModel.params,
         detail: { summary: "Toggle area active status", tags: ["Areas"] },
         response: {
@@ -63,7 +63,7 @@ export const areasController = new Elysia({
           404: AreasModel.errorResponse,
         },
       })
-      .delete("/:id", ({ params: { sectorId, id } }) => AreasService.remove(sectorId, id), {
+      .delete("/:areaId", ({ params: { id, areaId } }) => AreasService.remove(id, areaId), {
         params: AreasModel.params,
         detail: { summary: "Delete area", tags: ["Areas"] },
         response: {

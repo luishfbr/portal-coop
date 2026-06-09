@@ -1,3 +1,4 @@
+import { api } from "@/lib/axios-client"
 import type { CatalogType } from "@/lib/validations"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
@@ -22,33 +23,20 @@ export type Sector = {
   areas: Area[]
 }
 
-const BASE = "http://localhost:8080/api/v1/sectors"
-
 export function useSectors() {
   const queryClient = useQueryClient()
 
   const { data: sectors, isPending: fetchingSectors } = useQuery({
     queryKey: ["sectors"],
-    queryFn: async () => {
-      const res = await fetch(BASE, { credentials: "include" })
-      if (!res.ok) throw new Error(await res.text())
-      return res.json() as Promise<Sector[]>
-    },
+    queryFn: () => api.get<Sector[]>("/sectors").then((r) => r.data),
+    staleTime: 60_000,
   })
 
   // ── Setores ──────────────────────────────────────────────────────────────
 
   const { mutateAsync: createSector, isPending: creatingSector } = useMutation({
-    mutationFn: async (data: CatalogType) => {
-      const res = await fetch(BASE, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(data),
-      })
-      if (!res.ok) throw new Error(await res.text())
-      return res.json()
-    },
+    mutationFn: (data: CatalogType) =>
+      api.post("/sectors", data).then((r) => r.data),
     onSuccess: () => {
       toast.success("Setor criado com sucesso!")
       queryClient.invalidateQueries({ queryKey: ["sectors"] })
@@ -57,16 +45,8 @@ export function useSectors() {
   })
 
   const { mutateAsync: updateSector, isPending: updatingSector } = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: CatalogType }) => {
-      const res = await fetch(`${BASE}/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(data),
-      })
-      if (!res.ok) throw new Error(await res.text())
-      return res.json()
-    },
+    mutationFn: ({ id, data }: { id: string; data: CatalogType }) =>
+      api.patch(`/sectors/${id}`, data).then((r) => r.data),
     onSuccess: () => {
       toast.success("Setor atualizado com sucesso!")
       queryClient.invalidateQueries({ queryKey: ["sectors"] })
@@ -75,14 +55,8 @@ export function useSectors() {
   })
 
   const { mutateAsync: toggleSector, isPending: togglingSector } = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`${BASE}/${id}/toggle`, {
-        method: "PATCH",
-        credentials: "include",
-      })
-      if (!res.ok) throw new Error(await res.text())
-      return res.json()
-    },
+    mutationFn: (id: string) =>
+      api.patch(`/sectors/${id}/toggle`).then((r) => r.data),
     onSuccess: () => {
       toast.success("Status do setor atualizado!")
       queryClient.invalidateQueries({ queryKey: ["sectors"] })
@@ -91,14 +65,8 @@ export function useSectors() {
   })
 
   const { mutateAsync: removeSector, isPending: removingSector } = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`${BASE}/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      })
-      if (!res.ok) throw new Error(await res.text())
-      return res.json()
-    },
+    mutationFn: (id: string) =>
+      api.delete(`/sectors/${id}`).then((r) => r.data),
     onSuccess: () => {
       toast.success("Setor removido com sucesso!")
       queryClient.invalidateQueries({ queryKey: ["sectors"] })
@@ -109,16 +77,8 @@ export function useSectors() {
   // ── Áreas ────────────────────────────────────────────────────────────────
 
   const { mutateAsync: createArea, isPending: creatingArea } = useMutation({
-    mutationFn: async ({ sectorId, data }: { sectorId: string; data: CatalogType }) => {
-      const res = await fetch(`${BASE}/${sectorId}/areas`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(data),
-      })
-      if (!res.ok) throw new Error(await res.text())
-      return res.json()
-    },
+    mutationFn: ({ sectorId, data }: { sectorId: string; data: CatalogType }) =>
+      api.post(`/sectors/${sectorId}/areas`, data).then((r) => r.data),
     onSuccess: () => {
       toast.success("Área criada com sucesso!")
       queryClient.invalidateQueries({ queryKey: ["sectors"] })
@@ -127,20 +87,16 @@ export function useSectors() {
   })
 
   const { mutateAsync: updateArea, isPending: updatingArea } = useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       sectorId,
       id,
       data,
-    }: { sectorId: string; id: string; data: CatalogType }) => {
-      const res = await fetch(`${BASE}/${sectorId}/areas/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(data),
-      })
-      if (!res.ok) throw new Error(await res.text())
-      return res.json()
-    },
+    }: {
+      sectorId: string
+      id: string
+      data: CatalogType
+    }) =>
+      api.patch(`/sectors/${sectorId}/areas/${id}`, data).then((r) => r.data),
     onSuccess: () => {
       toast.success("Área atualizada com sucesso!")
       queryClient.invalidateQueries({ queryKey: ["sectors"] })
@@ -149,14 +105,10 @@ export function useSectors() {
   })
 
   const { mutateAsync: toggleArea, isPending: togglingArea } = useMutation({
-    mutationFn: async ({ sectorId, id }: { sectorId: string; id: string }) => {
-      const res = await fetch(`${BASE}/${sectorId}/areas/${id}/toggle`, {
-        method: "PATCH",
-        credentials: "include",
-      })
-      if (!res.ok) throw new Error(await res.text())
-      return res.json()
-    },
+    mutationFn: ({ sectorId, id }: { sectorId: string; id: string }) =>
+      api
+        .patch(`/sectors/${sectorId}/areas/${id}/toggle`)
+        .then((r) => r.data),
     onSuccess: () => {
       toast.success("Status da área atualizado!")
       queryClient.invalidateQueries({ queryKey: ["sectors"] })
@@ -165,14 +117,8 @@ export function useSectors() {
   })
 
   const { mutateAsync: removeArea, isPending: removingArea } = useMutation({
-    mutationFn: async ({ sectorId, id }: { sectorId: string; id: string }) => {
-      const res = await fetch(`${BASE}/${sectorId}/areas/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      })
-      if (!res.ok) throw new Error(await res.text())
-      return res.json()
-    },
+    mutationFn: ({ sectorId, id }: { sectorId: string; id: string }) =>
+      api.delete(`/sectors/${sectorId}/areas/${id}`).then((r) => r.data),
     onSuccess: () => {
       toast.success("Área removida com sucesso!")
       queryClient.invalidateQueries({ queryKey: ["sectors"] })

@@ -1,4 +1,4 @@
-import {
+﻿import {
   Card,
   CardContent,
   CardDescription,
@@ -58,10 +58,10 @@ export const VerifyTotpForm = () => {
       <CardHeader>
         <CardTitle className="flex flex-row items-center gap-2">
           <ShieldCheck />
-          <span>Habilitar autenticação 2FA</span>
+          <span>Verificar identidade</span>
         </CardTitle>
         <CardDescription>
-          Etapa de segurança de cunho obrigatório, preencha o campo abaixo.
+          Digite o código do seu aplicativo autenticador.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -71,11 +71,11 @@ export const VerifyTotpForm = () => {
               name="code"
               control={form.control}
               render={({ field, fieldState }) => (
-                <Field aria-busy={fieldState.isDirty}>
+                <Field>
                   <FieldLabel htmlFor="otp-verification">
                     Código de Verificação
                   </FieldLabel>
-                  <InputOTP maxLength={6} id="otp-verification" {...field}>
+                  <InputOTP maxLength={6} id="otp-verification" aria-label="Código de autenticação de 6 dígitos" {...field}>
                     <InputOTPGroup className="*:data-[slot=input-otp-slot]:h-13 *:data-[slot=input-otp-slot]:w-13 *:data-[slot=input-otp-slot]:text-xl">
                       <InputOTPSlot index={0} />
                       <InputOTPSlot index={1} />
