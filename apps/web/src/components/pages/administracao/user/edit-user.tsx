@@ -37,6 +37,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { UserStatusDialog } from "./ban-user"
+import { OrgProfileCard } from "./org-profile-card"
 
 type EditBasicType = z.infer<
   ReturnType<typeof editUserSchema.pick<{ name: true; email: true; role: true }>>
@@ -496,6 +497,7 @@ export function EditUser({
         revokeUserSessions={revokeUserSessions}
         revokingAllSessions={revokingAllSessions}
       />
+      <OrgProfileCard userId={user.id} />
     </div>
   )
 }

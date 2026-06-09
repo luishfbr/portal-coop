@@ -34,6 +34,7 @@ src/
 │       ├── index.ts                  # Importa tabelas + exporta schema combinado
 │       ├── auth-schema.ts            # Tabelas do Better Auth (não editar manualmente)
 │       ├── modules-schema.ts         # Tabela de módulos do sistema
+│       ├── organizational-schema.ts  # Agências, setores, áreas, funções, perfis de usuário
 │       └── <feature>-schema.ts       # Uma por feature de negócio
 └── http/
     ├── plugins/
@@ -43,6 +44,28 @@ src/
         │   ├── index.ts
         │   ├── model.ts
         │   └── service.ts
+        ├── org/                      # Domínio organizacional
+        │   ├── index.ts              # Root controller — agrega sub-controllers do domínio
+        │   ├── agencies/             # Agências/Unidades/PAs
+        │   │   ├── index.ts
+        │   │   ├── model.ts
+        │   │   └── service.ts
+        │   ├── sectors/              # Setores
+        │   │   ├── index.ts
+        │   │   ├── model.ts
+        │   │   ├── service.ts
+        │   │   └── areas/            # Áreas (sub-recurso de setor)
+        │   │       ├── index.ts
+        │   │       ├── model.ts
+        │   │       └── service.ts
+        │   ├── job-functions/        # Funções
+        │   │   ├── index.ts
+        │   │   ├── model.ts
+        │   │   └── service.ts
+        │   └── user-profiles/        # Vínculos organizacionais do usuário
+        │       ├── index.ts
+        │       ├── model.ts
+        │       └── service.ts
         └── <feature>/                # Uma pasta por feature
             ├── index.ts              # Controller: instância Elysia com rotas
             ├── model.ts              # Schemas Zod via drizzle-zod + tipos exportados
@@ -59,6 +82,28 @@ src/
 | `GET` | `/api/v1/modules/active` | `auth` | Lista módulos ativos (para sidebar) |
 | `GET` | `/api/v1/modules` | `adminOnly` | Lista todos os módulos (ativos e inativos) |
 | `PATCH` | `/api/v1/modules/:id/toggle` | `adminOnly` | Alterna `isActive` do módulo |
+| `GET` | `/api/v1/agencies` | `adminOnly` | Lista agências |
+| `POST` | `/api/v1/agencies` | `adminOnly` | Cria agência |
+| `PATCH` | `/api/v1/agencies/:id` | `adminOnly` | Atualiza agência |
+| `PATCH` | `/api/v1/agencies/:id/toggle` | `adminOnly` | Alterna `isActive` da agência |
+| `DELETE` | `/api/v1/agencies/:id` | `adminOnly` | Remove agência |
+| `GET` | `/api/v1/sectors` | `adminOnly` | Lista setores (com áreas) |
+| `POST` | `/api/v1/sectors` | `adminOnly` | Cria setor |
+| `PATCH` | `/api/v1/sectors/:id` | `adminOnly` | Atualiza setor |
+| `PATCH` | `/api/v1/sectors/:id/toggle` | `adminOnly` | Alterna `isActive` do setor |
+| `DELETE` | `/api/v1/sectors/:id` | `adminOnly` | Remove setor (áreas deletadas em cascade) |
+| `GET` | `/api/v1/sectors/:sectorId/areas` | `adminOnly` | Lista áreas de um setor |
+| `POST` | `/api/v1/sectors/:sectorId/areas` | `adminOnly` | Cria área no setor |
+| `PATCH` | `/api/v1/sectors/:sectorId/areas/:id` | `adminOnly` | Atualiza área |
+| `PATCH` | `/api/v1/sectors/:sectorId/areas/:id/toggle` | `adminOnly` | Alterna `isActive` da área |
+| `DELETE` | `/api/v1/sectors/:sectorId/areas/:id` | `adminOnly` | Remove área |
+| `GET` | `/api/v1/job-functions` | `adminOnly` | Lista funções |
+| `POST` | `/api/v1/job-functions` | `adminOnly` | Cria função |
+| `PATCH` | `/api/v1/job-functions/:id` | `adminOnly` | Atualiza função |
+| `PATCH` | `/api/v1/job-functions/:id/toggle` | `adminOnly` | Alterna `isActive` da função |
+| `DELETE` | `/api/v1/job-functions/:id` | `adminOnly` | Remove função |
+| `GET` | `/api/v1/users/:userId/org-profile` | `adminOnly` | Lê perfil organizacional do usuário |
+| `PUT` | `/api/v1/users/:userId/org-profile` | `adminOnly` | Define/atualiza vínculos organizacionais do usuário |
 
 > Ao adicionar novas features, registrar as rotas nesta tabela.
 
@@ -189,6 +234,11 @@ Geradas por `bun run auth:generate`. Não editar. Tabelas atuais:
 | Tabela | Arquivo | Propósito |
 |---|---|---|
 | `modules` | `modules-schema.ts` | Módulos do sistema (ativação/inativação por admins) |
+| `agencies` | `organizational-schema.ts` | Agências/Unidades/PAs |
+| `sectors` | `organizational-schema.ts` | Setores |
+| `areas` | `organizational-schema.ts` | Subdivisões de setores (FK → sectors, CASCADE delete) |
+| `job_functions` | `organizational-schema.ts` | Funções/cargos |
+| `user_profiles` | `organizational-schema.ts` | Vínculos organizacionais do usuário (1:1 com users) |
 
 #### `modules`
 
@@ -204,6 +254,44 @@ Geradas por `bun run auth:generate`. Não editar. Tabelas atuais:
 | `updated_at` | `timestamp` | Atualizado via `$onUpdate` |
 
 > Módulos são injetados via seed pelos desenvolvedores. Admins só podem alternar `isActive`.
+
+#### Catálogos organizacionais (`agencies`, `sectors`, `job_functions`)
+
+Todas seguem a mesma estrutura:
+
+| Coluna | Tipo | Observação |
+|---|---|---|
+| `id` | `text` PK | UUID v7 gerado em app |
+| `name` | `text` | Nome exibível |
+| `description` | `text` nullable | Descrição opcional |
+| `is_active` | `boolean` | Padrão `true` — alternável via `toggle` |
+| `created_at` | `timestamp` | Gerado em app via `$defaultFn` |
+| `updated_at` | `timestamp` | Atualizado via `$onUpdate` |
+
+#### `areas`
+
+Subdivisão de setor. Mesma estrutura dos catálogos acima, mais:
+
+| Coluna | Tipo | Observação |
+|---|---|---|
+| `sector_id` | `text` FK | Referência ao setor pai — `onDelete: "cascade"` |
+
+#### `user_profiles`
+
+Vínculo 1:1 entre usuário e estrutura organizacional. Todas as FK são nullable — usuário pode existir sem vínculo.
+
+| Coluna | Tipo | Observação |
+|---|---|---|
+| `id` | `text` PK | UUID v7 gerado em app |
+| `user_id` | `text` FK UNIQUE | Referência ao usuário — `onDelete: "cascade"` |
+| `agency_id` | `text` FK nullable | `onDelete: "set null"` |
+| `sector_id` | `text` FK nullable | `onDelete: "set null"` |
+| `area_id` | `text` FK nullable | `onDelete: "set null"` — deve pertencer ao `sector_id` informado |
+| `job_function_id` | `text` FK nullable | `onDelete: "set null"` |
+| `created_at` | `timestamp` | Gerado em app via `$defaultFn` |
+| `updated_at` | `timestamp` | Atualizado via `$onUpdate` |
+
+> Regra de negócio: se `areaId` for informado no `PUT /api/v1/users/:userId/org-profile`, o service valida que a área pertence ao `sectorId` informado. Retorna `400` se inconsistente.
 
 ### Padrões obrigatórios para toda tabela de negócio
 
@@ -288,6 +376,8 @@ export const MinhaModel = {
   update: _update.omit({ id: true, createdAt: true, updatedAt: true }),
   response: _select,
   params: z.object({ id: z.string() }),
+  errorResponse: z.object({ message: z.string() }),
+  deletedResponse: z.object({ deleted: z.boolean() }),
 };
 
 // Tipos derivados do schema — single source of truth
@@ -326,8 +416,8 @@ export abstract class MinhaService {
       with: { relacao: true },
     });
 
-    // ✅ return status() — nunca throw
-    if (!item) return status(404, "Item not found");
+    // ✅ return status() com objeto — nunca string pura, nunca throw
+    if (!item) return status(404, { message: "Item not found" });
     return item;
   }
 
@@ -341,7 +431,7 @@ export abstract class MinhaService {
       where: eq(minhaTabela.id, id),
       columns: { id: true },          // busca apenas id — mais eficiente
     });
-    if (!exists) return status(404, "Item not found");
+    if (!exists) return status(404, { message: "Item not found" });
 
     const [updated] = await db
       .update(minhaTabela)
@@ -356,7 +446,7 @@ export abstract class MinhaService {
       where: eq(minhaTabela.id, id),
       columns: { id: true },
     });
-    if (!exists) return status(404, "Item not found");
+    if (!exists) return status(404, { message: "Item not found" });
 
     await db.delete(minhaTabela).where(eq(minhaTabela.id, id));
     return { deleted: true };
@@ -377,6 +467,7 @@ export abstract class MinhaService {
 
 ```typescript
 import { Elysia } from "elysia";
+import { z } from "zod";
 import { betterAuthPlugin } from "@/http/plugins/better-auth";
 import { MinhaService } from "./service";
 import { MinhaModel } from "./model";
@@ -386,14 +477,14 @@ export const minhaController = new Elysia({
   prefix: "/api/v1/minha-feature",
 })
   .use(betterAuthPlugin)      // ✅ declarar dependência explicitamente
-  .onError(({ code, error, status }) => {
-    if (code === "VALIDATION") return status(422, { message: error.message });
-  })
-
   // ── Rotas com acesso individual (auth ou público) ─────────────────────────
   .get("/active", () => MinhaService.findActive(), {
     auth: true,
     detail: { summary: "List active", tags: ["Minha Feature"] },
+    response: {
+      200: z.array(MinhaModel.response),
+      401: MinhaModel.errorResponse,
+    },
   })
 
   // ── Rotas protegidas — usar .guard() para agrupar ─────────────────────────
@@ -401,18 +492,41 @@ export const minhaController = new Elysia({
     app
       .get("/", () => MinhaService.findAll(), {
         detail: { summary: "List all", tags: ["Minha Feature"] },
+        response: {
+          200: z.array(MinhaModel.response),
+          401: MinhaModel.errorResponse,
+          403: MinhaModel.errorResponse,
+        },
       })
       .post("/", ({ body }) => MinhaService.create(body), {
         body: MinhaModel.create,
         detail: { summary: "Create", tags: ["Minha Feature"] },
+        response: {
+          200: MinhaModel.response,
+          401: MinhaModel.errorResponse,
+          403: MinhaModel.errorResponse,
+          422: MinhaModel.errorResponse,
+        },
       })
       .patch("/:id/toggle", ({ params: { id } }) => MinhaService.toggle(id), {
         params: MinhaModel.params,
         detail: { summary: "Toggle status", tags: ["Minha Feature"] },
+        response: {
+          200: MinhaModel.response,
+          401: MinhaModel.errorResponse,
+          403: MinhaModel.errorResponse,
+          404: MinhaModel.errorResponse,
+        },
       })
       .delete("/:id", ({ params: { id } }) => MinhaService.remove(id), {
         params: MinhaModel.params,
         detail: { summary: "Delete", tags: ["Minha Feature"] },
+        response: {
+          200: MinhaModel.deletedResponse,
+          401: MinhaModel.errorResponse,
+          403: MinhaModel.errorResponse,
+          404: MinhaModel.errorResponse,
+        },
       })
   );
 ```
@@ -420,6 +534,8 @@ export const minhaController = new Elysia({
 **Regras:**
 - Sempre `name` único no construtor (ex: `"modules"`, `"goals"`, `"goals.entries"`)
 - Sempre `.use(betterAuthPlugin)` — dependência explícita, nunca global
+- **Nunca adicionar `.onError()` nos controllers** — o root `src/index.ts` já trata `VALIDATION → 422`, `NOT_FOUND → 404` e `500`
+- Sempre adicionar campo `response` em cada rota com todos os status codes possíveis (200, 401, 403, 404, 422 conforme aplicável) — documentação OpenAPI automática
 - Rotas com macro individual (`auth: true`) antes do `.guard()` adminOnly
 - Rotas com segmento literal antes de rotas parametrizadas (ex: `/active` antes de `/:id`)
 - `detail.tags` agrupam rotas no OpenAPI
@@ -523,6 +639,188 @@ bun run db:migrate    # aplica migrations pendentes
 bun run db:seed       # cria admin + insere módulos iniciais
 bun run auth:generate # regenera auth-schema.ts a partir do Better Auth
                       # ⚠️ após rodar: verificar se novas tabelas precisam ser adicionadas ao schema/index.ts
+bun run test          # roda todos os testes
+bun run test:watch    # modo watch
+bun run test:cov      # com cobertura
+```
+
+---
+
+## Testes
+
+Runner: **`bun:test`** (nativo, sem config extra). Alias `@/*` resolvido automaticamente pelo Bun.
+
+### Estrutura de arquivos
+
+```
+src/
+├── tests/
+│   └── helpers/
+│       ├── fixtures.ts     # fábricas de objetos para todos os domínios
+│       └── mock-auth.ts    # valores de env mockados (referência)
+└── http/controllers/
+    ├── modules/
+    │   ├── service.test.ts
+    │   └── index.test.ts
+    └── org/
+        ├── agencies/
+        │   ├── service.test.ts
+        │   └── index.test.ts
+        ├── sectors/
+        │   ├── service.test.ts
+        │   ├── index.test.ts
+        │   └── areas/
+        │       ├── service.test.ts
+        │       └── index.test.ts
+        ├── job-functions/
+        │   ├── service.test.ts
+        │   └── index.test.ts
+        └── user-profiles/
+            ├── service.test.ts
+            └── index.test.ts
+```
+
+Cada feature tem dois arquivos de teste co-localizados com o código: `service.test.ts` e `index.test.ts`.
+
+### Padrão: Service test
+
+Mockar `@/db/client` no topo do arquivo com `mock.module()` (hoistado antes dos imports). Declarar as funções mock fora da factory para poder usar `mockResolvedValueOnce` por teste.
+
+```typescript
+import { describe, test, expect, mock } from "bun:test";
+
+const findMany = mock(() => Promise.resolve([]));
+const findFirst = mock(() => Promise.resolve(null));
+const insertReturning = mock(() => Promise.resolve([]));
+const updateReturning = mock(() => Promise.resolve([]));
+
+mock.module("@/db/client", () => ({
+  db: {
+    query: {
+      minhaTabela: { findMany, findFirst },
+    },
+    insert: mock(() => ({ values: mock(() => ({ returning: insertReturning })) })),
+    update: mock(() => ({ set: mock(() => ({ where: mock(() => ({ returning: updateReturning })) })) })),
+    delete: mock(() => ({ where: mock(() => Promise.resolve()) })),
+  },
+}));
+
+import { MinhaService } from "./service";
+import { makeItem } from "@/tests/helpers/fixtures";
+
+describe("MinhaService", () => {
+  test("returns 404 when item not found", async () => {
+    findFirst.mockResolvedValueOnce(null);
+    const result = await MinhaService.findById("bad-id");
+    expect(result).toMatchObject({ code: 404, response: "Item not found" });
+  });
+
+  test("returns item when found", async () => {
+    const item = makeItem();
+    findFirst.mockResolvedValueOnce(item);
+    expect(await MinhaService.findById("item-1")).toEqual(item);
+  });
+});
+```
+
+**Regras:**
+- `mock.module()` deve vir **antes** do `import` do service — é hoistado automaticamente
+- Usar `mockResolvedValueOnce` por teste — nunca `mockResolvedValue` persistente (vaza entre testes)
+- Nunca usar `beforeEach(() => mock.mockReset())` — interage mal com `mockResolvedValueOnce` no bun:test
+- Erros do service retornam `{ code: N, response: "..." }` — usar `toMatchObject({ code: 404, response: "..." })` para assertar
+
+### Padrão: Controller test
+
+Mockar `@/lib/auth` e `@/lib/env` antes dos imports. Usar `spyOn` para isolar o service.
+
+```typescript
+import { describe, test, expect, mock, spyOn, afterEach } from "bun:test";
+
+const mockGetSession = mock(() => Promise.resolve(null));
+
+mock.module("@/lib/auth", () => ({
+  auth: {
+    handler: async () => new Response("ok"),
+    api: {
+      getSession: mockGetSession,
+      generateOpenAPISchema: mock(() => Promise.resolve({ paths: {}, components: {} })),
+    },
+  },
+}));
+
+mock.module("@/lib/env", () => ({
+  env: {
+    PORT: 8080, NODE_ENV: "test",
+    DATABASE_URL: "postgresql://test:test@localhost/test",
+    BETTER_AUTH_SECRET: "a".repeat(32), BETTER_AUTH_URL: "http://localhost:8080",
+    SMTP_HOST: "localhost", SMTP_PORT: 587, SMTP_USER: "u",
+    SMTP_PASS: "p", SMTP_MAIL_FROM: "test@example.com",
+    ADMIN_NAME: "Admin", ADMIN_EMAIL: "admin@example.com",
+    ADMIN_PASSWORD: "password123", VITE_URL: "http://localhost:3000",
+  },
+}));
+
+afterEach(() => mock.restore()); // limpa spyOn entre testes
+
+import { minhaController } from "./index";
+import { MinhaService } from "./service";
+import { makeItem, makeAdminSession, makeSession } from "@/tests/helpers/fixtures";
+
+const ADMIN = makeAdminSession();
+const USER  = makeSession({ role: "user" });
+
+function req(method: string, path: string, body?: unknown) {
+  return minhaController.handle(
+    new Request(`http://localhost${path}`, {
+      method,
+      headers: body ? { "Content-Type": "application/json" } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    })
+  );
+}
+
+describe("MinhaController", () => {
+  test("returns 401 when unauthenticated", async () => {
+    mockGetSession.mockResolvedValueOnce(null);
+    expect((await req("GET", "/api/v1/minha-feature")).status).toBe(401);
+  });
+
+  test("returns 403 when non-admin", async () => {
+    mockGetSession.mockResolvedValueOnce(USER);
+    expect((await req("GET", "/api/v1/minha-feature")).status).toBe(403);
+  });
+
+  test("returns 200 with items", async () => {
+    mockGetSession.mockResolvedValueOnce(ADMIN);
+    spyOn(MinhaService, "findAll").mockResolvedValue([makeItem()]);
+    expect((await req("GET", "/api/v1/minha-feature")).status).toBe(200);
+  });
+
+  test("proxies 404 from service", async () => {
+    mockGetSession.mockResolvedValueOnce(ADMIN);
+    const { status } = await import("elysia");
+    spyOn(MinhaService, "findById").mockResolvedValue(status(404, "Item not found") as never);
+    expect((await req("GET", "/api/v1/minha-feature/bad-id")).status).toBe(404);
+  });
+});
+```
+
+**Regras:**
+- Mockar `@/lib/auth` (não o `betterAuthPlugin` diretamente) — o plugin usa `auth.api.getSession()` em runtime
+- `afterEach(() => mock.restore())` — obrigatório para limpar `spyOn` entre testes
+- Usar `.handle(new Request(...))` — não requer servidor HTTP rodando
+- Body inválido (validação Zod) retorna `422` — o controller usa `.onError` para converter `VALIDATION` errors
+- `status` importado de `"elysia"` para simular retorno de erro do service nos `spyOn`
+
+### Fixtures (`src/tests/helpers/fixtures.ts`)
+
+Exporta fábricas para todos os domínios: `makeModule`, `makeAgency`, `makeSector`, `makeArea`, `makeJobFunction`, `makeUserProfile`, `makeUser`, `makeSession`, `makeAdminSession`.
+
+Todas aceitam `overrides` parciais:
+
+```typescript
+makeAgency({ name: "Agência Teste", isActive: false })
+makeSession({ role: "admin" })  // ou usar makeAdminSession()
 ```
 
 ---
@@ -542,7 +840,8 @@ import { betterAuthPlugin } from "@/http/plugins/better-auth";
 ## Regras gerais
 
 - **Nunca usar `process.env`** — sempre `env` de `@/lib/env`
-- **Nunca usar `throw`** em services — usar `return status(code, message)`
+- **Nunca usar `throw`** em services — usar `return status(code, { message: "..." })`
+- **Sempre usar objeto `{ message }` nos erros** — nunca string pura como segundo argumento do `status()`
 - **Nunca instanciar services** — sempre `abstract class` com métodos `static`
 - **Nunca passar `Context` do Elysia para services** — extrair apenas os dados necessários inline
 - **Nunca declarar tipos separados dos schemas** — usar `z.infer<typeof Model.campo>`
@@ -550,5 +849,6 @@ import { betterAuthPlugin } from "@/http/plugins/better-auth";
 - **Sempre usar `columns: { id: true }`** em verificações de existência antes de update/delete
 - **Nomes de tabelas SQL sem hífen** — usar underscore (`user_groups`, não `user-groups`)
 - **Nunca editar `auth-schema.ts` manualmente** — regenerar com `bun run auth:generate`
+- **`users` não é re-exportado de `schema/index.ts`** — quando um service precisar da tabela `users`, importar diretamente: `import { users } from "@/db/schema/auth-schema"`
 - **2FA é somente TOTP** — não configurar OTP por e-mail (plugin não está ativo)
 - **Módulos não são criados/editados/excluídos por admins** — apenas seedados por devs e ativados/inativados via `toggle`

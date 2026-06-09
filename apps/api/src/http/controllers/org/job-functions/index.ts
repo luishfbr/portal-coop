@@ -1,0 +1,64 @@
+import { Elysia } from "elysia";
+import { z } from "zod";
+import { betterAuthPlugin } from "@/http/plugins/better-auth";
+import { JobFunctionsService } from "./service";
+import { JobFunctionsModel } from "./model";
+
+export const jobFunctionsController = new Elysia({
+  name: "org.job-functions",
+  prefix: "/api/v1/job-functions",
+})
+  .use(betterAuthPlugin)
+  .guard({ adminOnly: true }, (app) =>
+    app
+      .get("/", () => JobFunctionsService.findAll(), {
+        detail: { summary: "List all job functions", tags: ["Job Functions"] },
+        response: {
+          200: z.array(JobFunctionsModel.response),
+          401: JobFunctionsModel.errorResponse,
+          403: JobFunctionsModel.errorResponse,
+        },
+      })
+      .post("/", ({ body }) => JobFunctionsService.create(body), {
+        body: JobFunctionsModel.create,
+        detail: { summary: "Create job function", tags: ["Job Functions"] },
+        response: {
+          200: JobFunctionsModel.response,
+          401: JobFunctionsModel.errorResponse,
+          403: JobFunctionsModel.errorResponse,
+          422: JobFunctionsModel.errorResponse,
+        },
+      })
+      .patch("/:id", ({ params: { id }, body }) => JobFunctionsService.update(id, body), {
+        params: JobFunctionsModel.params,
+        body: JobFunctionsModel.update,
+        detail: { summary: "Update job function", tags: ["Job Functions"] },
+        response: {
+          200: JobFunctionsModel.response,
+          401: JobFunctionsModel.errorResponse,
+          403: JobFunctionsModel.errorResponse,
+          404: JobFunctionsModel.errorResponse,
+          422: JobFunctionsModel.errorResponse,
+        },
+      })
+      .patch("/:id/toggle", ({ params: { id } }) => JobFunctionsService.toggle(id), {
+        params: JobFunctionsModel.params,
+        detail: { summary: "Toggle job function active status", tags: ["Job Functions"] },
+        response: {
+          200: JobFunctionsModel.response,
+          401: JobFunctionsModel.errorResponse,
+          403: JobFunctionsModel.errorResponse,
+          404: JobFunctionsModel.errorResponse,
+        },
+      })
+      .delete("/:id", ({ params: { id } }) => JobFunctionsService.remove(id), {
+        params: JobFunctionsModel.params,
+        detail: { summary: "Delete job function", tags: ["Job Functions"] },
+        response: {
+          200: JobFunctionsModel.deletedResponse,
+          401: JobFunctionsModel.errorResponse,
+          403: JobFunctionsModel.errorResponse,
+          404: JobFunctionsModel.errorResponse,
+        },
+      }),
+  );

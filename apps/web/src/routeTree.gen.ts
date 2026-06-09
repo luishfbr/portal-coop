@@ -24,6 +24,10 @@ import { Route as DashboardPathlessLayoutGovernancaAnaliticaAtualizarRelatoriosR
 import { Route as DashboardPathlessLayoutAdministracaoPathlessLayoutRouteImport } from './routes/_dashboard/_pathlessLayout/administracao/_pathlessLayout'
 import { Route as DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRouteImport } from './routes/_dashboard/_pathlessLayout/administracao/_pathlessLayout/index'
 import { Route as DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRouteImport } from './routes/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuarios'
+import { Route as DashboardPathlessLayoutAdministracaoPathlessLayoutSetoresRouteImport } from './routes/_dashboard/_pathlessLayout/administracao/_pathlessLayout/setores'
+import { Route as DashboardPathlessLayoutAdministracaoPathlessLayoutModulosRouteImport } from './routes/_dashboard/_pathlessLayout/administracao/_pathlessLayout/modulos'
+import { Route as DashboardPathlessLayoutAdministracaoPathlessLayoutFuncoesRouteImport } from './routes/_dashboard/_pathlessLayout/administracao/_pathlessLayout/funcoes'
+import { Route as DashboardPathlessLayoutAdministracaoPathlessLayoutAgenciasRouteImport } from './routes/_dashboard/_pathlessLayout/administracao/_pathlessLayout/agencias'
 import { Route as DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRouteImport } from './routes/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuario.$userId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -114,6 +118,34 @@ const DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRoute =
     getParentRoute: () =>
       DashboardPathlessLayoutAdministracaoPathlessLayoutRoute,
   } as any)
+const DashboardPathlessLayoutAdministracaoPathlessLayoutSetoresRoute =
+  DashboardPathlessLayoutAdministracaoPathlessLayoutSetoresRouteImport.update({
+    id: '/setores',
+    path: '/setores',
+    getParentRoute: () =>
+      DashboardPathlessLayoutAdministracaoPathlessLayoutRoute,
+  } as any)
+const DashboardPathlessLayoutAdministracaoPathlessLayoutModulosRoute =
+  DashboardPathlessLayoutAdministracaoPathlessLayoutModulosRouteImport.update({
+    id: '/modulos',
+    path: '/modulos',
+    getParentRoute: () =>
+      DashboardPathlessLayoutAdministracaoPathlessLayoutRoute,
+  } as any)
+const DashboardPathlessLayoutAdministracaoPathlessLayoutFuncoesRoute =
+  DashboardPathlessLayoutAdministracaoPathlessLayoutFuncoesRouteImport.update({
+    id: '/funcoes',
+    path: '/funcoes',
+    getParentRoute: () =>
+      DashboardPathlessLayoutAdministracaoPathlessLayoutRoute,
+  } as any)
+const DashboardPathlessLayoutAdministracaoPathlessLayoutAgenciasRoute =
+  DashboardPathlessLayoutAdministracaoPathlessLayoutAgenciasRouteImport.update({
+    id: '/agencias',
+    path: '/agencias',
+    getParentRoute: () =>
+      DashboardPathlessLayoutAdministracaoPathlessLayoutRoute,
+  } as any)
 const DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRoute =
   DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRouteImport.update(
     {
@@ -136,6 +168,10 @@ export interface FileRoutesByFullPath {
   '/governanca-analitica/atualizar-relatorios': typeof DashboardPathlessLayoutGovernancaAnaliticaAtualizarRelatoriosRoute
   '/governanca-analitica/formatar-planilha': typeof DashboardPathlessLayoutGovernancaAnaliticaFormatarPlanilhaRoute
   '/governanca-analitica/': typeof DashboardPathlessLayoutGovernancaAnaliticaIndexRoute
+  '/administracao/agencias': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutAgenciasRoute
+  '/administracao/funcoes': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutFuncoesRoute
+  '/administracao/modulos': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutModulosRoute
+  '/administracao/setores': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutSetoresRoute
   '/administracao/usuarios': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRoute
   '/administracao/': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRoute
   '/administracao/usuario/$userId': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRoute
@@ -151,6 +187,10 @@ export interface FileRoutesByTo {
   '/governanca-analitica/atualizar-relatorios': typeof DashboardPathlessLayoutGovernancaAnaliticaAtualizarRelatoriosRoute
   '/governanca-analitica/formatar-planilha': typeof DashboardPathlessLayoutGovernancaAnaliticaFormatarPlanilhaRoute
   '/governanca-analitica': typeof DashboardPathlessLayoutGovernancaAnaliticaIndexRoute
+  '/administracao/agencias': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutAgenciasRoute
+  '/administracao/funcoes': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutFuncoesRoute
+  '/administracao/modulos': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutModulosRoute
+  '/administracao/setores': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutSetoresRoute
   '/administracao/usuarios': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRoute
   '/administracao': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRoute
   '/administracao/usuario/$userId': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRoute
@@ -170,6 +210,10 @@ export interface FileRoutesById {
   '/_dashboard/_pathlessLayout/governanca-analitica/atualizar-relatorios': typeof DashboardPathlessLayoutGovernancaAnaliticaAtualizarRelatoriosRoute
   '/_dashboard/_pathlessLayout/governanca-analitica/formatar-planilha': typeof DashboardPathlessLayoutGovernancaAnaliticaFormatarPlanilhaRoute
   '/_dashboard/_pathlessLayout/governanca-analitica/': typeof DashboardPathlessLayoutGovernancaAnaliticaIndexRoute
+  '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/agencias': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutAgenciasRoute
+  '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/funcoes': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutFuncoesRoute
+  '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/modulos': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutModulosRoute
+  '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/setores': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutSetoresRoute
   '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuarios': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRoute
   '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRoute
   '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuario/$userId': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRoute
@@ -188,6 +232,10 @@ export interface FileRouteTypes {
     | '/governanca-analitica/atualizar-relatorios'
     | '/governanca-analitica/formatar-planilha'
     | '/governanca-analitica/'
+    | '/administracao/agencias'
+    | '/administracao/funcoes'
+    | '/administracao/modulos'
+    | '/administracao/setores'
     | '/administracao/usuarios'
     | '/administracao/'
     | '/administracao/usuario/$userId'
@@ -203,6 +251,10 @@ export interface FileRouteTypes {
     | '/governanca-analitica/atualizar-relatorios'
     | '/governanca-analitica/formatar-planilha'
     | '/governanca-analitica'
+    | '/administracao/agencias'
+    | '/administracao/funcoes'
+    | '/administracao/modulos'
+    | '/administracao/setores'
     | '/administracao/usuarios'
     | '/administracao'
     | '/administracao/usuario/$userId'
@@ -221,6 +273,10 @@ export interface FileRouteTypes {
     | '/_dashboard/_pathlessLayout/governanca-analitica/atualizar-relatorios'
     | '/_dashboard/_pathlessLayout/governanca-analitica/formatar-planilha'
     | '/_dashboard/_pathlessLayout/governanca-analitica/'
+    | '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/agencias'
+    | '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/funcoes'
+    | '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/modulos'
+    | '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/setores'
     | '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuarios'
     | '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/'
     | '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuario/$userId'
@@ -339,6 +395,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRouteImport
       parentRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutRoute
     }
+    '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/setores': {
+      id: '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/setores'
+      path: '/setores'
+      fullPath: '/administracao/setores'
+      preLoaderRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutSetoresRouteImport
+      parentRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutRoute
+    }
+    '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/modulos': {
+      id: '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/modulos'
+      path: '/modulos'
+      fullPath: '/administracao/modulos'
+      preLoaderRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutModulosRouteImport
+      parentRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutRoute
+    }
+    '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/funcoes': {
+      id: '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/funcoes'
+      path: '/funcoes'
+      fullPath: '/administracao/funcoes'
+      preLoaderRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutFuncoesRouteImport
+      parentRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutRoute
+    }
+    '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/agencias': {
+      id: '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/agencias'
+      path: '/agencias'
+      fullPath: '/administracao/agencias'
+      preLoaderRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutAgenciasRouteImport
+      parentRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutRoute
+    }
     '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuario/$userId': {
       id: '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuario/$userId'
       path: '/usuario/$userId'
@@ -370,6 +454,10 @@ const AuthPathlessLayoutRouteWithChildren =
   AuthPathlessLayoutRoute._addFileChildren(AuthPathlessLayoutRouteChildren)
 
 interface DashboardPathlessLayoutAdministracaoPathlessLayoutRouteChildren {
+  DashboardPathlessLayoutAdministracaoPathlessLayoutAgenciasRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutAgenciasRoute
+  DashboardPathlessLayoutAdministracaoPathlessLayoutFuncoesRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutFuncoesRoute
+  DashboardPathlessLayoutAdministracaoPathlessLayoutModulosRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutModulosRoute
+  DashboardPathlessLayoutAdministracaoPathlessLayoutSetoresRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutSetoresRoute
   DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRoute
   DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRoute
   DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRoute
@@ -377,6 +465,14 @@ interface DashboardPathlessLayoutAdministracaoPathlessLayoutRouteChildren {
 
 const DashboardPathlessLayoutAdministracaoPathlessLayoutRouteChildren: DashboardPathlessLayoutAdministracaoPathlessLayoutRouteChildren =
   {
+    DashboardPathlessLayoutAdministracaoPathlessLayoutAgenciasRoute:
+      DashboardPathlessLayoutAdministracaoPathlessLayoutAgenciasRoute,
+    DashboardPathlessLayoutAdministracaoPathlessLayoutFuncoesRoute:
+      DashboardPathlessLayoutAdministracaoPathlessLayoutFuncoesRoute,
+    DashboardPathlessLayoutAdministracaoPathlessLayoutModulosRoute:
+      DashboardPathlessLayoutAdministracaoPathlessLayoutModulosRoute,
+    DashboardPathlessLayoutAdministracaoPathlessLayoutSetoresRoute:
+      DashboardPathlessLayoutAdministracaoPathlessLayoutSetoresRoute,
     DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRoute:
       DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRoute,
     DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRoute:

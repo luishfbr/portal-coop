@@ -13,6 +13,20 @@ import {
 export * from "./modules-schema";
 import { modules } from "./modules-schema";
 
+export * from "./organizational-schema";
+import {
+  agencies,
+  agenciesRelations,
+  sectors,
+  sectorsRelations,
+  areas,
+  areasRelations,
+  jobFunctions,
+  jobFunctionsRelations,
+  userProfiles,
+  userProfilesRelations,
+} from "./organizational-schema";
+
 export const schema = {
   users,
   usersRelations,
@@ -25,4 +39,14 @@ export const schema = {
   verifications,
   rateLimits,
   modules,
+  agencies,
+  agenciesRelations,
+  sectors,
+  sectorsRelations,
+  areas,
+  areasRelations,
+  jobFunctions,
+  jobFunctionsRelations,
+  userProfiles,
+  userProfilesRelations,
 };

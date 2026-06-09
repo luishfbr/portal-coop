@@ -1,9 +1,11 @@
 import { Elysia } from "elysia";
+import { z } from "zod";
 import { env } from "./lib/env";
 import cors from "@elysiajs/cors";
 import openapi from "@elysiajs/openapi";
 import { betterAuthPlugin, OpenAPI } from "./http/plugins/better-auth";
 import { modulesController } from "./http/controllers/modules";
+import { orgController } from "./http/controllers/org";
 
 const app = new Elysia()
   .onError(({ code, error, status }) => {
@@ -27,10 +29,12 @@ const app = new Elysia()
         components: await OpenAPI.components,
         paths: await OpenAPI.getPaths(),
       },
+      mapJsonSchema: { zod: z.toJSONSchema },
     }),
   )
   .use(betterAuthPlugin)
   .use(modulesController)
+  .use(orgController)
   .listen(env.PORT);
 
 console.log(

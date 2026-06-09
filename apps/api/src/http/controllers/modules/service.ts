@@ -20,7 +20,7 @@ export abstract class ModulesService {
       columns: { id: true, isActive: true },
     });
 
-    if (!existing) return status(404, "Module not found");
+    if (!existing) return status(404, { message: "Module not found" });
 
     const [updated] = await db
       .update(modules)

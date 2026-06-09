@@ -103,3 +103,23 @@ export const setPasswordSchema = z
   })
 
 export type SetPasswordType = z.infer<typeof setPasswordSchema>
+
+// ── Catálogos organizacionais ────────────────────────────────────────────────
+
+export const catalogSchema = z.object({
+  name,
+  description: z.string().trim().optional(),
+})
+
+export type CatalogType = z.infer<typeof catalogSchema>
+
+// ── Perfil organizacional do usuário ────────────────────────────────────────
+
+export const orgProfileSchema = z.object({
+  agencyId: z.string().nullable().optional(),
+  sectorId: z.string().nullable().optional(),
+  areaId: z.string().nullable().optional(),
+  jobFunctionId: z.string().nullable().optional(),
+})
+
+export type OrgProfileType = z.infer<typeof orgProfileSchema>

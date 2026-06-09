@@ -1,9 +1,14 @@
 import {
+  Briefcase,
+  Building2,
   Cog,
   Home,
+  LayoutDashboard,
+  Layers,
   Sheet,
   Shredder,
   Upload,
+  Users,
   type LucideIcon,
 } from "lucide-react"
 
@@ -63,7 +68,7 @@ export const modules: ModulesProps[] = [
       {
         label: "Usuários",
         url: "/administracao/usuarios",
-        icon: Upload,
+        icon: Users,
         description:
           "Gerencie os usuários do sistema: cadastre novos membros, edite dados cadastrais, redefina senhas e desative contas.",
         submenu: [
@@ -72,6 +77,34 @@ export const modules: ModulesProps[] = [
             pattern: /^\/administracao\/usuario\/[^/]+$/,
           },
         ],
+      },
+      {
+        label: "Módulos",
+        url: "/administracao/modulos",
+        icon: LayoutDashboard,
+        description:
+          "Ative ou desative módulos para controlar quais funcionalidades ficam visíveis no sistema.",
+      },
+      {
+        label: "Agências",
+        url: "/administracao/agencias",
+        icon: Building2,
+        description:
+          "Gerencie as agências, unidades e postos de atendimento da cooperativa.",
+      },
+      {
+        label: "Setores",
+        url: "/administracao/setores",
+        icon: Layers,
+        description:
+          "Gerencie os setores da cooperativa e suas subdivisões em áreas.",
+      },
+      {
+        label: "Funções",
+        url: "/administracao/funcoes",
+        icon: Briefcase,
+        description:
+          "Gerencie as funções e cargos disponíveis na cooperativa.",
       },
     ],
   },

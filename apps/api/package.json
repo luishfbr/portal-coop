@@ -12,7 +12,10 @@
     "db:generate": "bunx --bun drizzle-kit generate",
     "db:migrate": "bunx --bun drizzle-kit migrate",
     "db:seed": "bun run ./src/db/seed.ts",
-    "auth:generate": "bunx --bun auth@latest generate --output ./src/db/schema/auth-schema.ts"
+    "auth:generate": "bunx --bun auth@latest generate --output ./src/db/schema/auth-schema.ts",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:cov": "bun test --coverage"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.1",
@@ -28,6 +31,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@elysiajs/eden": "^1.4.9",
     "@portal-coop/eslint-config": "workspace:*",
     "@portal-coop/typescript-config": "workspace:*",
     "@types/pg": "^8.20.0",

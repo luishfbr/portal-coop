@@ -36,27 +36,70 @@ src/
 │   ├── _auth/_pathlessLayout.tsx     # Layout público (centralizado, sem sidebar)
 │   ├── _auth/_pathlessLayout/        # login, habilitar-2fa, verificar-2fa, redefinicao-de-senha
 │   ├── _dashboard/_pathlessLayout.tsx  # Layout protegido (sidebar + header + breadcrumb)
-│   └── _dashboard/_pathlessLayout/   # pagina-inicial, módulos protegidos...
+│   └── _dashboard/_pathlessLayout/
+│       ├── pagina-inicial.tsx
+│       ├── governanca-analitica/
+│       └── administracao/
+│           ├── _pathlessLayout.tsx
+│           └── _pathlessLayout/
+│               ├── index.tsx         # AdminHome — lista todas as ferramentas do admin
+│               ├── usuarios.tsx      # Gestão de usuários
+│               ├── usuario.$userId.tsx  # Edição de usuário (dados, status, senha, sessões, vínculo org)
+│               ├── modulos.tsx       # Ativar/desativar módulos do sistema
+│               ├── agencias.tsx      # CRUD de agências
+│               ├── setores.tsx       # CRUD de setores + áreas (expandable rows)
+│               └── funcoes.tsx       # CRUD de funções/cargos
 │
 ├── components/
 │   ├── app-sidebar.tsx               # Sidebar principal (logo + NavProjects + NavUser)
 │   ├── nav-projects.tsx              # Navegação por módulos (usa lib/modules-types.ts)
 │   ├── nav-main.tsx                  # Itens colapsáveis com subitems
 │   ├── nav-user.tsx                  # Dropdown de perfil no rodapé da sidebar
-│   ├── pages/                        # Componentes de página por feature
-│   │   └── <domínio>/<Feature>.tsx
+│   ├── pages/
+│   │   └── administracao/
+│   │       ├── admin-home.tsx        # Página inicial do painel admin (grid de funcionalidades)
+│   │       ├── modulos/
+│   │       │   ├── modules-home.tsx
+│   │       │   └── modules-table.tsx
+│   │       ├── agencias/
+│   │       │   ├── agencies-home.tsx
+│   │       │   ├── agencies-table.tsx
+│   │       │   └── agency-form.tsx   # Reutilizável: modo "create" e "edit"
+│   │       ├── setores/
+│   │       │   ├── sectors-home.tsx
+│   │       │   ├── sectors-table.tsx # Tabela com expandable rows para áreas
+│   │       │   ├── sector-form.tsx
+│   │       │   └── area-form.tsx
+│   │       ├── funcoes/
+│   │       │   ├── job-functions-home.tsx
+│   │       │   ├── job-functions-table.tsx
+│   │       │   └── job-function-form.tsx
+│   │       └── user/
+│   │           ├── user-home.tsx
+│   │           ├── users-table.tsx
+│   │           ├── users-tools-bar.tsx
+│   │           ├── user-form.tsx
+│   │           ├── edit-user.tsx     # Grid de 5 cards: dados, status, senha, sessões, vínculo org
+│   │           ├── ban-user.tsx
+│   │           └── org-profile-card.tsx  # Card 5: vínculo org (agência, setor, área, função)
 │   ├── customs-pages/                # Páginas de erro e loading
 │   └── ui/                           # 60+ componentes base (shadcn / Base UI)
 │
 ├── hooks/
-│   └── use-<feature>.ts              # Hooks TanStack Query por domínio
+│   ├── use-admin.ts          # Operações Better Auth (usuários, sessões, ban/unban)
+│   ├── use-mobile.ts         # Detecção de viewport mobile
+│   ├── use-modules-admin.ts  # GET /modules (todos) + PATCH toggle
+│   ├── use-agencies.ts       # CRUD /agencies
+│   ├── use-sectors.ts        # CRUD /sectors + CRUD /sectors/:id/areas
+│   ├── use-job-functions.ts  # CRUD /job-functions
+│   └── use-org-profile.ts    # GET/PUT /users/:userId/org-profile
 │
 └── lib/
-    ├── validations.ts                # Schemas Zod + tipos inferidos (única fonte de verdade)
-    ├── modules-types.ts              # Configuração de módulos/sidebar
-    ├── auth-client.ts                # Instância do Better Auth client
-    ├── axios-client.ts               # Instância Axios (baseURL configurada)
-    └── utils.ts                      # cn() para merge de classes Tailwind
+    ├── validations.ts        # Schemas Zod + tipos inferidos (única fonte de verdade)
+    ├── modules-types.ts      # Configuração de módulos/sidebar
+    ├── auth-client.ts        # Instância do Better Auth client
+    ├── axios-client.ts       # Instância Axios (baseURL configurada)
+    └── utils.ts              # cn() para merge de classes Tailwind
 ```
 
 ---
@@ -211,6 +254,24 @@ export function MinhaPage() {
 </Dialog>
 ```
 
+### Dialog com fechar programático
+
+Quando o dialog precisa fechar após submissão bem-sucedida, usar `ref` no `DialogClose`:
+
+```typescript
+const closeRef = useRef<HTMLButtonElement>(null)
+
+async function onSubmit(data: MeuTipo) {
+  await minhaAcao(data).then(() => {
+    form.reset()
+    closeRef.current?.click()   // fecha o dialog
+  })
+}
+
+// No JSX:
+<DialogClose ref={closeRef} render={<Button variant="outline">Cancelar</Button>} />
+```
+
 ---
 
 ## TanStack Query Hooks
@@ -362,6 +423,67 @@ export function MinhaTabela({ itens, deletar }: Props) {
 }
 ```
 
+### Tabela com expandable rows (ex: Setores → Áreas)
+
+Para relações pai/filho onde o filho está embutido no pai (ex: setor com `areas[]`):
+
+```typescript
+import { getExpandedRowModel, type ExpandedState } from "@tanstack/react-table"
+
+const [expanded, setExpanded] = useState<ExpandedState>({})
+
+const table = useReactTable({
+  // ...
+  getExpandedRowModel: getExpandedRowModel(),
+  onExpandedChange: setExpanded,
+  state: { ..., expanded },
+})
+
+// Coluna de toggle:
+{
+  id: "expander",
+  size: 48,
+  cell: ({ row }) => (
+    <Button onClick={row.getToggleExpandedHandler()}>
+      {row.getIsExpanded() ? <ChevronDownIcon /> : <ChevronRightIcon />}
+    </Button>
+  ),
+}
+
+// Renderizar linha expandida após a linha principal:
+{row.getIsExpanded() && (
+  <TableRow key={`${row.id}-expanded`} className="hover:bg-transparent">
+    <TableCell colSpan={columns.length} className="p-0">
+      <SubTabela dados={row.original.filhos} />
+    </TableCell>
+  </TableRow>
+)}
+```
+
+Ver `sectors-table.tsx` como referência de implementação completa.
+
+---
+
+## Validações — Schemas disponíveis
+
+Todos os schemas ficam em `src/lib/validations.ts`.
+
+| Schema / Tipo | Uso |
+|---|---|
+| `email` | Validator de e-mail reutilizável |
+| `name` | `z.string().trim().min(1)` — campo obrigatório padrão |
+| `password` | Senha com requisitos de complexidade |
+| `role` | `z.enum(["admin", "user"])` |
+| `loginSchema` / `LoginType` | Formulário de login |
+| `codeSchema` / `CodeType` | Código TOTP 6 dígitos |
+| `searchSchema` / `SearchType` | Parâmetro de busca em URL |
+| `addUserSchema` / `AddUser` | Criar usuário (admin) |
+| `editUserSchema` / `EditUserType` | Editar dados do usuário |
+| `userStatusSchema` / `UserStatusType` | Alterar situação (ban) |
+| `setPasswordSchema` / `SetPasswordType` | Redefinir senha |
+| `catalogSchema` / `CatalogType` | `{ name, description? }` — shared por agências, setores, áreas, funções |
+| `orgProfileSchema` / `OrgProfileType` | `{ agencyId, sectorId, areaId, jobFunctionId }` — todos nullable |
+
 ---
 
 ## Componentes UI — Referência Rápida
@@ -412,7 +534,49 @@ export function MinhaTabela({ itens, deletar }: Props) {
   label="Excluir Item"
   onAccept={async () => deletar(item.id)}
   disabled={deletando}
+  variant="destructive-outline"  // default quando em DropdownMenu
 />
+```
+
+### Select (Base UI)
+
+```typescript
+import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+// Controlado via React Hook Form:
+<Select
+  name={field.name}
+  value={field.value}
+  onValueChange={field.onChange}
+>
+  <SelectTrigger id="meu-select" aria-invalid={fieldState.invalid}>
+    <SelectValue placeholder="Selecione" />
+  </SelectTrigger>
+  <SelectPopup>
+    <SelectItem value="opcao1">Opção 1</SelectItem>
+    <SelectItem value="opcao2">Opção 2</SelectItem>
+  </SelectPopup>
+</Select>
+```
+
+> `SelectContent` é um alias de `SelectPopup` — preferir `SelectPopup`.
+
+### Select com valor nullable
+
+Quando o campo pode ser `null` (ex: perfil organizacional):
+
+```typescript
+const NONE = ""
+
+<Select
+  value={field.value ?? NONE}
+  onValueChange={(v) => field.onChange(v === NONE ? null : v)}
+>
+  <SelectPopup>
+    <SelectItem value={NONE}>Nenhum</SelectItem>
+    {opcoes?.map(o => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
+  </SelectPopup>
+</Select>
 ```
 
 ### Toast (Sonner)
@@ -454,24 +618,17 @@ export interface ModulesProps {
     submenu?: { label: string; pattern: RegExp }[]  // para subpáginas (ex: detalhe de item)
   }[] | null             // null = módulo sem submenu (ex: Página Inicial)
 }
-
-// Adicionar ao array modules:
-{
-  label: "Meu Módulo",
-  url: "/meu-modulo",
-  icon: MinhaIcon,
-  onSidebar: true,
-  menu: [
-    {
-      label: "Sub-página",
-      url: "/meu-modulo/sub-pagina",
-      icon: SubIcon,
-      description: "Descrição da sub-página",
-      // submenu: opcional — só quando há rota filha dinâmica
-    },
-  ],
-},
 ```
+
+### Módulos atuais
+
+| Módulo | `url` | `onSidebar` | Itens de menu |
+|---|---|---|---|
+| Página Inicial | `/pagina-inicial` | `true` | — |
+| Governança Analítica | `/governanca-analitica` | `true` | Atualizar Relatórios, Formatar Planilha |
+| Painel de Administração | `/administracao` | `false` | Usuários, Módulos, Agências, Setores, Funções |
+
+> `onSidebar: false` significa que o módulo aparece no header mas não na sidebar principal. Os itens do menu são exibidos na `AdminHome` como cards acessíveis.
 
 > O breadcrumb do dashboard é gerado automaticamente a partir deste array.
 
@@ -497,6 +654,43 @@ if (!user?.twoFactorEnabled) { /* ... */ }
 
 ---
 
+## Padrões de componentes por domínio
+
+### Catálogos organizacionais (agências, setores, funções)
+
+Todos seguem o mesmo padrão de 3 arquivos:
+
+```
+<dominio>/
+├── <dominio>-home.tsx      # Usa o hook, renderiza DefaultHeader + toolbar + tabela
+├── <dominio>-table.tsx     # TanStack Table com declare module TableMeta
+└── <dominio>-form.tsx      # Dialog reutilizável modo "create" | "edit"
+```
+
+O formulário expõe dois componentes auxiliares:
+- `<DominioCreateButton>` — trigger "Novo X" para a toolbar
+- `<DominioEditButton>` — trigger ícone de lápis para o dropdown de ações
+
+### Setores (com áreas)
+
+A tabela de setores usa `getExpandedRowModel` para exibir uma sub-tabela de áreas inline. O `declare module TableMeta` do arquivo inclui tanto as funções de setor quanto as de área, pois ambas são passadas via `meta`.
+
+As áreas chegam embutidas na resposta de `GET /api/v1/sectors` — não é necessária query separada para expandir.
+
+### Edição de usuário
+
+A página `/administracao/usuario/$userId` renderiza um grid de 5 cards:
+
+| Card | Arquivo | Descrição |
+|---|---|---|
+| Dados básicos | `edit-user.tsx` (inline) | Nome, e-mail, perfil |
+| Situação da conta | `edit-user.tsx` + `ban-user.tsx` | Ban/unban, status |
+| Redefinir senha | `edit-user.tsx` (inline) | Nova senha admin |
+| Sessões ativas | `edit-user.tsx` (inline) | Revogar sessões |
+| Vínculo organizacional | `org-profile-card.tsx` | Agência, setor, área, função |
+
+---
+
 ## O Que NÃO Fazer (web-específico)
 
 | Proibido | Motivo |
@@ -509,3 +703,5 @@ if (!user?.twoFactorEnabled) { /* ... */ }
 | Criar interfaces TypeScript separadas para dados de formulário | Usar `z.infer<typeof schema>` |
 | Adicionar novos roles Better Auth para controle fino | Usar grupos RBAC |
 | Colocar rotas autenticadas fora de `_dashboard/_pathlessLayout/` | O guard de auth é herdado do layout |
+| Declarar schemas Zod manualmente para agências/setores/funções/áreas | Usar `catalogSchema` de `validations.ts` |
+| Criar formulários create/edit separados para catálogos | Usar o padrão `mode: "create" | "edit"` como em `agency-form.tsx` |
