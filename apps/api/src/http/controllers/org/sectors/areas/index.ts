@@ -25,7 +25,21 @@ export const areasController = new Elysia({
           404: AreasModel.errorResponse,
         },
       })
-      .post("/", ({ params: { id }, body }) => AreasService.create(id, body), {
+      .get("/:areaId/users", ({ params: { id, areaId } }) => AreasService.findUsersByArea(id, areaId), {
+        params: AreasModel.params,
+        detail: { summary: "List users in area", tags: ["Areas"] },
+        response: {
+          200: z.array(AreasModel.usersResponse),
+          401: AreasModel.errorResponse,
+          403: AreasModel.errorResponse,
+          404: AreasModel.errorResponse,
+        },
+      })
+      .post("/", async ({ params: { id }, body, status }) => {
+        const result = await AreasService.create(id, body);
+        if ("code" in (result as object)) return result;
+        return status(201, result);
+      }, {
         params: AreasModel.sectorParams,
         body: AreasModel.create,
         detail: {
@@ -34,7 +48,7 @@ export const areasController = new Elysia({
           tags: ["Areas"],
         },
         response: {
-          200: AreasModel.response,
+          201: AreasModel.response,
           401: AreasModel.errorResponse,
           403: AreasModel.errorResponse,
           404: AreasModel.errorResponse,
@@ -53,16 +67,6 @@ export const areasController = new Elysia({
           422: AreasModel.errorResponse,
         },
       })
-      .patch("/:areaId/toggle", ({ params: { id, areaId } }) => AreasService.toggle(id, areaId), {
-        params: AreasModel.params,
-        detail: { summary: "Toggle area active status", tags: ["Areas"] },
-        response: {
-          200: AreasModel.response,
-          401: AreasModel.errorResponse,
-          403: AreasModel.errorResponse,
-          404: AreasModel.errorResponse,
-        },
-      })
       .delete("/:areaId", ({ params: { id, areaId } }) => AreasService.remove(id, areaId), {
         params: AreasModel.params,
         detail: { summary: "Delete area", tags: ["Areas"] },
@@ -71,6 +75,7 @@ export const areasController = new Elysia({
           401: AreasModel.errorResponse,
           403: AreasModel.errorResponse,
           404: AreasModel.errorResponse,
+          409: AreasModel.errorResponse,
         },
       }),
   );

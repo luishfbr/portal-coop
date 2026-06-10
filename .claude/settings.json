@@ -7,7 +7,9 @@
       "WebSearch",
       "Bash(NODE_DEBUG=module bunx --bun kubb generate --config packages/api-contract/kubb.config.ts)",
       "Bash(npx skills *)",
-      "Bash(bun run *)"
+      "Bash(bun run *)",
+      "Bash(cd /mnt/c/programming/portal-coop/apps/api && bun run db:generate 2>&1)",
+      "Read(//mnt/c/programming/portal-coop/apps/**)"
     ]
   }
 }

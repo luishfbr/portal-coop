@@ -14,8 +14,8 @@ import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { catalogSchema, type CatalogType } from "@/lib/validations"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Layers, Pencil } from "lucide-react"
-import { useRef } from "react"
+import { Layers } from "lucide-react"
+import { useId, useRef } from "react"
 import { Controller, useForm } from "react-hook-form"
 
 type SectorFormProps =
@@ -145,16 +145,91 @@ export function SectorCreateButton({
   return <SectorForm mode="create" onSubmit={onSubmit} loading={loading} />
 }
 
-export function SectorEditButton({
+export function SectorEditDialog({
+  open,
+  onOpenChange,
   defaultValues,
   onSubmit,
   loading,
 }: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
   defaultValues: CatalogType
   onSubmit: (data: CatalogType) => Promise<unknown>
   loading: boolean
 }) {
+  const instanceId = useId()
+  const formId = `sector-edit-form-${instanceId}`
+
+  const form = useForm<CatalogType>({
+    resolver: zodResolver(catalogSchema),
+    defaultValues,
+  })
+
+  async function handleSubmit(data: CatalogType) {
+    await onSubmit(data).then(() => {
+      form.reset()
+      onOpenChange(false)
+    })
+  }
+
   return (
-    <SectorForm mode="edit" defaultValues={defaultValues} onSubmit={onSubmit} loading={loading} />
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-100">
+        <DialogHeader>
+          <DialogTitle>Editar setor</DialogTitle>
+          <DialogDescription>Atualize os dados do setor.</DialogDescription>
+        </DialogHeader>
+        <form id={formId} onSubmit={form.handleSubmit(handleSubmit)} autoComplete="off">
+          <FieldGroup>
+            <Controller
+              control={form.control}
+              name="name"
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldLabel htmlFor={`${formId}-name`}>Nome</FieldLabel>
+                  <Input
+                    id={`${formId}-name`}
+                    placeholder="ex: Recursos Humanos"
+                    {...field}
+                  />
+                  {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+            <Controller
+              control={form.control}
+              name="description"
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldLabel htmlFor={`${formId}-desc`}>
+                    Descrição{" "}
+                    <span className="text-muted-foreground font-normal">(opcional)</span>
+                  </FieldLabel>
+                  <Input
+                    id={`${formId}-desc`}
+                    placeholder="ex: Gestão de pessoas e benefícios"
+                    {...field}
+                    value={field.value ?? ""}
+                  />
+                  {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+          </FieldGroup>
+        </form>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <LoadingButton
+            disabled={form.formState.disabled}
+            form={formId}
+            label="Salvar alterações"
+            loading={loading || form.formState.isSubmitting}
+          />
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

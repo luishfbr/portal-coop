@@ -9,6 +9,7 @@ export type Area = {
   name: string
   description: string | null
   isActive: boolean
+  userCount: number
   createdAt: string
   updatedAt: string
 }
@@ -18,9 +19,40 @@ export type Sector = {
   name: string
   description: string | null
   isActive: boolean
+  userCount: number
   createdAt: string
   updatedAt: string
   areas: Area[]
+}
+
+export type SectorUser = {
+  id: string
+  name: string
+  email: string
+}
+
+export function useSectorUsers(id: string | null) {
+  const { data: users, isPending: fetchingUsers } = useQuery({
+    queryKey: ["sectors", id, "users"],
+    queryFn: () =>
+      api.get<SectorUser[]>(`/sectors/${id}/users`).then((r) => r.data),
+    enabled: !!id,
+    staleTime: 60_000,
+  })
+  return { users, fetchingUsers }
+}
+
+export function useAreaUsers(sectorId: string | null, areaId: string | null) {
+  const { data: users, isPending: fetchingUsers } = useQuery({
+    queryKey: ["sectors", sectorId, "areas", areaId, "users"],
+    queryFn: () =>
+      api
+        .get<SectorUser[]>(`/sectors/${sectorId}/areas/${areaId}/users`)
+        .then((r) => r.data),
+    enabled: !!sectorId && !!areaId,
+    staleTime: 60_000,
+  })
+  return { users, fetchingUsers }
 }
 
 export function useSectors() {

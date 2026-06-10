@@ -27,6 +27,17 @@ import {
   userProfilesRelations,
 } from "./organizational-schema";
 
+export * from "./rbac-schema";
+import {
+  groups,
+  groupsRelations,
+  groupModules,
+  groupModulesRelations,
+  userGroups,
+  userGroupsRelations,
+  modulesRelations,
+} from "./rbac-schema";
+
 export const schema = {
   users,
   usersRelations,
@@ -39,6 +50,7 @@ export const schema = {
   verifications,
   rateLimits,
   modules,
+  modulesRelations,
   agencies,
   agenciesRelations,
   sectors,
@@ -49,4 +61,10 @@ export const schema = {
   jobFunctionsRelations,
   userProfiles,
   userProfilesRelations,
+  groups,
+  groupsRelations,
+  groupModules,
+  groupModulesRelations,
+  userGroups,
+  userGroupsRelations,
 };

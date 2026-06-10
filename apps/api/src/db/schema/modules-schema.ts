@@ -1,4 +1,4 @@
-import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { randomUUIDv7 } from "bun";
 
 export const modules = pgTable("modules", {
@@ -9,7 +9,6 @@ export const modules = pgTable("modules", {
   description: text("description").notNull(),
   slug: text("slug").notNull().unique(),
   icon: text("icon").notNull(),
-  isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at")
     .notNull()
     .$defaultFn(() => new Date()),

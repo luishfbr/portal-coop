@@ -28,41 +28,15 @@ afterEach(() => mock.restore());
 
 import { modulesController } from "./index";
 import { ModulesService } from "./service";
-import { makeModule, makeAdminSession, makeSession } from "@/tests/helpers/fixtures";
+import { makeModule, makeSession } from "@/tests/helpers/fixtures";
 
-const ADMIN_SESSION = makeAdminSession();
 const USER_SESSION = makeSession({ role: "user" });
 
 function get(path: string) {
   return modulesController.handle(new Request(`http://localhost${path}`));
 }
-function patch(path: string) {
-  return modulesController.handle(new Request(`http://localhost${path}`, { method: "PATCH" }));
-}
 
 describe("Modules Controller", () => {
-  describe("GET /api/v1/modules/active", () => {
-    test("returns 401 when unauthenticated", async () => {
-      mockGetSession.mockResolvedValueOnce(null);
-      const res = await get("/api/v1/modules/active");
-      expect(res.status).toBe(401);
-    });
-
-    test("returns 200 for authenticated user (any role)", async () => {
-      mockGetSession.mockResolvedValueOnce(USER_SESSION);
-      spyOn(ModulesService, "findActive").mockResolvedValue([makeModule()]);
-      const res = await get("/api/v1/modules/active");
-      expect(res.status).toBe(200);
-    });
-
-    test("delegates to ModulesService.findActive", async () => {
-      mockGetSession.mockResolvedValueOnce(USER_SESSION);
-      const spy = spyOn(ModulesService, "findActive").mockResolvedValue([]);
-      await get("/api/v1/modules/active");
-      expect(spy).toHaveBeenCalledTimes(1);
-    });
-  });
-
   describe("GET /api/v1/modules", () => {
     test("returns 401 when unauthenticated", async () => {
       mockGetSession.mockResolvedValueOnce(null);
@@ -70,46 +44,40 @@ describe("Modules Controller", () => {
       expect(res.status).toBe(401);
     });
 
-    test("returns 403 when authenticated as non-admin", async () => {
+    test("returns 200 for authenticated user", async () => {
       mockGetSession.mockResolvedValueOnce(USER_SESSION);
-      const res = await get("/api/v1/modules");
-      expect(res.status).toBe(403);
-    });
-
-    test("returns 200 with all modules when admin", async () => {
-      mockGetSession.mockResolvedValueOnce(ADMIN_SESSION);
       spyOn(ModulesService, "findAll").mockResolvedValue([makeModule()]);
       const res = await get("/api/v1/modules");
       expect(res.status).toBe(200);
     });
+
+    test("delegates to ModulesService.findAll", async () => {
+      mockGetSession.mockResolvedValueOnce(USER_SESSION);
+      const spy = spyOn(ModulesService, "findAll").mockResolvedValue([]);
+      await get("/api/v1/modules");
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
   });
 
-  describe("PATCH /api/v1/modules/:id/toggle", () => {
+  describe("GET /api/v1/modules/active", () => {
     test("returns 401 when unauthenticated", async () => {
       mockGetSession.mockResolvedValueOnce(null);
-      const res = await patch("/api/v1/modules/module-1/toggle");
+      const res = await get("/api/v1/modules/active");
       expect(res.status).toBe(401);
     });
 
-    test("returns 403 when non-admin", async () => {
+    test("returns 200 with accessible modules for authenticated user", async () => {
       mockGetSession.mockResolvedValueOnce(USER_SESSION);
-      const res = await patch("/api/v1/modules/module-1/toggle");
-      expect(res.status).toBe(403);
-    });
-
-    test("returns 200 with toggled module", async () => {
-      mockGetSession.mockResolvedValueOnce(ADMIN_SESSION);
-      spyOn(ModulesService, "toggle").mockResolvedValue(makeModule({ isActive: false }));
-      const res = await patch("/api/v1/modules/module-1/toggle");
+      spyOn(ModulesService, "findActive").mockResolvedValue([makeModule()]);
+      const res = await get("/api/v1/modules/active");
       expect(res.status).toBe(200);
     });
 
-    test("proxies 404 from service", async () => {
-      mockGetSession.mockResolvedValueOnce(ADMIN_SESSION);
-      const { status } = await import("elysia");
-      spyOn(ModulesService, "toggle").mockResolvedValue(status(404, { message: "Module not found" }) as never);
-      const res = await patch("/api/v1/modules/bad-id/toggle");
-      expect(res.status).toBe(404);
+    test("delegates to ModulesService.findActive with user id", async () => {
+      mockGetSession.mockResolvedValueOnce(USER_SESSION);
+      const spy = spyOn(ModulesService, "findActive").mockResolvedValue([]);
+      await get("/api/v1/modules/active");
+      expect(spy).toHaveBeenCalledWith(USER_SESSION.user.id);
     });
   });
 });

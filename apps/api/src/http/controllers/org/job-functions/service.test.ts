@@ -2,12 +2,16 @@ import { describe, test, expect, mock } from "bun:test";
 
 const findMany = mock(() => Promise.resolve([]));
 const findFirst = mock(() => Promise.resolve(null));
+const userProfilesFindFirst = mock(() => Promise.resolve(null));
 const insertReturning = mock(() => Promise.resolve([]));
 const updateReturning = mock(() => Promise.resolve([]));
 
 mock.module("@/db/client", () => ({
   db: {
-    query: { jobFunctions: { findMany, findFirst } },
+    query: {
+      jobFunctions: { findMany, findFirst },
+      userProfiles: { findFirst: userProfilesFindFirst },
+    },
     insert: mock(() => ({
       values: mock(() => ({ returning: insertReturning })),
     })),
@@ -27,10 +31,17 @@ import { makeJobFunction } from "@/tests/helpers/fixtures";
 
 describe("JobFunctionsService", () => {
   describe("findAll", () => {
-    test("returns all job functions", async () => {
-      const items = [makeJobFunction(), makeJobFunction({ id: "jf-2" })];
-      findMany.mockResolvedValueOnce(items);
-      expect(await JobFunctionsService.findAll()).toEqual(items);
+    test("returns all job functions with userCount", async () => {
+      const raw = [
+        { ...makeJobFunction(), userProfiles: [] },
+        { ...makeJobFunction({ id: "jf-2" }), userProfiles: [] },
+      ];
+      findMany.mockResolvedValueOnce(raw);
+      const expected = [
+        { ...makeJobFunction(), userCount: 0 },
+        { ...makeJobFunction({ id: "jf-2" }), userCount: 0 },
+      ];
+      expect(await JobFunctionsService.findAll()).toEqual(expected);
     });
 
     test("returns empty array when none exist", async () => {
@@ -76,21 +87,6 @@ describe("JobFunctionsService", () => {
     });
   });
 
-  describe("toggle", () => {
-    test("returns status 404 when not found", async () => {
-      findFirst.mockResolvedValueOnce(null);
-      const result = await JobFunctionsService.toggle("non-existent");
-      expect(result).toMatchObject({ code: 404, response: { message: "Job function not found" } });
-    });
-
-    test("returns updated job function with flipped isActive", async () => {
-      const toggled = makeJobFunction({ isActive: false });
-      findFirst.mockResolvedValueOnce({ id: "jf-1" });
-      updateReturning.mockResolvedValueOnce([toggled]);
-      expect(await JobFunctionsService.toggle("jf-1")).toEqual(toggled);
-    });
-  });
-
   describe("remove", () => {
     test("returns status 404 when not found", async () => {
       findFirst.mockResolvedValueOnce(null);
@@ -98,8 +94,16 @@ describe("JobFunctionsService", () => {
       expect(result).toMatchObject({ code: 404, response: { message: "Job function not found" } });
     });
 
+    test("returns 409 when users are linked", async () => {
+      findFirst.mockResolvedValueOnce({ id: "jf-1" });
+      userProfilesFindFirst.mockResolvedValueOnce({ id: "profile-1" });
+      const result = await JobFunctionsService.remove("jf-1");
+      expect(result).toMatchObject({ code: 409, response: { message: "Job function has linked users and cannot be deleted" } });
+    });
+
     test("deletes and returns { deleted: true }", async () => {
       findFirst.mockResolvedValueOnce({ id: "jf-1" });
+      userProfilesFindFirst.mockResolvedValueOnce(null);
       expect(await JobFunctionsService.remove("jf-1")).toEqual({ deleted: true });
     });
   });

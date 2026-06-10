@@ -21,11 +21,21 @@ export const sectorsController = new Elysia({
           403: SectorsModel.errorResponse,
         },
       })
-      .post("/", ({ body }) => SectorsService.create(body), {
+      .get("/:id/users", ({ params: { id } }) => SectorsService.findUsersBySector(id), {
+        params: SectorsModel.params,
+        detail: { summary: "List users in sector", tags: ["Sectors"] },
+        response: {
+          200: z.array(SectorsModel.usersResponse),
+          401: SectorsModel.errorResponse,
+          403: SectorsModel.errorResponse,
+          404: SectorsModel.errorResponse,
+        },
+      })
+      .post("/", async ({ body, status }) => status(201, await SectorsService.create(body)), {
         body: SectorsModel.create,
         detail: { summary: "Create sector", tags: ["Sectors"] },
         response: {
-          200: SectorsModel.response,
+          201: SectorsModel.response,
           401: SectorsModel.errorResponse,
           403: SectorsModel.errorResponse,
           422: SectorsModel.errorResponse,
@@ -43,21 +53,11 @@ export const sectorsController = new Elysia({
           422: SectorsModel.errorResponse,
         },
       })
-      .patch("/:id/toggle", ({ params: { id } }) => SectorsService.toggle(id), {
-        params: SectorsModel.params,
-        detail: { summary: "Toggle sector active status", tags: ["Sectors"] },
-        response: {
-          200: SectorsModel.response,
-          401: SectorsModel.errorResponse,
-          403: SectorsModel.errorResponse,
-          404: SectorsModel.errorResponse,
-        },
-      })
       .delete("/:id", ({ params: { id } }) => SectorsService.remove(id), {
         params: SectorsModel.params,
         detail: {
           summary: "Delete sector",
-          description: "Remove o setor e exclui em cascata todas as áreas associadas.",
+          description: "Remove o setor e exclui em cascata todas as áreas associadas. Bloqueado com 409 se houver usuários vinculados ao setor ou às suas áreas.",
           tags: ["Sectors"],
         },
         response: {
@@ -65,6 +65,7 @@ export const sectorsController = new Elysia({
           401: SectorsModel.errorResponse,
           403: SectorsModel.errorResponse,
           404: SectorsModel.errorResponse,
+          409: SectorsModel.errorResponse,
         },
       }),
   );

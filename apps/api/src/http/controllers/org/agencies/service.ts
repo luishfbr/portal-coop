@@ -1,12 +1,18 @@
 import { status } from "elysia";
-import { eq, not } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { agencies } from "@/db/schema";
+import { agencies, userProfiles } from "@/db/schema";
 import type { CreateAgency, UpdateAgency } from "./model";
 
 export abstract class AgenciesService {
-  static findAll() {
-    return db.query.agencies.findMany();
+  static async findAll() {
+    const items = await db.query.agencies.findMany({
+      with: { userProfiles: { columns: { id: true } } },
+    });
+    return items.map(({ userProfiles: profiles, ...rest }) => ({
+      ...rest,
+      userCount: profiles.length,
+    }));
   }
 
   static async findById(id: string) {
@@ -37,27 +43,18 @@ export abstract class AgenciesService {
     return updated;
   }
 
-  static async toggle(id: string) {
-    const exists = await db.query.agencies.findFirst({
-      where: eq(agencies.id, id),
-      columns: { id: true },
-    });
-    if (!exists) return status(404, { message: "Agency not found" });
-
-    const [updated] = await db
-      .update(agencies)
-      .set({ isActive: not(agencies.isActive) })
-      .where(eq(agencies.id, id))
-      .returning();
-    return updated;
-  }
-
   static async remove(id: string) {
     const exists = await db.query.agencies.findFirst({
       where: eq(agencies.id, id),
       columns: { id: true },
     });
     if (!exists) return status(404, { message: "Agency not found" });
+
+    const linked = await db.query.userProfiles.findFirst({
+      where: eq(userProfiles.agencyId, id),
+      columns: { id: true },
+    });
+    if (linked) return status(409, { message: "Agency has linked users and cannot be deleted" });
 
     await db.delete(agencies).where(eq(agencies.id, id));
     return { deleted: true };

@@ -40,7 +40,7 @@ src/
     ├── plugins/
     │   └── better-auth.ts            # Plugin Elysia com macros auth e adminOnly
     └── controllers/
-        ├── modules/                  # Módulos do sistema (ativação/inativação)
+        ├── modules/                  # Módulos do sistema (listagem)
         │   ├── index.ts
         │   ├── model.ts
         │   └── service.ts
@@ -79,29 +79,34 @@ src/
 |---|---|---|---|
 | `GET` | `/health` | público | Health check — retorna `{ status, uptime }` |
 | `*` | `/auth/*` | — | Rotas do Better Auth (login, 2FA, reset, admin) |
-| `GET` | `/api/v1/modules/active` | `auth` | Lista módulos ativos (para sidebar) |
-| `GET` | `/api/v1/modules` | `adminOnly` | Lista todos os módulos (ativos e inativos) |
-| `PATCH` | `/api/v1/modules/:id/toggle` | `adminOnly` | Alterna `isActive` do módulo |
+| `GET` | `/api/v1/modules` | `auth` | Lista todos os módulos (catálogo completo) |
+| `GET` | `/api/v1/modules/active` | `auth` | Lista módulos acessíveis ao usuário logado (via grupos) |
+| `GET` | `/api/v1/groups` | `adminOnly` | Lista grupos |
+| `POST` | `/api/v1/groups` | `adminOnly` | Cria grupo |
+| `PATCH` | `/api/v1/groups/:id` | `adminOnly` | Atualiza grupo |
+| `DELETE` | `/api/v1/groups/:id` | `adminOnly` | Remove grupo (cascade nas junções) |
+| `GET` | `/api/v1/groups/:id/modules` | `adminOnly` | Lista módulos atribuídos ao grupo |
+| `PUT` | `/api/v1/groups/:id/modules` | `adminOnly` | Define módulos do grupo — body: `{ moduleIds }` |
+| `GET` | `/api/v1/groups/:id/users` | `adminOnly` | Lista usuários do grupo |
+| `PUT` | `/api/v1/groups/:id/users` | `adminOnly` | Define usuários do grupo — body: `{ userIds }` |
 | `GET` | `/api/v1/agencies` | `adminOnly` | Lista agências |
 | `POST` | `/api/v1/agencies` | `adminOnly` | Cria agência |
 | `PATCH` | `/api/v1/agencies/:id` | `adminOnly` | Atualiza agência |
-| `PATCH` | `/api/v1/agencies/:id/toggle` | `adminOnly` | Alterna `isActive` da agência |
-| `DELETE` | `/api/v1/agencies/:id` | `adminOnly` | Remove agência |
+| `DELETE` | `/api/v1/agencies/:id` | `adminOnly` | Remove agência — `409` se houver usuários vinculados |
 | `GET` | `/api/v1/sectors` | `adminOnly` | Lista setores (com áreas) |
 | `POST` | `/api/v1/sectors` | `adminOnly` | Cria setor |
 | `PATCH` | `/api/v1/sectors/:id` | `adminOnly` | Atualiza setor |
-| `PATCH` | `/api/v1/sectors/:id/toggle` | `adminOnly` | Alterna `isActive` do setor |
-| `DELETE` | `/api/v1/sectors/:id` | `adminOnly` | Remove setor (áreas deletadas em cascade) |
+| `DELETE` | `/api/v1/sectors/:id` | `adminOnly` | Remove setor (cascade em áreas) — `409` se houver usuários vinculados ao setor ou às suas áreas |
+| `GET` | `/api/v1/sectors/:id/users` | `adminOnly` | Lista usuários vinculados ao setor |
 | `GET` | `/api/v1/sectors/:id/areas` | `adminOnly` | Lista áreas de um setor |
 | `POST` | `/api/v1/sectors/:id/areas` | `adminOnly` | Cria área no setor |
 | `PATCH` | `/api/v1/sectors/:id/areas/:areaId` | `adminOnly` | Atualiza área |
-| `PATCH` | `/api/v1/sectors/:id/areas/:areaId/toggle` | `adminOnly` | Alterna `isActive` da área |
-| `DELETE` | `/api/v1/sectors/:id/areas/:areaId` | `adminOnly` | Remove área |
+| `DELETE` | `/api/v1/sectors/:id/areas/:areaId` | `adminOnly` | Remove área — `409` se houver usuários vinculados |
+| `GET` | `/api/v1/sectors/:id/areas/:areaId/users` | `adminOnly` | Lista usuários vinculados à área |
 | `GET` | `/api/v1/job-functions` | `adminOnly` | Lista funções |
 | `POST` | `/api/v1/job-functions` | `adminOnly` | Cria função |
 | `PATCH` | `/api/v1/job-functions/:id` | `adminOnly` | Atualiza função |
-| `PATCH` | `/api/v1/job-functions/:id/toggle` | `adminOnly` | Alterna `isActive` da função |
-| `DELETE` | `/api/v1/job-functions/:id` | `adminOnly` | Remove função |
+| `DELETE` | `/api/v1/job-functions/:id` | `adminOnly` | Remove função — `409` se houver usuários vinculados |
 | `GET` | `/api/v1/job-functions/:id/users` | `adminOnly` | Lista usuários vinculados à função |
 | `GET` | `/api/v1/users/:userId/org-profile` | `adminOnly` | Lê perfil organizacional do usuário |
 | `PUT` | `/api/v1/users/:userId/org-profile` | `adminOnly` | Define/atualiza vínculos organizacionais do usuário |
@@ -236,12 +241,15 @@ Geradas por `bun run auth:generate`. Não editar. Tabelas atuais:
 
 | Tabela | Arquivo | Propósito |
 |---|---|---|
-| `modules` | `modules-schema.ts` | Módulos do sistema (ativação/inativação por admins) |
+| `modules` | `modules-schema.ts` | Módulos do sistema (seedados por devs, listados via API) |
 | `agencies` | `organizational-schema.ts` | Agências/Unidades/PAs |
 | `sectors` | `organizational-schema.ts` | Setores |
 | `areas` | `organizational-schema.ts` | Subdivisões de setores (FK → sectors, CASCADE delete) |
 | `job_functions` | `organizational-schema.ts` | Funções/cargos |
 | `user_profiles` | `organizational-schema.ts` | Vínculos organizacionais do usuário (1:1 com users) |
+| `groups` | `rbac-schema.ts` | Grupos de acesso (admin cria e gerencia) |
+| `group_modules` | `rbac-schema.ts` | Junção grupos ↔ módulos (CASCADE em ambos os lados) |
+| `user_groups` | `rbac-schema.ts` | Junção usuários ↔ grupos (CASCADE em ambos os lados) |
 
 #### `modules`
 
@@ -252,11 +260,10 @@ Geradas por `bun run auth:generate`. Não editar. Tabelas atuais:
 | `description` | `text` | Descrição do módulo |
 | `slug` | `text` UNIQUE | Chave de rota (ex: `dashboards-internos`) |
 | `icon` | `text` | Nome do ícone lucide-react (ex: `LayoutDashboard`) |
-| `is_active` | `boolean` | Visibilidade do módulo — padrão `true` |
 | `created_at` | `timestamp` | Gerado em app via `$defaultFn` |
 | `updated_at` | `timestamp` | Atualizado via `$onUpdate` |
 
-> Módulos são injetados via seed pelos desenvolvedores. Admins só podem alternar `isActive`.
+> Módulos são injetados via seed pelos desenvolvedores. Apenas leitura via API.
 
 #### Catálogos organizacionais (`agencies`, `sectors`, `job_functions`)
 
@@ -266,8 +273,6 @@ Todas seguem a mesma estrutura:
 |---|---|---|
 | `id` | `text` PK | UUID v7 gerado em app |
 | `name` | `text` | Nome exibível |
-| `description` | `text` nullable | Descrição opcional |
-| `is_active` | `boolean` | Padrão `true` — alternável via `toggle` |
 | `created_at` | `timestamp` | Gerado em app via `$defaultFn` |
 | `updated_at` | `timestamp` | Atualizado via `$onUpdate` |
 
@@ -295,6 +300,50 @@ Vínculo 1:1 entre usuário e estrutura organizacional. Todas as FK são nullabl
 | `updated_at` | `timestamp` | Atualizado via `$onUpdate` |
 
 > Regra de negócio: se `areaId` for informado no `PUT /api/v1/users/:userId/org-profile`, o service valida que a área pertence ao `sectorId` informado. Retorna `400` se inconsistente.
+
+#### `groups`
+
+| Coluna | Tipo | Observação |
+|---|---|---|
+| `id` | `text` PK | UUID v7 gerado em app |
+| `name` | `text` | Nome do grupo (ex: "Analítica", "Gestores") |
+| `description` | `text` nullable | Descrição opcional |
+| `created_at` | `timestamp` | Gerado em app via `$defaultFn` |
+| `updated_at` | `timestamp` | Atualizado via `$onUpdate` |
+
+#### `group_modules`
+
+Junção grupos ↔ módulos. Sem `updatedAt` — join table é imutável (apenas insert/delete).
+
+| Coluna | Tipo | Observação |
+|---|---|---|
+| `id` | `text` PK | UUID v7 |
+| `group_id` | `text` FK | Referência ao grupo — `onDelete: "cascade"` |
+| `module_id` | `text` FK | Referência ao módulo — `onDelete: "cascade"` |
+| `created_at` | `timestamp` | Gerado em app via `$defaultFn` |
+
+> Índice único em `(group_id, module_id)`.
+
+#### `user_groups`
+
+Junção usuários ↔ grupos. Sem `updatedAt` — join table é imutável.
+
+| Coluna | Tipo | Observação |
+|---|---|---|
+| `id` | `text` PK | UUID v7 |
+| `user_id` | `text` FK | Referência ao usuário — `onDelete: "cascade"` |
+| `group_id` | `text` FK | Referência ao grupo — `onDelete: "cascade"` |
+| `created_at` | `timestamp` | Gerado em app via `$defaultFn` |
+
+> Índice único em `(user_id, group_id)`.
+
+#### Regras de acesso a módulos
+
+- Acesso a módulos é **100% via grupos** — usuário sem grupo vê lista vazia em `GET /api/v1/modules/active`
+- Módulos são catálogo nativo do sistema (sem `isActive`) — admin não ativa/desativa, apenas distribui acesso via grupos
+- `PUT /api/v1/groups/:id/modules` substitui a atribuição completa (delete + insert em transação)
+- `PUT /api/v1/groups/:id/users` substitui a lista completa de usuários do grupo (delete + insert em transação)
+- `relations` de `modules → groupModules` é definida em `rbac-schema.ts` para evitar dependência circular
 
 ### Padrões obrigatórios para toda tabela de negócio
 
@@ -462,7 +511,6 @@ export abstract class MinhaService {
 - `return status(code, message)` para erros — importar de `"elysia"`
 - Nunca receber `Context` do Elysia como parâmetro — extrair apenas os dados necessários inline
 - Verificar existência antes de update/delete com `columns: { id: true }` (busca mínima)
-- Para inverter um booleano diretamente no banco: `.set({ campo: not(tabela.campo) })` da `drizzle-orm`
 
 ---
 
@@ -480,16 +528,6 @@ export const minhaController = new Elysia({
   prefix: "/api/v1/minha-feature",
 })
   .use(betterAuthPlugin)      // ✅ declarar dependência explicitamente
-  // ── Rotas com acesso individual (auth ou público) ─────────────────────────
-  .get("/active", () => MinhaService.findActive(), {
-    auth: true,
-    detail: { summary: "List active", tags: ["Minha Feature"] },
-    response: {
-      200: z.array(MinhaModel.response),
-      401: MinhaModel.errorResponse,
-    },
-  })
-
   // ── Rotas protegidas — usar .guard() para agrupar ─────────────────────────
   .guard({ adminOnly: true }, (app) =>
     app
@@ -505,20 +543,10 @@ export const minhaController = new Elysia({
         body: MinhaModel.create,
         detail: { summary: "Create", tags: ["Minha Feature"] },
         response: {
-          200: MinhaModel.response,
+          201: MinhaModel.response,
           401: MinhaModel.errorResponse,
           403: MinhaModel.errorResponse,
           422: MinhaModel.errorResponse,
-        },
-      })
-      .patch("/:id/toggle", ({ params: { id } }) => MinhaService.toggle(id), {
-        params: MinhaModel.params,
-        detail: { summary: "Toggle status", tags: ["Minha Feature"] },
-        response: {
-          200: MinhaModel.response,
-          401: MinhaModel.errorResponse,
-          403: MinhaModel.errorResponse,
-          404: MinhaModel.errorResponse,
         },
       })
       .delete("/:id", ({ params: { id } }) => MinhaService.remove(id), {
@@ -538,9 +566,9 @@ export const minhaController = new Elysia({
 - Sempre `name` único no construtor (ex: `"modules"`, `"goals"`, `"goals.entries"`)
 - Sempre `.use(betterAuthPlugin)` — dependência explícita, nunca global
 - **Nunca adicionar `.onError()` nos controllers** — o root `src/index.ts` já trata `VALIDATION → 422`, `NOT_FOUND → 404` e `500`
-- Sempre adicionar campo `response` em cada rota com todos os status codes possíveis (200, 401, 403, 404, 422 conforme aplicável) — documentação OpenAPI automática
+- Sempre adicionar campo `response` em cada rota com todos os status codes possíveis (200, 201, 401, 403, 404, 409, 422 conforme aplicável) — documentação OpenAPI automática
 - Rotas com macro individual (`auth: true`) antes do `.guard()` adminOnly
-- Rotas com segmento literal antes de rotas parametrizadas (ex: `/active` antes de `/:id`)
+- Rotas com segmento literal antes de rotas parametrizadas (ex: `/me` antes de `/:id`)
 - `detail.tags` agrupam rotas no OpenAPI
 - Inline handlers — nunca passar `Context` para o service
 
@@ -822,7 +850,7 @@ Exporta fábricas para todos os domínios: `makeModule`, `makeAgency`, `makeSect
 Todas aceitam `overrides` parciais:
 
 ```typescript
-makeAgency({ name: "Agência Teste", isActive: false })
+makeAgency({ name: "Agência Teste" })
 makeSession({ role: "admin" })  // ou usar makeAdminSession()
 ```
 
@@ -854,4 +882,8 @@ import { betterAuthPlugin } from "@/http/plugins/better-auth";
 - **Nunca editar `auth-schema.ts` manualmente** — regenerar com `bun run auth:generate`
 - **`users` não é re-exportado de `schema/index.ts`** — quando um service precisar da tabela `users`, importar diretamente: `import { users } from "@/db/schema/auth-schema"`
 - **2FA é somente TOTP** — não configurar OTP por e-mail (plugin não está ativo)
-- **Módulos não são criados/editados/excluídos por admins** — apenas seedados por devs e ativados/inativados via `toggle`
+- **Módulos não são criados/editados/excluídos por admins** — apenas seedados por devs e listados via API
+- **Módulos não possuem `isActive`** — acesso é controlado exclusivamente via grupos (`group_modules`)
+- **Catálogos organizacionais não possuem `isActive`** — a exclusão dos catálogos é bloqueada com `409 Conflict` quando houver usuários vinculados via `user_profiles`
+- **DELETE com vínculo via `user_profiles`**: verificar `userProfiles.<entityId>` antes de deletar; para setores, verificar também usuários vinculados às áreas do setor via `inArray(userProfiles.areaId, areaIds)`
+- **`modulesRelations` é definida em `rbac-schema.ts`**, não em `modules-schema.ts` — evita dependência circular (modules-schema não pode importar rbac-schema que importa modules-schema)

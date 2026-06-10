@@ -80,10 +80,10 @@ describe("Areas Controller", () => {
   });
 
   describe("POST /:id/areas", () => {
-    test("returns 200 and creates area", async () => {
+    test("returns 201 and creates area", async () => {
       mockGetSession.mockResolvedValueOnce(ADMIN);
       spyOn(AreasService, "create").mockResolvedValue(makeArea());
-      expect((await req("POST", BASE, { name: "Test Area" })).status).toBe(200);
+      expect((await req("POST", BASE, { name: "Test Area" })).status).toBe(201);
     });
 
     test("returns 422 on invalid body", async () => {
@@ -114,21 +114,6 @@ describe("Areas Controller", () => {
     });
   });
 
-  describe("PATCH /:id/areas/:areaId/toggle", () => {
-    test("returns 200 with toggled area", async () => {
-      mockGetSession.mockResolvedValueOnce(ADMIN);
-      spyOn(AreasService, "toggle").mockResolvedValue(makeArea({ isActive: false }));
-      expect((await req("PATCH", `${BASE}/area-1/toggle`)).status).toBe(200);
-    });
-
-    test("proxies 404 from service", async () => {
-      mockGetSession.mockResolvedValueOnce(ADMIN);
-      const { status } = await import("elysia");
-      spyOn(AreasService, "toggle").mockResolvedValue(status(404, { message: "Area not found" }) as never);
-      expect((await req("PATCH", `${BASE}/bad-id/toggle`)).status).toBe(404);
-    });
-  });
-
   describe("DELETE /:id/areas/:areaId", () => {
     test("returns 200 with { deleted: true }", async () => {
       mockGetSession.mockResolvedValueOnce(ADMIN);
@@ -141,6 +126,13 @@ describe("Areas Controller", () => {
       const { status } = await import("elysia");
       spyOn(AreasService, "remove").mockResolvedValue(status(404, { message: "Area not found" }) as never);
       expect((await req("DELETE", `${BASE}/bad-id`)).status).toBe(404);
+    });
+
+    test("proxies 409 from service", async () => {
+      mockGetSession.mockResolvedValueOnce(ADMIN);
+      const { status } = await import("elysia");
+      spyOn(AreasService, "remove").mockResolvedValue(status(409, { message: "Area has linked users and cannot be deleted" }) as never);
+      expect((await req("DELETE", `${BASE}/area-1`)).status).toBe(409);
     });
   });
 });

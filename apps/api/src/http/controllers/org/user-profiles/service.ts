@@ -28,60 +28,62 @@ export abstract class UserProfilesService {
     });
     if (!userExists) return status(404, { message: "User not found" });
 
-    if (data.agencyId) {
-      const agency = await db.query.agencies.findFirst({
-        where: eq(agencies.id, data.agencyId),
-        columns: { id: true },
-      });
-      if (!agency) return status(422, { message: "Agency not found" });
-    }
-
-    if (data.sectorId) {
-      const sector = await db.query.sectors.findFirst({
-        where: eq(sectors.id, data.sectorId),
-        columns: { id: true },
-      });
-      if (!sector) return status(422, { message: "Sector not found" });
-    }
-
-    if (data.areaId) {
-      const area = await db.query.areas.findFirst({
-        where: eq(areas.id, data.areaId),
-        columns: { id: true, sectorId: true },
-      });
-      if (!area) return status(422, { message: "Area not found" });
-
-      if (data.sectorId && area.sectorId !== data.sectorId) {
-        return status(422, { message: "Area does not belong to the given sector" });
+    return db.transaction(async (tx) => {
+      if (data.agencyId) {
+        const agency = await tx.query.agencies.findFirst({
+          where: eq(agencies.id, data.agencyId),
+          columns: { id: true },
+        });
+        if (!agency) return status(422, { message: "Agency not found" });
       }
-    }
 
-    if (data.jobFunctionId) {
-      const jobFunction = await db.query.jobFunctions.findFirst({
-        where: eq(jobFunctions.id, data.jobFunctionId),
+      if (data.sectorId) {
+        const sector = await tx.query.sectors.findFirst({
+          where: eq(sectors.id, data.sectorId),
+          columns: { id: true },
+        });
+        if (!sector) return status(422, { message: "Sector not found" });
+      }
+
+      if (data.areaId) {
+        const area = await tx.query.areas.findFirst({
+          where: eq(areas.id, data.areaId),
+          columns: { id: true, sectorId: true },
+        });
+        if (!area) return status(422, { message: "Area not found" });
+
+        if (data.sectorId && area.sectorId !== data.sectorId) {
+          return status(422, { message: "Area does not belong to the given sector" });
+        }
+      }
+
+      if (data.jobFunctionId) {
+        const jobFunction = await tx.query.jobFunctions.findFirst({
+          where: eq(jobFunctions.id, data.jobFunctionId),
+          columns: { id: true },
+        });
+        if (!jobFunction) return status(422, { message: "Job function not found" });
+      }
+
+      const existing = await tx.query.userProfiles.findFirst({
+        where: eq(userProfiles.userId, userId),
         columns: { id: true },
       });
-      if (!jobFunction) return status(422, { message: "Job function not found" });
-    }
 
-    const existing = await db.query.userProfiles.findFirst({
-      where: eq(userProfiles.userId, userId),
-      columns: { id: true },
-    });
+      if (existing) {
+        const [updated] = await tx
+          .update(userProfiles)
+          .set(data)
+          .where(eq(userProfiles.userId, userId))
+          .returning();
+        return updated;
+      }
 
-    if (existing) {
-      const [updated] = await db
-        .update(userProfiles)
-        .set(data)
-        .where(eq(userProfiles.userId, userId))
+      const [created] = await tx
+        .insert(userProfiles)
+        .values({ userId, ...data })
         .returning();
-      return updated;
-    }
-
-    const [created] = await db
-      .insert(userProfiles)
-      .values({ userId, ...data })
-      .returning();
-    return created;
+      return created;
+    });
   }
 }

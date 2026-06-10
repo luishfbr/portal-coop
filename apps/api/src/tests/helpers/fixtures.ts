@@ -7,7 +7,6 @@ export function makeModule(overrides: Record<string, unknown> = {}) {
     description: "Test description",
     slug: "test-module",
     icon: "LayoutDashboard",
-    isActive: true,
     createdAt: BASE_DATE,
     updatedAt: BASE_DATE,
     ...overrides,
@@ -18,8 +17,6 @@ export function makeAgency(overrides: Record<string, unknown> = {}) {
   return {
     id: "agency-1",
     name: "Test Agency",
-    description: "Test description",
-    isActive: true,
     createdAt: BASE_DATE,
     updatedAt: BASE_DATE,
     ...overrides,
@@ -30,8 +27,6 @@ export function makeSector(overrides: Record<string, unknown> = {}) {
   return {
     id: "sector-1",
     name: "Test Sector",
-    description: "Test description",
-    isActive: true,
     createdAt: BASE_DATE,
     updatedAt: BASE_DATE,
     areas: [],
@@ -44,8 +39,6 @@ export function makeArea(overrides: Record<string, unknown> = {}) {
     id: "area-1",
     sectorId: "sector-1",
     name: "Test Area",
-    description: "Test description",
-    isActive: true,
     createdAt: BASE_DATE,
     updatedAt: BASE_DATE,
     ...overrides,
@@ -56,8 +49,6 @@ export function makeJobFunction(overrides: Record<string, unknown> = {}) {
   return {
     id: "jf-1",
     name: "Test Job Function",
-    description: "Test description",
-    isActive: true,
     createdAt: BASE_DATE,
     updatedAt: BASE_DATE,
     ...overrides,
@@ -97,4 +88,35 @@ export function makeSession(overrides: Record<string, unknown> = {}) {
 
 export function makeAdminSession() {
   return makeSession({ role: "admin" });
+}
+
+export function makeGroup(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "group-1",
+    name: "Test Group",
+    description: null,
+    createdAt: BASE_DATE,
+    updatedAt: BASE_DATE,
+    ...overrides,
+  };
+}
+
+export function makeGroupModule(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "gm-1",
+    groupId: "group-1",
+    moduleId: "module-1",
+    createdAt: BASE_DATE,
+    ...overrides,
+  };
+}
+
+export function makeUserGroup(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "ug-1",
+    userId: "user-1",
+    groupId: "group-1",
+    createdAt: BASE_DATE,
+    ...overrides,
+  };
 }

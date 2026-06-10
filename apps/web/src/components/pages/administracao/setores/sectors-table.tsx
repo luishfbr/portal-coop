@@ -10,14 +10,27 @@ import {
 import {
   ChevronDownIcon,
   ChevronUpIcon,
+  CircleCheck,
+  CircleSlash,
   CornerDownRightIcon,
   Layers2Icon,
   MoreHorizontalIcon,
+  Pencil,
 } from "lucide-react"
 import { Fragment, useState } from "react"
 import { cn } from "@/lib/utils"
 import type { Area, Sector } from "@/hooks/use-sectors"
 import type { CatalogType } from "@/lib/validations"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { CardFrame } from "@/components/ui/card"
@@ -36,8 +49,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { AreaEditButton } from "./area-form"
-import { SectorEditButton } from "./sector-form"
+import { AreaEditDialog } from "./area-form"
+import { SectorEditDialog } from "./sector-form"
+import { AreaUsersDialog, SectorUsersDialog } from "./sector-users-dialog"
 
 declare module "@tanstack/react-table" {
   interface TableMeta<_TData extends RowData> {
@@ -54,6 +68,100 @@ declare module "@tanstack/react-table" {
     removeArea: (args: { sectorId: string; id: string }) => Promise<unknown>
     removingArea: boolean
   }
+}
+
+// ── Linha de área (encapsula estado de edição) ────────────────────────────────
+
+function AreaRow({
+  area,
+  sectorId,
+  updateArea,
+  updatingArea,
+  toggleArea,
+  togglingArea,
+  removeArea,
+  removingArea,
+}: {
+  area: Area
+  sectorId: string
+  updateArea: (args: { sectorId: string; id: string; data: CatalogType }) => Promise<unknown>
+  updatingArea: boolean
+  toggleArea: (args: { sectorId: string; id: string }) => Promise<unknown>
+  togglingArea: boolean
+  removeArea: (args: { sectorId: string; id: string }) => Promise<unknown>
+  removingArea: boolean
+}) {
+  const [editOpen, setEditOpen] = useState(false)
+
+  return (
+    <div className="flex items-center gap-3 px-3 py-2 transition-colors hover:bg-accent/40">
+      <AreaEditDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        defaultValues={{ name: area.name, description: area.description ?? "" }}
+        onSubmit={(data) => updateArea({ sectorId, id: area.id, data })}
+        loading={updatingArea}
+      />
+
+      <CornerDownRightIcon
+        aria-hidden="true"
+        className="ml-1 size-3.5 shrink-0 text-muted-foreground/40"
+      />
+
+      <span className="w-44 shrink-0 truncate text-sm font-medium">{area.name}</span>
+
+      <span className="flex-1 truncate text-sm text-muted-foreground">
+        {area.description ?? <span className="text-muted-foreground/40">—</span>}
+      </span>
+
+      <Badge variant="outline" className="shrink-0">
+        <span
+          aria-hidden="true"
+          className={cn(
+            "size-1.5 rounded-full",
+            area.isActive ? "bg-emerald-500" : "bg-red-500"
+          )}
+        />
+        {area.isActive ? "Ativa" : "Inativa"}
+      </Badge>
+
+      <AreaUsersDialog area={area} sectorId={sectorId} />
+
+      <div className="flex shrink-0 items-center gap-0.5">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-7"
+          onClick={() => setEditOpen(true)}
+          title="Editar área"
+        >
+          <Pencil className="size-3.5" />
+          <span className="sr-only">Editar área</span>
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-7"
+          disabled={togglingArea}
+          onClick={() => toggleArea({ sectorId, id: area.id })}
+          title={area.isActive ? "Desativar área" : "Ativar área"}
+        >
+          {area.isActive ? (
+            <CircleSlash className="size-3.5 text-destructive" />
+          ) : (
+            <CircleCheck className="size-3.5 text-emerald-500" />
+          )}
+          <span className="sr-only">{area.isActive ? "Desativar área" : "Ativar área"}</span>
+        </Button>
+        <DeleteAlert
+          variant="ghost"
+          disabled={removingArea}
+          onAccept={() => removeArea({ sectorId, id: area.id })}
+          label="Excluir área"
+        />
+      </div>
+    </div>
+  )
 }
 
 // ── Painel de áreas (sempre visível, dentro de colSpan) ───────────────────────
@@ -84,69 +192,17 @@ function AreasPanel({
       ) : (
         <div className="divide-y divide-border/40">
           {sector.areas.map((area: Area) => (
-            <div
+            <AreaRow
               key={area.id}
-              className="flex items-center gap-3 px-3 py-2 transition-colors hover:bg-accent/40"
-            >
-              <CornerDownRightIcon
-                aria-hidden="true"
-                className="ml-1 size-3.5 shrink-0 text-muted-foreground/40"
-              />
-
-              <span className="w-44 shrink-0 truncate text-sm font-medium">
-                {area.name}
-              </span>
-
-              <span className="flex-1 truncate text-sm text-muted-foreground">
-                {area.description ?? (
-                  <span className="text-muted-foreground/40">—</span>
-                )}
-              </span>
-
-              <Badge variant="outline" className="shrink-0">
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    "size-1.5 rounded-full",
-                    area.isActive ? "bg-emerald-500" : "bg-red-500"
-                  )}
-                />
-                {area.isActive ? "Ativa" : "Inativa"}
-              </Badge>
-
-              <div className="flex shrink-0 items-center gap-0.5">
-                <AreaEditButton
-                  defaultValues={{ name: area.name, description: area.description ?? "" }}
-                  onSubmit={(data) => updateArea({ sectorId: sector.id, id: area.id, data })}
-                  loading={updatingArea}
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-7"
-                  disabled={togglingArea}
-                  onClick={() => toggleArea({ sectorId: sector.id, id: area.id })}
-                  title={area.isActive ? "Desativar área" : "Ativar área"}
-                >
-                  <span className="sr-only">
-                    {area.isActive ? "Desativar área" : "Ativar área"}
-                  </span>
-                  <span
-                    aria-hidden="true"
-                    className={cn(
-                      "size-2 rounded-full",
-                      area.isActive ? "bg-emerald-500" : "bg-red-500"
-                    )}
-                  />
-                </Button>
-                <DeleteAlert
-                  variant="ghost"
-                  disabled={removingArea}
-                  onAccept={() => removeArea({ sectorId: sector.id, id: area.id })}
-                  label="Excluir área"
-                />
-              </div>
-            </div>
+              area={area}
+              sectorId={sector.id}
+              updateArea={updateArea}
+              updatingArea={updatingArea}
+              toggleArea={toggleArea}
+              togglingArea={togglingArea}
+              removeArea={removeArea}
+              removingArea={removingArea}
+            />
           ))}
         </div>
       )}
@@ -154,9 +210,105 @@ function AreasPanel({
   )
 }
 
+// ── Cell de ações do setor ────────────────────────────────────────────────────
+
+function SectorActionsCell({
+  sector,
+  updateSector,
+  updatingSector,
+  toggleSector,
+  togglingSector,
+  removeSector,
+  removingSector,
+}: {
+  sector: Sector
+  updateSector: (args: { id: string; data: CatalogType }) => Promise<unknown>
+  updatingSector: boolean
+  toggleSector: (id: string) => Promise<unknown>
+  togglingSector: boolean
+  removeSector: (id: string) => Promise<unknown>
+  removingSector: boolean
+}) {
+  const [editOpen, setEditOpen] = useState(false)
+  const [toggleOpen, setToggleOpen] = useState(false)
+
+  return (
+    <div className="text-end">
+      <SectorEditDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        defaultValues={{ name: sector.name, description: sector.description ?? "" }}
+        onSubmit={(data) => updateSector({ id: sector.id, data })}
+        loading={updatingSector}
+      />
+      <AlertDialog open={toggleOpen} onOpenChange={setToggleOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {sector.isActive ? "Desativar setor" : "Ativar setor"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {sector.isActive
+                ? `O setor "${sector.name}" ficará indisponível para novos vínculos. Usuários já vinculados não serão afetados.`
+                : `O setor "${sector.name}" voltará a estar disponível para vínculos.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={togglingSector}
+              onClick={() => toggleSector(sector.id)}
+            >
+              {sector.isActive ? "Desativar" : "Ativar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button variant="ghost" size="icon" className="size-8">
+              <MoreHorizontalIcon />
+              <span className="sr-only">Abrir menu</span>
+            </Button>
+          }
+        />
+        <DropdownMenuContent align="end">
+          <Button
+            variant="ghost"
+            className="flex w-full flex-row items-center justify-start gap-4"
+            onClick={() => setEditOpen(true)}
+          >
+            <Pencil />
+            Editar
+          </Button>
+          <Button
+            variant="ghost"
+            className={cn(
+              "flex w-full flex-row items-center justify-start gap-4",
+              sector.isActive && "text-destructive hover:text-destructive"
+            )}
+            onClick={() => setToggleOpen(true)}
+          >
+            {sector.isActive ? <CircleSlash /> : <CircleCheck />}
+            {sector.isActive ? "Desativar" : "Ativar"}
+          </Button>
+          <DropdownMenuSeparator />
+          <DeleteAlert
+            variant="destructive-outline"
+            disabled={removingSector}
+            onAccept={() => removeSector(sector.id)}
+            label="Excluir setor"
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
+}
+
 // ── Colunas da tabela de setores ──────────────────────────────────────────────
 
-const COLUMNS_COUNT = 5
+const COLUMNS_COUNT = 6
 
 const columns: ColumnDef<Sector>[] = [
   {
@@ -208,6 +360,13 @@ const columns: ColumnDef<Sector>[] = [
     size: 120,
   },
   {
+    id: "userCount",
+    header: "Usuários",
+    size: 130,
+    enableSorting: false,
+    cell: ({ row }) => <SectorUsersDialog sector={row.original} />,
+  },
+  {
     cell: ({ row, table }) => {
       const {
         updateSector,
@@ -217,45 +376,16 @@ const columns: ColumnDef<Sector>[] = [
         removeSector,
         removingSector,
       } = table.options.meta!
-      const sector = row.original
       return (
-        <div className="text-end">
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button variant="ghost" size="icon" className="size-8">
-                  <MoreHorizontalIcon />
-                  <span className="sr-only">Abrir menu</span>
-                </Button>
-              }
-            />
-            <DropdownMenuContent align="end">
-              <SectorEditButton
-                defaultValues={{
-                  name: sector.name,
-                  description: sector.description ?? "",
-                }}
-                onSubmit={(data) => updateSector({ id: sector.id, data })}
-                loading={updatingSector}
-              />
-              <Button
-                variant="ghost"
-                className="flex w-full flex-row items-center justify-start gap-4"
-                disabled={togglingSector}
-                onClick={() => toggleSector(sector.id)}
-              >
-                {sector.isActive ? "Desativar" : "Ativar"}
-              </Button>
-              <DropdownMenuSeparator />
-              <DeleteAlert
-                variant="destructive-outline"
-                disabled={removingSector}
-                onAccept={() => removeSector(sector.id)}
-                label="Excluir setor"
-              />
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <SectorActionsCell
+          sector={row.original}
+          updateSector={updateSector}
+          updatingSector={updatingSector}
+          toggleSector={toggleSector}
+          togglingSector={togglingSector}
+          removeSector={removeSector}
+          removingSector={removingSector}
+        />
       )
     },
     enableSorting: false,
@@ -387,7 +517,6 @@ export function SectorsTable({
           {table.getRowModel().rows.length ? (
             table.getRowModel().rows.map((row) => (
               <Fragment key={row.id}>
-                {/* Linha do setor */}
                 <TableRow>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -395,13 +524,8 @@ export function SectorsTable({
                     </TableCell>
                   ))}
                 </TableRow>
-
-                {/* Painel de áreas (sempre visível) */}
                 <TableRow className="hover:bg-transparent">
-                  <TableCell
-                    colSpan={COLUMNS_COUNT}
-                    className="p-0 bg-transparent!"
-                  >
+                  <TableCell colSpan={COLUMNS_COUNT} className="p-0 bg-transparent!">
                     <AreasPanel
                       sector={row.original}
                       updateArea={updateArea}

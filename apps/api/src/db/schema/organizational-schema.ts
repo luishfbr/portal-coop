@@ -3,9 +3,9 @@ import { relations } from "drizzle-orm";
 import {
   pgTable,
   text,
-  boolean,
   timestamp,
   uniqueIndex,
+  index,
 } from "drizzle-orm/pg-core";
 import { users } from "./auth-schema";
 
@@ -14,8 +14,6 @@ export const agencies = pgTable("agencies", {
     .primaryKey()
     .$defaultFn(() => randomUUIDv7()),
   name: text("name").notNull(),
-  description: text("description"),
-  isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at")
     .notNull()
     .$defaultFn(() => new Date()),
@@ -30,8 +28,6 @@ export const sectors = pgTable("sectors", {
     .primaryKey()
     .$defaultFn(() => randomUUIDv7()),
   name: text("name").notNull(),
-  description: text("description"),
-  isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at")
     .notNull()
     .$defaultFn(() => new Date()),
@@ -41,32 +37,32 @@ export const sectors = pgTable("sectors", {
     .$onUpdate(() => new Date()),
 });
 
-export const areas = pgTable("areas", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => randomUUIDv7()),
-  sectorId: text("sector_id")
-    .notNull()
-    .references(() => sectors.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  description: text("description"),
-  isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at")
-    .notNull()
-    .$defaultFn(() => new Date()),
-  updatedAt: timestamp("updated_at")
-    .notNull()
-    .$defaultFn(() => new Date())
-    .$onUpdate(() => new Date()),
-});
+export const areas = pgTable(
+  "areas",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => randomUUIDv7()),
+    sectorId: text("sector_id")
+      .notNull()
+      .references(() => sectors.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .$defaultFn(() => new Date())
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [index("idx_areas_sector_id").on(table.sectorId)],
+);
 
 export const jobFunctions = pgTable("job_functions", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => randomUUIDv7()),
   name: text("name").notNull(),
-  description: text("description"),
-  isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at")
     .notNull()
     .$defaultFn(() => new Date()),
@@ -105,7 +101,13 @@ export const userProfiles = pgTable(
       .$defaultFn(() => new Date())
       .$onUpdate(() => new Date()),
   },
-  (table) => [uniqueIndex("uq_user_profiles_user_id").on(table.userId)],
+  (table) => [
+    uniqueIndex("uq_user_profiles_user_id").on(table.userId),
+    index("idx_user_profiles_agency_id").on(table.agencyId),
+    index("idx_user_profiles_sector_id").on(table.sectorId),
+    index("idx_user_profiles_area_id").on(table.areaId),
+    index("idx_user_profiles_job_function_id").on(table.jobFunctionId),
+  ],
 );
 
 export const agenciesRelations = relations(agencies, ({ many }) => ({

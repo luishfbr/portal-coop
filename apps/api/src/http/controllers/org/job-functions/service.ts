@@ -1,5 +1,5 @@
 import { status } from "elysia";
-import { eq, not } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { jobFunctions, userProfiles } from "@/db/schema";
 import type { CreateJobFunction, UpdateJobFunction } from "./model";
@@ -43,21 +43,6 @@ export abstract class JobFunctionsService {
     return updated;
   }
 
-  static async toggle(id: string) {
-    const exists = await db.query.jobFunctions.findFirst({
-      where: eq(jobFunctions.id, id),
-      columns: { id: true },
-    });
-    if (!exists) return status(404, { message: "Job function not found" });
-
-    const [updated] = await db
-      .update(jobFunctions)
-      .set({ isActive: not(jobFunctions.isActive) })
-      .where(eq(jobFunctions.id, id))
-      .returning();
-    return updated;
-  }
-
   static async findUsers(id: string) {
     const exists = await db.query.jobFunctions.findFirst({
       where: eq(jobFunctions.id, id),
@@ -79,6 +64,12 @@ export abstract class JobFunctionsService {
       columns: { id: true },
     });
     if (!exists) return status(404, { message: "Job function not found" });
+
+    const linked = await db.query.userProfiles.findFirst({
+      where: eq(userProfiles.jobFunctionId, id),
+      columns: { id: true },
+    });
+    if (linked) return status(409, { message: "Job function has linked users and cannot be deleted" });
 
     await db.delete(jobFunctions).where(eq(jobFunctions.id, id));
     return { deleted: true };

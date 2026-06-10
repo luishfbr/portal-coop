@@ -3,13 +3,11 @@ import { z } from "zod";
 import { jobFunctions } from "@/db/schema";
 
 const _insert = createInsertSchema(jobFunctions, {
-  name: z.string().min(2).max(100),
-  description: z.string().max(255).optional(),
+  name: z.string().trim().min(2).max(100),
 });
 
 const _update = createUpdateSchema(jobFunctions, {
-  name: z.string().min(2).max(100),
-  description: z.string().max(255).optional(),
+  name: z.string().trim().min(2).max(100),
 });
 
 const _select = createSelectSchema(jobFunctions);

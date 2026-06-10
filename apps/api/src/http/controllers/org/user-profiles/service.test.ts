@@ -9,24 +9,30 @@ const profileFindFirst = mock(() => Promise.resolve(null));
 const insertReturning = mock(() => Promise.resolve([]));
 const updateReturning = mock(() => Promise.resolve([]));
 
+// txDb is the transaction context — same mocks as outer db so mockResolvedValueOnce chaining works
+const txDb = {
+  query: {
+    users: { findFirst: userFindFirst },
+    agencies: { findFirst: agencyFindFirst },
+    sectors: { findFirst: sectorFindFirst },
+    areas: { findFirst: areaFindFirst },
+    jobFunctions: { findFirst: jobFunctionFindFirst },
+    userProfiles: { findFirst: profileFindFirst },
+  },
+  insert: mock(() => ({
+    values: mock(() => ({ returning: insertReturning })),
+  })),
+  update: mock(() => ({
+    set: mock(() => ({
+      where: mock(() => ({ returning: updateReturning })),
+    })),
+  })),
+};
+
 mock.module("@/db/client", () => ({
   db: {
-    query: {
-      users: { findFirst: userFindFirst },
-      agencies: { findFirst: agencyFindFirst },
-      sectors: { findFirst: sectorFindFirst },
-      areas: { findFirst: areaFindFirst },
-      jobFunctions: { findFirst: jobFunctionFindFirst },
-      userProfiles: { findFirst: profileFindFirst },
-    },
-    insert: mock(() => ({
-      values: mock(() => ({ returning: insertReturning })),
-    })),
-    update: mock(() => ({
-      set: mock(() => ({
-        where: mock(() => ({ returning: updateReturning })),
-      })),
-    })),
+    ...txDb,
+    transaction: mock((fn: any) => fn(txDb)),
   },
 }));
 

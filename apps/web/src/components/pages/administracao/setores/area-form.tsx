@@ -239,14 +239,87 @@ export function AreaCreateHeaderButton({ sectors, onSubmit, loading }: AreaCreat
   )
 }
 
-export function AreaEditButton({
+export function AreaEditDialog({
+  open,
+  onOpenChange,
   defaultValues,
   onSubmit,
   loading,
 }: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
   defaultValues: CatalogType
   onSubmit: (data: CatalogType) => Promise<unknown>
   loading: boolean
 }) {
-  return <AreaEditForm defaultValues={defaultValues} onSubmit={onSubmit} loading={loading} />
+  const instanceId = useId()
+  const formId = `area-edit-dialog-form-${instanceId}`
+
+  const form = useForm<CatalogType>({
+    resolver: zodResolver(catalogSchema),
+    defaultValues,
+  })
+
+  async function handleSubmit(data: CatalogType) {
+    await onSubmit(data).then(() => {
+      form.reset()
+      onOpenChange(false)
+    })
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-100">
+        <DialogHeader>
+          <DialogTitle>Editar área</DialogTitle>
+          <DialogDescription>Atualize os dados da área.</DialogDescription>
+        </DialogHeader>
+        <form id={formId} onSubmit={form.handleSubmit(handleSubmit)} autoComplete="off">
+          <FieldGroup>
+            <Controller
+              control={form.control}
+              name="name"
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldLabel htmlFor={`${formId}-name`}>Nome</FieldLabel>
+                  <Input id={`${formId}-name`} placeholder="ex: Recrutamento e Seleção" {...field} />
+                  {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+            <Controller
+              control={form.control}
+              name="description"
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldLabel htmlFor={`${formId}-desc`}>
+                    Descrição{" "}
+                    <span className="text-muted-foreground font-normal">(opcional)</span>
+                  </FieldLabel>
+                  <Input
+                    id={`${formId}-desc`}
+                    placeholder="ex: Responsável pela seleção de talentos"
+                    {...field}
+                    value={field.value ?? ""}
+                  />
+                  {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+          </FieldGroup>
+        </form>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <LoadingButton
+            disabled={form.formState.disabled}
+            form={formId}
+            label="Salvar alterações"
+            loading={loading || form.formState.isSubmitting}
+          />
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }

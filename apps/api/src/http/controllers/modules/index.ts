@@ -9,32 +9,19 @@ export const modulesController = new Elysia({
   prefix: "/api/v1/modules",
 })
   .use(betterAuthPlugin)
-  .get("/active", () => ModulesService.findActive(), {
+  .get("/active", ({ user }) => ModulesService.findActive(user.id), {
     auth: true,
-    detail: { summary: "List active modules", tags: ["Modules"] },
+    detail: { summary: "List accessible modules for the current user", tags: ["Modules"] },
     response: {
       200: z.array(ModulesModel.response),
       401: ModulesModel.errorResponse,
     },
   })
-  .guard({ adminOnly: true }, (app) =>
-    app
-      .get("/", () => ModulesService.findAll(), {
-        detail: { summary: "List all modules", tags: ["Modules"] },
-        response: {
-          200: z.array(ModulesModel.response),
-          401: ModulesModel.errorResponse,
-          403: ModulesModel.errorResponse,
-        },
-      })
-      .patch("/:id/toggle", ({ params: { id } }) => ModulesService.toggle(id), {
-        params: ModulesModel.params,
-        detail: { summary: "Toggle module active status", tags: ["Modules"] },
-        response: {
-          200: ModulesModel.response,
-          401: ModulesModel.errorResponse,
-          403: ModulesModel.errorResponse,
-          404: ModulesModel.errorResponse,
-        },
-      })
-  );
+  .get("/", () => ModulesService.findAll(), {
+    auth: true,
+    detail: { summary: "List all modules", tags: ["Modules"] },
+    response: {
+      200: z.array(ModulesModel.response),
+      401: ModulesModel.errorResponse,
+    },
+  });

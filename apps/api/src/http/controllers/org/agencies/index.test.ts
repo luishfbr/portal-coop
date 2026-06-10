@@ -57,7 +57,7 @@ describe("Agencies Controller", () => {
 
     test("returns 200 with agencies list", async () => {
       mockGetSession.mockResolvedValueOnce(ADMIN);
-      spyOn(AgenciesService, "findAll").mockResolvedValue([makeAgency()]);
+      spyOn(AgenciesService, "findAll").mockResolvedValue([{ ...makeAgency(), userCount: 0 }]);
       expect((await req("GET", "/api/v1/agencies")).status).toBe(200);
     });
 
@@ -70,10 +70,10 @@ describe("Agencies Controller", () => {
   });
 
   describe("POST /api/v1/agencies", () => {
-    test("returns 200 and creates agency", async () => {
+    test("returns 201 and creates agency", async () => {
       mockGetSession.mockResolvedValueOnce(ADMIN);
       spyOn(AgenciesService, "create").mockResolvedValue(makeAgency());
-      expect((await req("POST", "/api/v1/agencies", { name: "Test Agency" })).status).toBe(200);
+      expect((await req("POST", "/api/v1/agencies", { name: "Test Agency" })).status).toBe(201);
     });
 
     test("returns 422 on invalid body (name too short)", async () => {
@@ -104,21 +104,6 @@ describe("Agencies Controller", () => {
     });
   });
 
-  describe("PATCH /api/v1/agencies/:id/toggle", () => {
-    test("returns 200 with toggled agency", async () => {
-      mockGetSession.mockResolvedValueOnce(ADMIN);
-      spyOn(AgenciesService, "toggle").mockResolvedValue(makeAgency({ isActive: false }));
-      expect((await req("PATCH", "/api/v1/agencies/agency-1/toggle")).status).toBe(200);
-    });
-
-    test("proxies 404 from service", async () => {
-      mockGetSession.mockResolvedValueOnce(ADMIN);
-      const { status } = await import("elysia");
-      spyOn(AgenciesService, "toggle").mockResolvedValue(status(404, { message: "Agency not found" }) as never);
-      expect((await req("PATCH", "/api/v1/agencies/bad-id/toggle")).status).toBe(404);
-    });
-  });
-
   describe("DELETE /api/v1/agencies/:id", () => {
     test("returns 200 with { deleted: true }", async () => {
       mockGetSession.mockResolvedValueOnce(ADMIN);
@@ -131,6 +116,13 @@ describe("Agencies Controller", () => {
       const { status } = await import("elysia");
       spyOn(AgenciesService, "remove").mockResolvedValue(status(404, { message: "Agency not found" }) as never);
       expect((await req("DELETE", "/api/v1/agencies/bad-id")).status).toBe(404);
+    });
+
+    test("proxies 409 from service", async () => {
+      mockGetSession.mockResolvedValueOnce(ADMIN);
+      const { status } = await import("elysia");
+      spyOn(AgenciesService, "remove").mockResolvedValue(status(409, { message: "Agency has linked users and cannot be deleted" }) as never);
+      expect((await req("DELETE", "/api/v1/agencies/agency-1")).status).toBe(409);
     });
   });
 });

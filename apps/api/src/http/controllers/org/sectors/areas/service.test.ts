@@ -3,6 +3,7 @@ import { describe, test, expect, mock } from "bun:test";
 const sectorFindFirst = mock(() => Promise.resolve(null));
 const areaFindMany = mock(() => Promise.resolve([]));
 const areaFindFirst = mock(() => Promise.resolve(null));
+const userProfilesFindFirst = mock(() => Promise.resolve(null));
 const insertReturning = mock(() => Promise.resolve([]));
 const updateReturning = mock(() => Promise.resolve([]));
 
@@ -11,6 +12,7 @@ mock.module("@/db/client", () => ({
     query: {
       sectors: { findFirst: sectorFindFirst },
       areas: { findMany: areaFindMany, findFirst: areaFindFirst },
+      userProfiles: { findFirst: userProfilesFindFirst },
     },
     insert: mock(() => ({
       values: mock(() => ({ returning: insertReturning })),
@@ -81,21 +83,6 @@ describe("AreasService", () => {
     });
   });
 
-  describe("toggle", () => {
-    test("returns status 404 when area not found under that sector", async () => {
-      areaFindFirst.mockResolvedValueOnce(null);
-      const result = await AreasService.toggle("sector-1", "non-existent");
-      expect(result).toMatchObject({ code: 404, response: { message: "Area not found" } });
-    });
-
-    test("flips isActive and returns updated area", async () => {
-      const toggled = makeArea({ isActive: false });
-      areaFindFirst.mockResolvedValueOnce({ id: "area-1" });
-      updateReturning.mockResolvedValueOnce([toggled]);
-      expect(await AreasService.toggle("sector-1", "area-1")).toEqual(toggled);
-    });
-  });
-
   describe("remove", () => {
     test("returns status 404 when area not found under that sector", async () => {
       areaFindFirst.mockResolvedValueOnce(null);
@@ -103,8 +90,16 @@ describe("AreasService", () => {
       expect(result).toMatchObject({ code: 404, response: { message: "Area not found" } });
     });
 
+    test("returns 409 when users are linked to the area", async () => {
+      areaFindFirst.mockResolvedValueOnce({ id: "area-1" });
+      userProfilesFindFirst.mockResolvedValueOnce({ id: "profile-1" });
+      const result = await AreasService.remove("sector-1", "area-1");
+      expect(result).toMatchObject({ code: 409, response: { message: "Area has linked users and cannot be deleted" } });
+    });
+
     test("deletes and returns { deleted: true }", async () => {
       areaFindFirst.mockResolvedValueOnce({ id: "area-1" });
+      userProfilesFindFirst.mockResolvedValueOnce(null);
       expect(await AreasService.remove("sector-1", "area-1")).toEqual({ deleted: true });
     });
   });

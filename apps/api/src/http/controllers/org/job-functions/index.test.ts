@@ -57,16 +57,16 @@ describe("Job Functions Controller", () => {
 
     test("returns 200 with job functions list", async () => {
       mockGetSession.mockResolvedValueOnce(ADMIN);
-      spyOn(JobFunctionsService, "findAll").mockResolvedValue([makeJobFunction()]);
+      spyOn(JobFunctionsService, "findAll").mockResolvedValue([{ ...makeJobFunction(), userCount: 0 }]);
       expect((await req("GET", "/api/v1/job-functions")).status).toBe(200);
     });
   });
 
   describe("POST /api/v1/job-functions", () => {
-    test("returns 200 and creates job function", async () => {
+    test("returns 201 and creates job function", async () => {
       mockGetSession.mockResolvedValueOnce(ADMIN);
       spyOn(JobFunctionsService, "create").mockResolvedValue(makeJobFunction());
-      expect((await req("POST", "/api/v1/job-functions", { name: "Test JF" })).status).toBe(200);
+      expect((await req("POST", "/api/v1/job-functions", { name: "Test JF" })).status).toBe(201);
     });
 
     test("returns 422 on invalid body", async () => {
@@ -90,21 +90,6 @@ describe("Job Functions Controller", () => {
     });
   });
 
-  describe("PATCH /api/v1/job-functions/:id/toggle", () => {
-    test("returns 200 with toggled job function", async () => {
-      mockGetSession.mockResolvedValueOnce(ADMIN);
-      spyOn(JobFunctionsService, "toggle").mockResolvedValue(makeJobFunction({ isActive: false }));
-      expect((await req("PATCH", "/api/v1/job-functions/jf-1/toggle")).status).toBe(200);
-    });
-
-    test("proxies 404 from service", async () => {
-      mockGetSession.mockResolvedValueOnce(ADMIN);
-      const { status } = await import("elysia");
-      spyOn(JobFunctionsService, "toggle").mockResolvedValue(status(404, { message: "Job function not found" }) as never);
-      expect((await req("PATCH", "/api/v1/job-functions/bad-id/toggle")).status).toBe(404);
-    });
-  });
-
   describe("DELETE /api/v1/job-functions/:id", () => {
     test("returns 200 with { deleted: true }", async () => {
       mockGetSession.mockResolvedValueOnce(ADMIN);
@@ -117,6 +102,13 @@ describe("Job Functions Controller", () => {
       const { status } = await import("elysia");
       spyOn(JobFunctionsService, "remove").mockResolvedValue(status(404, { message: "Job function not found" }) as never);
       expect((await req("DELETE", "/api/v1/job-functions/bad-id")).status).toBe(404);
+    });
+
+    test("proxies 409 from service", async () => {
+      mockGetSession.mockResolvedValueOnce(ADMIN);
+      const { status } = await import("elysia");
+      spyOn(JobFunctionsService, "remove").mockResolvedValue(status(409, { message: "Job function has linked users and cannot be deleted" }) as never);
+      expect((await req("DELETE", "/api/v1/job-functions/jf-1")).status).toBe(409);
     });
   });
 });

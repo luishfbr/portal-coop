@@ -2,12 +2,16 @@ import { describe, test, expect, mock } from "bun:test";
 
 const findMany = mock(() => Promise.resolve([]));
 const findFirst = mock(() => Promise.resolve(null));
+const userProfilesFindFirst = mock(() => Promise.resolve(null));
 const insertReturning = mock(() => Promise.resolve([]));
 const updateReturning = mock(() => Promise.resolve([]));
 
 mock.module("@/db/client", () => ({
   db: {
-    query: { agencies: { findMany, findFirst } },
+    query: {
+      agencies: { findMany, findFirst },
+      userProfiles: { findFirst: userProfilesFindFirst },
+    },
     insert: mock(() => ({
       values: mock(() => ({ returning: insertReturning })),
     })),
@@ -27,10 +31,17 @@ import { makeAgency } from "@/tests/helpers/fixtures";
 
 describe("AgenciesService", () => {
   describe("findAll", () => {
-    test("returns all agencies", async () => {
-      const agencies = [makeAgency(), makeAgency({ id: "agency-2" })];
-      findMany.mockResolvedValueOnce(agencies);
-      expect(await AgenciesService.findAll()).toEqual(agencies);
+    test("returns all agencies with userCount", async () => {
+      const raw = [
+        { ...makeAgency(), userProfiles: [] },
+        { ...makeAgency({ id: "agency-2" }), userProfiles: [] },
+      ];
+      findMany.mockResolvedValueOnce(raw);
+      const expected = [
+        { ...makeAgency(), userCount: 0 },
+        { ...makeAgency({ id: "agency-2" }), userCount: 0 },
+      ];
+      expect(await AgenciesService.findAll()).toEqual(expected);
     });
 
     test("returns empty array when none exist", async () => {
@@ -76,21 +87,6 @@ describe("AgenciesService", () => {
     });
   });
 
-  describe("toggle", () => {
-    test("returns status 404 when not found", async () => {
-      findFirst.mockResolvedValueOnce(null);
-      const result = await AgenciesService.toggle("non-existent");
-      expect(result).toMatchObject({ code: 404, response: { message: "Agency not found" } });
-    });
-
-    test("returns updated agency with flipped isActive", async () => {
-      const toggled = makeAgency({ isActive: false });
-      findFirst.mockResolvedValueOnce({ id: "agency-1" });
-      updateReturning.mockResolvedValueOnce([toggled]);
-      expect(await AgenciesService.toggle("agency-1")).toEqual(toggled);
-    });
-  });
-
   describe("remove", () => {
     test("returns status 404 when not found", async () => {
       findFirst.mockResolvedValueOnce(null);
@@ -98,8 +94,16 @@ describe("AgenciesService", () => {
       expect(result).toMatchObject({ code: 404, response: { message: "Agency not found" } });
     });
 
+    test("returns 409 when users are linked", async () => {
+      findFirst.mockResolvedValueOnce({ id: "agency-1" });
+      userProfilesFindFirst.mockResolvedValueOnce({ id: "profile-1" });
+      const result = await AgenciesService.remove("agency-1");
+      expect(result).toMatchObject({ code: 409, response: { message: "Agency has linked users and cannot be deleted" } });
+    });
+
     test("deletes and returns { deleted: true }", async () => {
       findFirst.mockResolvedValueOnce({ id: "agency-1" });
+      userProfilesFindFirst.mockResolvedValueOnce(null);
       expect(await AgenciesService.remove("agency-1")).toEqual({ deleted: true });
     });
   });

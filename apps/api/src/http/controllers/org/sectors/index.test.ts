@@ -57,16 +57,16 @@ describe("Sectors Controller", () => {
 
     test("returns 200 with sectors list", async () => {
       mockGetSession.mockResolvedValueOnce(ADMIN);
-      spyOn(SectorsService, "findAll").mockResolvedValue([makeSector()]);
+      spyOn(SectorsService, "findAll").mockResolvedValue([{ ...makeSector(), userCount: 0 }]);
       expect((await req("GET", "/api/v1/sectors")).status).toBe(200);
     });
   });
 
   describe("POST /api/v1/sectors", () => {
-    test("returns 200 and creates sector", async () => {
+    test("returns 201 and creates sector", async () => {
       mockGetSession.mockResolvedValueOnce(ADMIN);
       spyOn(SectorsService, "create").mockResolvedValue(makeSector());
-      expect((await req("POST", "/api/v1/sectors", { name: "Test Sector" })).status).toBe(200);
+      expect((await req("POST", "/api/v1/sectors", { name: "Test Sector" })).status).toBe(201);
     });
 
     test("returns 422 on invalid body", async () => {
@@ -90,21 +90,6 @@ describe("Sectors Controller", () => {
     });
   });
 
-  describe("PATCH /api/v1/sectors/:id/toggle", () => {
-    test("returns 200 with toggled sector", async () => {
-      mockGetSession.mockResolvedValueOnce(ADMIN);
-      spyOn(SectorsService, "toggle").mockResolvedValue(makeSector({ isActive: false }));
-      expect((await req("PATCH", "/api/v1/sectors/sector-1/toggle")).status).toBe(200);
-    });
-
-    test("proxies 404 from service", async () => {
-      mockGetSession.mockResolvedValueOnce(ADMIN);
-      const { status } = await import("elysia");
-      spyOn(SectorsService, "toggle").mockResolvedValue(status(404, { message: "Sector not found" }) as never);
-      expect((await req("PATCH", "/api/v1/sectors/bad-id/toggle")).status).toBe(404);
-    });
-  });
-
   describe("DELETE /api/v1/sectors/:id", () => {
     test("returns 200 with { deleted: true }", async () => {
       mockGetSession.mockResolvedValueOnce(ADMIN);
@@ -117,6 +102,13 @@ describe("Sectors Controller", () => {
       const { status } = await import("elysia");
       spyOn(SectorsService, "remove").mockResolvedValue(status(404, { message: "Sector not found" }) as never);
       expect((await req("DELETE", "/api/v1/sectors/bad-id")).status).toBe(404);
+    });
+
+    test("proxies 409 from service", async () => {
+      mockGetSession.mockResolvedValueOnce(ADMIN);
+      const { status } = await import("elysia");
+      spyOn(SectorsService, "remove").mockResolvedValue(status(409, { message: "Sector has linked users and cannot be deleted" }) as never);
+      expect((await req("DELETE", "/api/v1/sectors/sector-1")).status).toBe(409);
     });
   });
 });

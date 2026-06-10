@@ -1,7 +1,7 @@
 import { status } from "elysia";
-import { and, eq, not } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { areas, sectors } from "@/db/schema";
+import { areas, sectors, userProfiles } from "@/db/schema";
 import type { CreateArea, UpdateArea } from "./model";
 
 export abstract class AreasService {
@@ -46,19 +46,19 @@ export abstract class AreasService {
     return updated;
   }
 
-  static async toggle(sectorId: string, id: string) {
+  static async findUsersByArea(sectorId: string, id: string) {
     const exists = await db.query.areas.findFirst({
       where: and(eq(areas.id, id), eq(areas.sectorId, sectorId)),
       columns: { id: true },
     });
     if (!exists) return status(404, { message: "Area not found" });
 
-    const [updated] = await db
-      .update(areas)
-      .set({ isActive: not(areas.isActive) })
-      .where(and(eq(areas.id, id), eq(areas.sectorId, sectorId)))
-      .returning();
-    return updated;
+    const profiles = await db.query.userProfiles.findMany({
+      where: eq(userProfiles.areaId, id),
+      columns: { userId: true },
+      with: { user: { columns: { id: true, name: true, email: true } } },
+    });
+    return profiles.map((p) => p.user);
   }
 
   static async remove(sectorId: string, id: string) {
@@ -67,6 +67,12 @@ export abstract class AreasService {
       columns: { id: true },
     });
     if (!exists) return status(404, { message: "Area not found" });
+
+    const linked = await db.query.userProfiles.findFirst({
+      where: eq(userProfiles.areaId, id),
+      columns: { id: true },
+    });
+    if (linked) return status(409, { message: "Area has linked users and cannot be deleted" });
 
     await db
       .delete(areas)
