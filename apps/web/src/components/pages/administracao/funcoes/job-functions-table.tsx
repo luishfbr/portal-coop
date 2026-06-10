@@ -7,11 +7,21 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table"
-import { ChevronDownIcon, ChevronUpIcon, MoreHorizontalIcon } from "lucide-react"
+import { ChevronDownIcon, ChevronUpIcon, CircleCheck, CircleSlash, MoreHorizontalIcon, Pencil } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import type { JobFunction } from "@/hooks/use-job-functions"
 import type { CatalogType } from "@/lib/validations"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { CardFrame } from "@/components/ui/card"
@@ -30,7 +40,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { JobFunctionEditButton } from "./job-function-form"
+import { JobFunctionEditDialog } from "./job-function-form"
+import { JobFunctionUsersDialog } from "./job-function-users-dialog"
 
 declare module "@tanstack/react-table" {
   interface TableMeta<_TData extends RowData> {
@@ -85,45 +96,32 @@ const columns: ColumnDef<JobFunction>[] = [
     size: 120,
   },
   {
+    id: "userCount",
+    header: "Usuários",
+    size: 130,
+    enableSorting: false,
+    cell: ({ row }) => <JobFunctionUsersDialog jobFunction={row.original} />,
+  },
+  {
     cell: ({ row, table }) => {
-      const { updateJobFunction, updatingJobFunction, toggleJobFunction, togglingJobFunction, removeJobFunction, removingJobFunction } =
-        table.options.meta!
-      const fn = row.original
+      const {
+        updateJobFunction,
+        updatingJobFunction,
+        toggleJobFunction,
+        togglingJobFunction,
+        removeJobFunction,
+        removingJobFunction,
+      } = table.options.meta!
       return (
-        <div className="text-end">
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button variant="ghost" size="icon" className="size-8">
-                  <MoreHorizontalIcon />
-                  <span className="sr-only">Abrir menu</span>
-                </Button>
-              }
-            />
-            <DropdownMenuContent align="end">
-              <JobFunctionEditButton
-                defaultValues={{ name: fn.name, description: fn.description ?? "" }}
-                onSubmit={(data) => updateJobFunction({ id: fn.id, data })}
-                loading={updatingJobFunction}
-              />
-              <Button
-                variant="ghost"
-                className="flex w-full flex-row items-center justify-start gap-4"
-                disabled={togglingJobFunction}
-                onClick={() => toggleJobFunction(fn.id)}
-              >
-                {fn.isActive ? "Desativar" : "Ativar"}
-              </Button>
-              <DropdownMenuSeparator />
-              <DeleteAlert
-                variant="destructive-outline"
-                disabled={removingJobFunction}
-                onAccept={() => removeJobFunction(fn.id)}
-                label="Excluir função"
-              />
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <ActionsCell
+          fn={row.original}
+          updateJobFunction={updateJobFunction}
+          updatingJobFunction={updatingJobFunction}
+          toggleJobFunction={toggleJobFunction}
+          togglingJobFunction={togglingJobFunction}
+          removeJobFunction={removeJobFunction}
+          removingJobFunction={removingJobFunction}
+        />
       )
     },
     enableSorting: false,
@@ -132,6 +130,100 @@ const columns: ColumnDef<JobFunction>[] = [
     size: 60,
   },
 ]
+
+function ActionsCell({
+  fn,
+  updateJobFunction,
+  updatingJobFunction,
+  toggleJobFunction,
+  togglingJobFunction,
+  removeJobFunction,
+  removingJobFunction,
+}: {
+  fn: JobFunction
+  updateJobFunction: (args: { id: string; data: CatalogType }) => Promise<unknown>
+  updatingJobFunction: boolean
+  toggleJobFunction: (id: string) => Promise<unknown>
+  togglingJobFunction: boolean
+  removeJobFunction: (id: string) => Promise<unknown>
+  removingJobFunction: boolean
+}) {
+  const [editOpen, setEditOpen] = useState(false)
+  const [toggleOpen, setToggleOpen] = useState(false)
+
+  return (
+    <div className="text-end">
+      <JobFunctionEditDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        defaultValues={{ name: fn.name, description: fn.description ?? "" }}
+        onSubmit={(data) => updateJobFunction({ id: fn.id, data })}
+        loading={updatingJobFunction}
+      />
+      <AlertDialog open={toggleOpen} onOpenChange={setToggleOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {fn.isActive ? "Desativar função" : "Ativar função"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {fn.isActive
+                ? `A função "${fn.name}" ficará indisponível para novos vínculos. Usuários já vinculados não serão afetados.`
+                : `A função "${fn.name}" voltará a estar disponível para vínculos.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={togglingJobFunction}
+              onClick={() => toggleJobFunction(fn.id)}
+            >
+              {fn.isActive ? "Desativar" : "Ativar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button variant="ghost" size="icon" className="size-8">
+              <MoreHorizontalIcon />
+              <span className="sr-only">Abrir menu</span>
+            </Button>
+          }
+        />
+        <DropdownMenuContent align="end">
+          <Button
+            variant="ghost"
+            className="flex w-full flex-row items-center justify-start gap-4"
+            onClick={() => setEditOpen(true)}
+          >
+            <Pencil />
+            Editar
+          </Button>
+          <Button
+            variant="ghost"
+            className={cn(
+              "flex w-full flex-row items-center justify-start gap-4",
+              fn.isActive && "text-destructive hover:text-destructive"
+            )}
+            onClick={() => setToggleOpen(true)}
+          >
+            {fn.isActive ? <CircleSlash /> : <CircleCheck />}
+            {fn.isActive ? "Desativar" : "Ativar"}
+          </Button>
+          <DropdownMenuSeparator />
+          <DeleteAlert
+            variant="destructive-outline"
+            disabled={removingJobFunction}
+            onAccept={() => removeJobFunction(fn.id)}
+            label="Excluir função"
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
+}
 
 export function JobFunctionsTable({
   jobFunctions,

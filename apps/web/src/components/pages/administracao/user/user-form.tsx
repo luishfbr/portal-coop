@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { addUserSchema, type AddUser } from "@/lib/validations"
+import { addUserSchema, ROLE_LABELS, type AddUser } from "@/lib/validations"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { UserPlus } from "lucide-react"
 import { Controller, useForm } from "react-hook-form"
@@ -126,7 +126,9 @@ export function UserForm({
                     onValueChange={field.onChange}
                   >
                     <SelectTrigger id="role" aria-invalid={fieldState.invalid}>
-                      <SelectValue placeholder="Selecione" />
+                      <SelectValue placeholder="Selecione">
+                        {field.value ? ROLE_LABELS[field.value as keyof typeof ROLE_LABELS] : null}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={"user"}>Usuário</SelectItem>

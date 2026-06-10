@@ -173,7 +173,9 @@ export function AreaCreateHeaderButton({ sectors, onSubmit, loading }: AreaCreat
                   <FieldLabel htmlFor="area-create-sector">Setor</FieldLabel>
                   <Select name={field.name} value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger id="area-create-sector" aria-invalid={fieldState.invalid}>
-                      <SelectValue placeholder="Selecione um setor" />
+                      <SelectValue placeholder="Selecione um setor">
+                        {field.value ? (activeSectors.find(s => s.id === field.value)?.name ?? null) : null}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectPopup>
                       {activeSectors.length === 0 ? (

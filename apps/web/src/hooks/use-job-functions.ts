@@ -8,8 +8,26 @@ export type JobFunction = {
   name: string
   description: string | null
   isActive: boolean
+  userCount: number
   createdAt: string
   updatedAt: string
+}
+
+export type JobFunctionUser = {
+  id: string
+  name: string
+  email: string
+}
+
+export function useJobFunctionUsers(id: string | null) {
+  const { data: users, isPending: fetchingUsers } = useQuery({
+    queryKey: ["job-functions", id, "users"],
+    queryFn: () =>
+      api.get<JobFunctionUser[]>(`/job-functions/${id}/users`).then((r) => r.data),
+    enabled: !!id,
+    staleTime: 60_000,
+  })
+  return { users, fetchingUsers }
 }
 
 export function useJobFunctions() {

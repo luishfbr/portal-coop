@@ -102,6 +102,7 @@ src/
 | `PATCH` | `/api/v1/job-functions/:id` | `adminOnly` | Atualiza função |
 | `PATCH` | `/api/v1/job-functions/:id/toggle` | `adminOnly` | Alterna `isActive` da função |
 | `DELETE` | `/api/v1/job-functions/:id` | `adminOnly` | Remove função |
+| `GET` | `/api/v1/job-functions/:id/users` | `adminOnly` | Lista usuários vinculados à função |
 | `GET` | `/api/v1/users/:userId/org-profile` | `adminOnly` | Lê perfil organizacional do usuário |
 | `PUT` | `/api/v1/users/:userId/org-profile` | `adminOnly` | Define/atualiza vínculos organizacionais do usuário |
 

@@ -160,7 +160,9 @@ function AlterStatusDialog({
                     onValueChange={field.onChange}
                   >
                     <SelectTrigger id="statusType" aria-invalid={fieldState.invalid}>
-                      <SelectValue placeholder="Selecione" />
+                      <SelectValue placeholder="Selecione">
+                        {USER_STATUS_TYPES.find(t => t.value === field.value)?.label ?? null}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectPopup>
                       {USER_STATUS_TYPES.map((type) => (

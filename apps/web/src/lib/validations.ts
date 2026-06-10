@@ -14,6 +14,11 @@ export const password = z
 
 export const role = z.enum(["admin", "user"])
 
+export const ROLE_LABELS: Record<"user" | "admin", string> = {
+  user: "Usuário",
+  admin: "Administrador",
+}
+
 export const loginSchema = z.object({
   email,
   password,

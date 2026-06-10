@@ -1,12 +1,18 @@
 import { status } from "elysia";
 import { eq, not } from "drizzle-orm";
 import { db } from "@/db/client";
-import { jobFunctions } from "@/db/schema";
+import { jobFunctions, userProfiles } from "@/db/schema";
 import type { CreateJobFunction, UpdateJobFunction } from "./model";
 
 export abstract class JobFunctionsService {
-  static findAll() {
-    return db.query.jobFunctions.findMany();
+  static async findAll() {
+    const items = await db.query.jobFunctions.findMany({
+      with: { userProfiles: { columns: { id: true } } },
+    });
+    return items.map(({ userProfiles, ...rest }) => ({
+      ...rest,
+      userCount: userProfiles.length,
+    }));
   }
 
   static async findById(id: string) {
@@ -50,6 +56,21 @@ export abstract class JobFunctionsService {
       .where(eq(jobFunctions.id, id))
       .returning();
     return updated;
+  }
+
+  static async findUsers(id: string) {
+    const exists = await db.query.jobFunctions.findFirst({
+      where: eq(jobFunctions.id, id),
+      columns: { id: true },
+    });
+    if (!exists) return status(404, { message: "Job function not found" });
+
+    const profiles = await db.query.userProfiles.findMany({
+      where: eq(userProfiles.jobFunctionId, id),
+      columns: { userId: true },
+      with: { user: { columns: { id: true, name: true, email: true } } },
+    });
+    return profiles.map((p) => p.user);
   }
 
   static async remove(id: string) {

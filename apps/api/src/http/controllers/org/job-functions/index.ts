@@ -14,9 +14,19 @@ export const jobFunctionsController = new Elysia({
       .get("/", () => JobFunctionsService.findAll(), {
         detail: { summary: "List all job functions", tags: ["Job Functions"] },
         response: {
-          200: z.array(JobFunctionsModel.response),
+          200: z.array(JobFunctionsModel.responseWithCount),
           401: JobFunctionsModel.errorResponse,
           403: JobFunctionsModel.errorResponse,
+        },
+      })
+      .get("/:id/users", ({ params: { id } }) => JobFunctionsService.findUsers(id), {
+        params: JobFunctionsModel.params,
+        detail: { summary: "List users assigned to job function", tags: ["Job Functions"] },
+        response: {
+          200: z.array(JobFunctionsModel.usersResponse),
+          401: JobFunctionsModel.errorResponse,
+          403: JobFunctionsModel.errorResponse,
+          404: JobFunctionsModel.errorResponse,
         },
       })
       .post("/", ({ body }) => JobFunctionsService.create(body), {

@@ -40,6 +40,8 @@ src/
 │   └── _dashboard/_pathlessLayout/
 │       ├── pagina-inicial.tsx
 │       ├── governanca-analitica/
+│       │   ├── atualizar-relatorios.tsx
+│       │   └── formatar-planilha.tsx
 │       └── administracao/
 │           ├── _pathlessLayout.tsx
 │           └── _pathlessLayout/
@@ -55,44 +57,57 @@ src/
 │   ├── app-sidebar.tsx               # Sidebar principal — filtra módulos pelo status ativo do backend
 │   ├── nav-projects.tsx              # Navegação por módulos (usa lib/modules-types.ts)
 │   ├── nav-main.tsx                  # Itens colapsáveis com subitems
+│   ├── nav-secondary.tsx             # Navegação secundária genérica da sidebar
 │   ├── nav-user.tsx                  # Dropdown de perfil no rodapé da sidebar
+│   ├── mode-toggle.tsx               # Alternador dark/light/system
+│   ├── theme-provider.tsx            # Provider de tema (wraps main.tsx)
 │   ├── pages/
-│   │   └── administracao/
-│   │       ├── admin-home.tsx        # Página inicial do painel admin (grid de funcionalidades)
-│   │       ├── modulos/
-│   │       │   ├── modules-home.tsx
-│   │       │   └── modules-table.tsx
-│   │       ├── agencias/
-│   │       │   ├── agencies-home.tsx
-│   │       │   ├── agencies-table.tsx
-│   │       │   └── agency-form.tsx   # Reutilizável: modo "create" e "edit"
-│   │       ├── setores/
-│   │       │   ├── sectors-home.tsx
-│   │       │   ├── sectors-table.tsx # Tabela com expandable rows para áreas
-│   │       │   ├── sector-form.tsx
-│   │       │   └── area-form.tsx
-│   │       ├── funcoes/
-│   │       │   ├── job-functions-home.tsx
-│   │       │   ├── job-functions-table.tsx
-│   │       │   └── job-function-form.tsx
-│   │       └── user/
-│   │           ├── user-home.tsx
-│   │           ├── users-table.tsx
-│   │           ├── users-tools-bar.tsx
-│   │           ├── user-form.tsx
-│   │           ├── edit-user.tsx     # Grid de 5 cards: dados, status, senha, sessões, vínculo org
-│   │           ├── ban-user.tsx
-│   │           └── org-profile-card.tsx  # Card 5: vínculo org (agência, setor, área, função)
+│   │   ├── administracao/
+│   │   │   ├── admin-home.tsx        # Página inicial do painel admin (grid de funcionalidades)
+│   │   │   ├── modulos/
+│   │   │   │   ├── modules-home.tsx
+│   │   │   │   └── modules-table.tsx
+│   │   │   ├── agencias/
+│   │   │   │   ├── agencies-home.tsx
+│   │   │   │   ├── agencies-table.tsx
+│   │   │   │   └── agency-form.tsx   # Reutilizável: modo "create" e "edit"
+│   │   │   ├── setores/
+│   │   │   │   ├── sectors-home.tsx
+│   │   │   │   ├── sectors-table.tsx # Tabela com expandable rows para áreas
+│   │   │   │   ├── sector-form.tsx
+│   │   │   │   └── area-form.tsx
+│   │   │   ├── funcoes/
+│   │   │   │   ├── job-functions-home.tsx
+│   │   │   │   ├── job-functions-table.tsx
+│   │   │   │   ├── job-function-form.tsx
+│   │   │   │   └── job-function-users-dialog.tsx  # Lista usuários com determinada função
+│   │   │   └── user/
+│   │   │       ├── user-home.tsx
+│   │   │       ├── users-table.tsx
+│   │   │       ├── users-tools-bar.tsx
+│   │   │       ├── user-form.tsx
+│   │   │       ├── edit-user.tsx     # Grid de 5 cards: dados, status, senha, sessões, vínculo org
+│   │   │       ├── ban-user.tsx
+│   │   │       └── org-profile-card.tsx  # Card 5: vínculo org (agência, setor, área, função)
+│   │   ├── authentication/
+│   │   │   └── login-form.tsx
+│   │   ├── reset-password/
+│   │   │   ├── request.tsx
+│   │   │   └── reset-password.tsx
+│   │   └── two-factor/
+│   │       ├── enable.tsx
+│   │       ├── verify.tsx
+│   │       └── verify-totp-form-to-enable.tsx
 │   ├── customs-pages/                # Páginas de erro e loading
-│   └── ui/                           # 60+ componentes base (shadcn / Base UI)
+│   └── ui/                           # 60 componentes base (shadcn / Base UI)
 │
 ├── hooks/
 │   ├── use-admin.ts          # Operações Better Auth (usuários, sessões, ban/unban)
 │   ├── use-mobile.ts         # Detecção de viewport mobile
 │   ├── use-active-modules.ts # GET /modules/active — slugs ativos para filtrar sidebar
 │   ├── use-modules-admin.ts  # GET /modules (todos) + PATCH toggle
-│   ├── use-agencies.ts       # CRUD /agencies
-│   ├── use-sectors.ts        # CRUD /sectors + CRUD /sectors/:id/areas
+│   ├── use-agencies.ts       # CRUD /agencies — exporta tipo `Agency`
+│   ├── use-sectors.ts        # CRUD /sectors + CRUD /sectors/:id/areas — exporta tipos `Sector`, `Area`
 │   ├── use-job-functions.ts  # CRUD /job-functions
 │   └── use-org-profile.ts    # GET/PUT /users/:userId/org-profile
 │
@@ -275,6 +290,22 @@ async function onSubmit(data: MeuTipo) {
 // No JSX:
 <DialogClose ref={closeRef} render={<Button variant="outline">Cancelar</Button>} />
 ```
+
+### IDs de formulário em dialogs com múltiplas instâncias
+
+Quando um componente de dialog pode existir múltiplas vezes na tela (ex: um botão de editar por linha de tabela), usar `useId()` para gerar IDs únicos:
+
+```typescript
+const instanceId = useId()
+const formId = `area-edit-form-${instanceId}`
+
+<form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
+  {/* ... */}
+</form>
+<LoadingButton form={formId} label="Salvar" loading={loading} />
+```
+
+**Não derivar o `formId` do `mode` ("create" | "edit")** — todos os formulários em modo edit compartilhariam o mesmo id.
 
 ---
 
@@ -562,12 +593,14 @@ Todos os schemas ficam em `src/lib/validations.ts`.
 | `name` | `z.string().trim().min(1)` — campo obrigatório padrão |
 | `password` | Senha com requisitos de complexidade |
 | `role` | `z.enum(["admin", "user"])` |
+| `ROLE_LABELS` | `Record<"user"\|"admin", string>` — labels PT-BR para exibição nos selects |
 | `loginSchema` / `LoginType` | Formulário de login |
 | `codeSchema` / `CodeType` | Código TOTP 6 dígitos |
 | `searchSchema` / `SearchType` | Parâmetro de busca em URL |
 | `addUserSchema` / `AddUser` | Criar usuário (admin) |
 | `editUserSchema` / `EditUserType` | Editar dados do usuário |
 | `userStatusSchema` / `UserStatusType` | Alterar situação (ban) |
+| `USER_STATUS_TYPES` | Array `{ value, label }[]` — opções de status em PT-BR |
 | `setPasswordSchema` / `SetPasswordType` | Redefinir senha |
 | `catalogSchema` / `CatalogType` | `{ name, description? }` — shared por agências, setores, áreas, funções |
 | `orgProfileSchema` / `OrgProfileType` | `{ agencyId, sectorId, areaId, jobFunctionId }` — todos nullable |
@@ -628,30 +661,34 @@ Todos os schemas ficam em `src/lib/validations.ts`.
 
 ### Select (Base UI)
 
+O `Select.Value` do Base UI resolve o texto do item selecionado via registro interno do `ItemText` — mecanismo que só funciona após o popup ser aberto pela primeira vez. Para garantir exibição correta desde o carregamento inicial, **sempre passe o label computado como `children` do `SelectValue`**:
+
 ```typescript
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-// Controlado via React Hook Form:
-<Select
-  name={field.name}
-  value={field.value}
-  onValueChange={field.onChange}
->
+// Opções estáticas (ex: role) — usar um mapa de labels
+const ROLE_LABELS = { user: "Usuário", admin: "Administrador" }
+
+<Select name={field.name} value={field.value} onValueChange={field.onChange}>
   <SelectTrigger id="meu-select" aria-invalid={fieldState.invalid}>
-    <SelectValue placeholder="Selecione" />
+    <SelectValue placeholder="Selecione">
+      {field.value ? ROLE_LABELS[field.value as keyof typeof ROLE_LABELS] : null}
+    </SelectValue>
   </SelectTrigger>
   <SelectPopup>
-    <SelectItem value="opcao1">Opção 1</SelectItem>
-    <SelectItem value="opcao2">Opção 2</SelectItem>
+    <SelectItem value="user">Usuário</SelectItem>
+    <SelectItem value="admin">Administrador</SelectItem>
   </SelectPopup>
 </Select>
 ```
+
+> Para `role`, usar `ROLE_LABELS` de `validations.ts` — não redeclarar localmente.
 
 > `SelectContent` é um alias de `SelectPopup` — preferir `SelectPopup`.
 
 ### Select com valor nullable
 
-Quando o campo pode ser `null` (ex: perfil organizacional):
+Quando o campo pode ser `null` (ex: perfil organizacional), combinar o `NONE = ""` com lookup no array de dados:
 
 ```typescript
 const NONE = ""
@@ -660,8 +697,13 @@ const NONE = ""
   value={field.value ?? NONE}
   onValueChange={(v) => field.onChange(v === NONE ? null : v)}
 >
+  <SelectTrigger id="org-agency">
+    <SelectValue placeholder="Nenhuma">
+      {field.value ? (opcoes?.find(o => o.id === field.value)?.name ?? null) : null}
+    </SelectValue>
+  </SelectTrigger>
   <SelectPopup>
-    <SelectItem value={NONE}>Nenhum</SelectItem>
+    <SelectItem value={NONE}>Nenhuma</SelectItem>
     {opcoes?.map(o => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
   </SelectPopup>
 </Select>
@@ -810,7 +852,7 @@ O formulário expõe dois componentes auxiliares:
 - `<DominioCreateButton>` — trigger "Novo X" para a toolbar
 - `<DominioEditButton>` — trigger ícone de lápis para o dropdown de ações
 
-O `formId` deve ser uma string fixa e única (ex: `"agency-edit-form"`), **não** derivado do `mode` — caso contrário o formulário sempre recebe o mesmo id independente do modo.
+O `formId` deve ser uma string fixa e única (ex: `"agency-edit-form"`), **não** derivado do `mode` — caso contrário o formulário sempre recebe o mesmo id independente do modo. Em componentes com múltiplas instâncias simultâneas (ex: um edit button por linha), usar `useId()` para gerar ids únicos.
 
 ### Setores (com áreas)
 
@@ -849,3 +891,5 @@ A página `/administracao/usuario/$userId` renderiza um grid de 5 cards:
 | Criar formulários create/edit separados para catálogos | Usar o padrão `mode: "create" \| "edit"` como em `agency-form.tsx` |
 | Usar `localStorage` para armazenar URI TOTP | Usar `sessionStorage` — evita estado stale entre sessões de login diferentes |
 | Omitir invalidação de `["modules", "active"]` ao alternar módulos | A sidebar não atualiza sem ela |
+| `<SelectValue placeholder="..." />` sem `children` quando o valor já está definido | O Base UI resolve o texto via `ItemText` apenas após o popup ser aberto — com valor pré-carregado exibe o valor bruto. Sempre passar o label computado como `children` |
+| Redeclarar `ROLE_LABELS` localmente nos componentes | Usar `ROLE_LABELS` de `validations.ts` |

@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import {
   editUserSchema,
+  ROLE_LABELS,
   setPasswordSchema,
   USER_STATUS_TYPES,
   type SetPasswordType,
@@ -132,7 +133,9 @@ function BasicDataCard({
                       onValueChange={field.onChange}
                     >
                       <SelectTrigger id="edit-role" aria-invalid={fieldState.invalid}>
-                        <SelectValue placeholder="Selecione" />
+                        <SelectValue placeholder="Selecione">
+                          {field.value ? ROLE_LABELS[field.value as keyof typeof ROLE_LABELS] : null}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectPopup>
                         <SelectItem value="user">Usuário</SelectItem>

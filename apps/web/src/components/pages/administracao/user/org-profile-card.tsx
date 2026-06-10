@@ -1,6 +1,6 @@
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
 import { useAgencies } from "@/hooks/use-agencies"
 import { useSectors } from "@/hooks/use-sectors"
 import { useJobFunctions } from "@/hooks/use-job-functions"
@@ -58,17 +58,25 @@ export function OrgProfileCard({ userId }: { userId: string }) {
 
   // Reseta areaId quando sectorId muda para um setor que não contém a área atual
   const watchedSectorId = useWatch({ control: form.control, name: "sectorId" })
+  const activeSectors = useMemo(() => sectors?.filter((s) => s.isActive) ?? [], [sectors])
+  const selectedSector = useMemo(
+    () => activeSectors.find((s) => s.id === watchedSectorId),
+    [activeSectors, watchedSectorId],
+  )
+  const availableAreas = useMemo(
+    () => selectedSector?.areas.filter((a) => a.isActive) ?? [],
+    [selectedSector],
+  )
+
   useEffect(() => {
+    // Aguarda sectors carregar antes de resetar — evita apagar areaId quando
+    // orgProfile chega antes dos sectors e availableAreas ainda está vazio
+    if (!sectors) return
     const currentAreaId = form.getValues("areaId")
-    const sectorHasArea = availableAreas.some((a) => a.id === currentAreaId)
-    if (!sectorHasArea) {
+    if (currentAreaId && !availableAreas.some((a) => a.id === currentAreaId)) {
       form.setValue("areaId", null)
     }
-  }, [watchedSectorId, availableAreas, form])
-
-  const activeSectors = sectors?.filter((s) => s.isActive) ?? []
-  const selectedSector = activeSectors.find((s) => s.id === watchedSectorId)
-  const availableAreas = selectedSector?.areas.filter((a) => a.isActive) ?? []
+  }, [watchedSectorId, availableAreas, form, sectors])
 
   async function onSubmit(data: OrgProfileType) {
     await saveOrgProfile(data)
@@ -113,7 +121,9 @@ export function OrgProfileCard({ userId }: { userId: string }) {
                       onValueChange={(v) => field.onChange(v === NONE ? null : v)}
                     >
                       <SelectTrigger id="org-agency">
-                        <SelectValue placeholder="Nenhuma" />
+                        <SelectValue placeholder="Nenhuma">
+                          {field.value ? (agencies?.find(a => a.id === field.value)?.name ?? null) : null}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectPopup>
                         <SelectItem value={NONE}>Nenhuma</SelectItem>
@@ -141,7 +151,9 @@ export function OrgProfileCard({ userId }: { userId: string }) {
                       onValueChange={(v) => field.onChange(v === NONE ? null : v)}
                     >
                       <SelectTrigger id="org-sector">
-                        <SelectValue placeholder="Nenhum" />
+                        <SelectValue placeholder="Nenhum">
+                          {field.value ? (activeSectors.find(s => s.id === field.value)?.name ?? null) : null}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectPopup>
                         <SelectItem value={NONE}>Nenhum</SelectItem>
@@ -177,7 +189,9 @@ export function OrgProfileCard({ userId }: { userId: string }) {
                       disabled={!watchedSectorId || availableAreas.length === 0}
                     >
                       <SelectTrigger id="org-area">
-                        <SelectValue placeholder="Nenhuma" />
+                        <SelectValue placeholder="Nenhuma">
+                          {field.value ? (availableAreas.find(a => a.id === field.value)?.name ?? null) : null}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectPopup>
                         <SelectItem value={NONE}>Nenhuma</SelectItem>
@@ -205,7 +219,9 @@ export function OrgProfileCard({ userId }: { userId: string }) {
                       onValueChange={(v) => field.onChange(v === NONE ? null : v)}
                     >
                       <SelectTrigger id="org-function">
-                        <SelectValue placeholder="Nenhuma" />
+                        <SelectValue placeholder="Nenhuma">
+                          {field.value ? (jobFunctions?.find(f => f.id === field.value)?.name ?? null) : null}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectPopup>
                         <SelectItem value={NONE}>Nenhuma</SelectItem>
