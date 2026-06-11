@@ -2,19 +2,12 @@ import { describe, test, expect, mock } from "bun:test";
 
 const groupsFindMany = mock(() => Promise.resolve([]));
 const groupsFindFirst = mock(() => Promise.resolve(null));
-const insertReturning = mock(() => Promise.resolve([]));
-const updateReturning = mock(() => Promise.resolve([]));
 
-// selectDistinct chain: .from().innerJoin().where()
-const selectDistinctWhere = mock(() => Promise.resolve([]));
-const selectDistinctJoin = mock(() => ({ where: selectDistinctWhere }));
-const selectDistinctFrom = mock(() => ({ innerJoin: selectDistinctJoin }));
-const selectDistinct = mock(() => ({ from: selectDistinctFrom }));
-
-// select chain: .from().innerJoin().where()
+// select chain: supports up to 2 innerJoins (.from().innerJoin().innerJoin().where())
 const selectWhere = mock(() => Promise.resolve([]));
-const selectJoin = mock(() => ({ where: selectWhere }));
-const selectFrom = mock(() => ({ innerJoin: selectJoin }));
+const selectJoin2 = mock(() => ({ where: selectWhere }));
+const selectJoin1 = mock(() => ({ innerJoin: selectJoin2, where: selectWhere }));
+const selectFrom = mock(() => ({ innerJoin: selectJoin1 }));
 const selectFn = mock(() => ({ from: selectFrom }));
 
 // transaction mock — calls fn with a lightweight tx object
@@ -31,25 +24,13 @@ mock.module("@/db/client", () => ({
     query: {
       groups: { findMany: groupsFindMany, findFirst: groupsFindFirst },
     },
-    insert: mock(() => ({
-      values: mock(() => ({ returning: insertReturning })),
-    })),
-    update: mock(() => ({
-      set: mock(() => ({
-        where: mock(() => ({ returning: updateReturning })),
-      })),
-    })),
-    delete: mock(() => ({
-      where: mock(() => Promise.resolve()),
-    })),
-    selectDistinct,
     select: selectFn,
     transaction,
   },
 }));
 
 import { GroupsService } from "./service";
-import { makeGroup, makeModule, makeUser } from "@/tests/helpers/fixtures";
+import { makeGroup, makePermission, makeUser } from "@/tests/helpers/fixtures";
 
 describe("GroupsService", () => {
   describe("findAll", () => {
@@ -60,72 +41,24 @@ describe("GroupsService", () => {
     });
   });
 
-  describe("create", () => {
-    test("inserts and returns the created group", async () => {
-      const group = makeGroup();
-      insertReturning.mockResolvedValueOnce([group]);
-      expect(await GroupsService.create({ name: "Test Group" })).toEqual(group);
-    });
-  });
-
-  describe("update", () => {
+  describe("findPermissions", () => {
     test("returns 404 when group not found", async () => {
       groupsFindFirst.mockResolvedValueOnce(null);
-      const result = await GroupsService.update("non-existent", { name: "New" });
+      const result = await GroupsService.findPermissions("non-existent");
       expect(result).toMatchObject({ code: 404, response: { message: "Group not found" } });
     });
 
-    test("updates and returns updated group", async () => {
-      const updated = makeGroup({ name: "Updated" });
+    test("returns permissions with moduleSlug for group", async () => {
+      const perms = [{ ...makePermission(), moduleSlug: "test-module" }];
       groupsFindFirst.mockResolvedValueOnce({ id: "group-1" });
-      updateReturning.mockResolvedValueOnce([updated]);
-      expect(await GroupsService.update("group-1", { name: "Updated" })).toEqual(updated);
-    });
-  });
-
-  describe("remove", () => {
-    test("returns 404 when group not found", async () => {
-      groupsFindFirst.mockResolvedValueOnce(null);
-      const result = await GroupsService.remove("non-existent");
-      expect(result).toMatchObject({ code: 404, response: { message: "Group not found" } });
+      selectWhere.mockResolvedValueOnce(perms);
+      expect(await GroupsService.findPermissions("group-1")).toEqual(perms);
     });
 
-    test("deletes and returns { deleted: true }", async () => {
+    test("returns empty array when group has no permissions", async () => {
       groupsFindFirst.mockResolvedValueOnce({ id: "group-1" });
-      expect(await GroupsService.remove("group-1")).toEqual({ deleted: true });
-    });
-  });
-
-  describe("findModules", () => {
-    test("returns 404 when group not found", async () => {
-      groupsFindFirst.mockResolvedValueOnce(null);
-      const result = await GroupsService.findModules("non-existent");
-      expect(result).toMatchObject({ code: 404, response: { message: "Group not found" } });
-    });
-
-    test("returns modules assigned to group", async () => {
-      const modules = [makeModule()];
-      groupsFindFirst.mockResolvedValueOnce({ id: "group-1" });
-      selectDistinctWhere.mockResolvedValueOnce(modules);
-      expect(await GroupsService.findModules("group-1")).toEqual(modules);
-    });
-  });
-
-  describe("setModules", () => {
-    test("returns 404 when group not found", async () => {
-      groupsFindFirst.mockResolvedValueOnce(null);
-      const result = await GroupsService.setModules("non-existent", ["module-1"]);
-      expect(result).toMatchObject({ code: 404, response: { message: "Group not found" } });
-    });
-
-    test("returns { updated: true } on success", async () => {
-      groupsFindFirst.mockResolvedValueOnce({ id: "group-1" });
-      expect(await GroupsService.setModules("group-1", ["module-1"])).toEqual({ updated: true });
-    });
-
-    test("returns { updated: true } when moduleIds is empty", async () => {
-      groupsFindFirst.mockResolvedValueOnce({ id: "group-1" });
-      expect(await GroupsService.setModules("group-1", [])).toEqual({ updated: true });
+      selectWhere.mockResolvedValueOnce([]);
+      expect(await GroupsService.findPermissions("group-1")).toEqual([]);
     });
   });
 

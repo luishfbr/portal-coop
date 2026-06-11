@@ -9,7 +9,24 @@
       "Bash(npx skills *)",
       "Bash(bun run *)",
       "Bash(cd /mnt/c/programming/portal-coop/apps/api && bun run db:generate 2>&1)",
-      "Read(//mnt/c/programming/portal-coop/apps/**)"
+      "Read(//mnt/c/programming/portal-coop/apps/**)",
+      "Bash(bunx --bun drizzle-kit generate --yes)",
+      "Bash(bunx --bun drizzle-kit generate)",
+      "Bash(Remove-Item \"c:\\\\programming\\\\portal-coop\\\\apps\\\\web\\\\src\\\\components\\\\pages\\\\administracao\\\\grupos\\\\grupo-form.tsx\" -Force)",
+      "Bash(Remove-Item -Recurse -Force \"c:\\\\programming\\\\portal-coop\\\\apps\\\\web\\\\src\\\\routes\\\\_dashboard\\\\_pathlessLayout\\\\dashboards-internos\")",
+      "Bash(Remove-Item -Recurse -Force \"c:\\\\programming\\\\portal-coop\\\\apps\\\\web\\\\src\\\\components\\\\pages\\\\dashboards-internos\")",
+      "PowerShell(cd c:\\\\programming\\\\portal-coop\\\\apps\\\\web; bun run typecheck; if \\($LASTEXITCODE -eq 0\\) { Write-Host \"TYPECHECK OK\" } else { Write-Host \"TYPECHECK FAILED: $LASTEXITCODE\" })",
+      "Bash(node -e ' *)",
+      "Bash(echo \"Exit: $?\")",
+      "Bash(Remove-Item -Recurse -Force \"c:\\\\programming\\\\portal-coop\\\\apps\\\\api\\\\src\\\\db\\\\schema\\\\dashboards-schema.ts\" -ErrorAction SilentlyContinue)",
+      "Bash(Remove-Item -Recurse -Force \"c:\\\\programming\\\\portal-coop\\\\apps\\\\api\\\\src\\\\http\\\\controllers\\\\dashboards\" -ErrorAction SilentlyContinue)",
+      "Bash(Remove-Item -Force \"c:\\\\programming\\\\portal-coop\\\\apps\\\\api\\\\drizzle\\\\0001_brief_runaways.sql\" -ErrorAction SilentlyContinue)",
+      "Bash(Remove-Item -Force \"c:\\\\programming\\\\portal-coop\\\\apps\\\\api\\\\drizzle\\\\meta\\\\0001_snapshot.json\" -ErrorAction SilentlyContinue)",
+      "Bash(Remove-Item -Recurse -Force \"c:\\\\programming\\\\portal-coop\\\\apps\\\\web\\\\src\\\\components\\\\pages\\\\dashboards\" -ErrorAction SilentlyContinue)",
+      "Bash(Remove-Item -Recurse -Force \"c:\\\\programming\\\\portal-coop\\\\apps\\\\web\\\\src\\\\components\\\\pages\\\\administracao\\\\indicadores\" -ErrorAction SilentlyContinue)",
+      "Bash(Remove-Item -Recurse -Force \"c:\\\\programming\\\\portal-coop\\\\apps\\\\web\\\\src\\\\components\\\\pages\\\\administracao\\\\categorias-indicadores\" -ErrorAction SilentlyContinue)",
+      "Bash(Remove-Item -Recurse -Force \"c:\\\\programming\\\\portal-coop\\\\apps\\\\web\\\\src\\\\routes\\\\_dashboard\\\\_pathlessLayout\\\\dashboards\" -ErrorAction SilentlyContinue)",
+      "Bash(Remove-Item -Force \"c:\\\\programming\\\\portal-coop\\\\apps\\\\web\\\\src\\\\routes\\\\_dashboard\\\\_pathlessLayout\\\\administracao\\\\_pathlessLayout\\\\indicadores.tsx\" -ErrorAction SilentlyContinue)"
     ]
   }
 }

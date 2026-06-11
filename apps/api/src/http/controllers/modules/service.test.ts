@@ -2,8 +2,14 @@ import { describe, test, expect, mock } from "bun:test";
 
 const findMany = mock(() => Promise.resolve([]));
 const findFirst = mock(() => Promise.resolve(null));
+
+// selectDistinct chain: supports up to 3 innerJoins (.from().innerJoin().innerJoin().innerJoin().where())
 const selectDistinctWhere = mock(() => Promise.resolve([]));
-const selectDistinctJoin2 = mock(() => ({ where: selectDistinctWhere }));
+const selectDistinctJoin3 = mock(() => ({ where: selectDistinctWhere }));
+const selectDistinctJoin2 = mock(() => ({
+  innerJoin: selectDistinctJoin3,
+  where: selectDistinctWhere,
+}));
 const selectDistinctJoin1 = mock(() => ({
   innerJoin: selectDistinctJoin2,
   where: selectDistinctWhere,
@@ -61,6 +67,25 @@ describe("ModulesService", () => {
       const modules = [makeModule(), makeModule({ id: "module-2" })];
       selectDistinctWhere.mockResolvedValueOnce(modules);
       expect(await ModulesService.findActive("user-1")).toEqual(modules);
+    });
+  });
+
+  describe("findMyPermissions", () => {
+    test("returns empty object when user has no permissions", async () => {
+      selectDistinctWhere.mockResolvedValueOnce([]);
+      expect(await ModulesService.findMyPermissions("user-1")).toEqual({});
+    });
+
+    test("groups permissions by module slug", async () => {
+      selectDistinctWhere.mockResolvedValueOnce([
+        { moduleSlug: "dashboards-internos", permissionSlug: "view" },
+        { moduleSlug: "dashboards-internos", permissionSlug: "edit" },
+        { moduleSlug: "relatorios", permissionSlug: "view" },
+      ]);
+      expect(await ModulesService.findMyPermissions("user-1")).toEqual({
+        "dashboards-internos": ["view", "edit"],
+        relatorios: ["view"],
+      });
     });
   });
 });

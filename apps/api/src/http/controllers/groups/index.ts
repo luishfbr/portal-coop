@@ -19,64 +19,16 @@ export const groupsController = new Elysia({
           403: GroupsModel.errorResponse,
         },
       })
-      .post("/", ({ body }) => GroupsService.create(body), {
-        body: GroupsModel.create,
-        detail: { summary: "Create group", tags: ["Groups"] },
-        response: {
-          200: GroupsModel.response,
-          401: GroupsModel.errorResponse,
-          403: GroupsModel.errorResponse,
-          422: GroupsModel.errorResponse,
-        },
-      })
-      .patch("/:id", ({ params: { id }, body }) => GroupsService.update(id, body), {
+      .get("/:id/permissions", ({ params: { id } }) => GroupsService.findPermissions(id), {
         params: GroupsModel.params,
-        body: GroupsModel.update,
-        detail: { summary: "Update group", tags: ["Groups"] },
+        detail: { summary: "List permissions of a group", tags: ["Groups"] },
         response: {
-          200: GroupsModel.response,
-          401: GroupsModel.errorResponse,
-          403: GroupsModel.errorResponse,
-          404: GroupsModel.errorResponse,
-          422: GroupsModel.errorResponse,
-        },
-      })
-      .delete("/:id", ({ params: { id } }) => GroupsService.remove(id), {
-        params: GroupsModel.params,
-        detail: { summary: "Delete group", tags: ["Groups"] },
-        response: {
-          200: GroupsModel.deletedResponse,
+          200: z.array(GroupsModel.permissionResponse),
           401: GroupsModel.errorResponse,
           403: GroupsModel.errorResponse,
           404: GroupsModel.errorResponse,
         },
       })
-      .get("/:id/modules", ({ params: { id } }) => GroupsService.findModules(id), {
-        params: GroupsModel.params,
-        detail: { summary: "List modules assigned to group", tags: ["Groups"] },
-        response: {
-          200: z.array(GroupsModel.moduleResponse),
-          401: GroupsModel.errorResponse,
-          403: GroupsModel.errorResponse,
-          404: GroupsModel.errorResponse,
-        },
-      })
-      .put(
-        "/:id/modules",
-        ({ params: { id }, body }) => GroupsService.setModules(id, body.moduleIds),
-        {
-          params: GroupsModel.params,
-          body: GroupsModel.setModulesBody,
-          detail: { summary: "Set modules for group", tags: ["Groups"] },
-          response: {
-            200: GroupsModel.updatedResponse,
-            401: GroupsModel.errorResponse,
-            403: GroupsModel.errorResponse,
-            404: GroupsModel.errorResponse,
-            422: GroupsModel.errorResponse,
-          },
-        }
-      )
       .get("/:id/users", ({ params: { id } }) => GroupsService.findUsers(id), {
         params: GroupsModel.params,
         detail: { summary: "List users in group", tags: ["Groups"] },

@@ -114,7 +114,8 @@ src/
 │   ├── use-agencies.ts       # CRUD /agencies — exporta tipo `Agency` (sem isActive/description)
 │   ├── use-sectors.ts        # CRUD /sectors + /areas — exporta tipos `Sector`, `Area` (sem isActive/description)
 │   ├── use-job-functions.ts  # CRUD /job-functions (sem isActive/description)
-│   ├── use-groups.ts         # CRUD /groups + setGroupModules + setGroupUsers — exporta tipos `Group`, `GroupModule`, `GroupUser`
+│   ├── use-groups.ts         # GET /groups + useGroupPermissions + setGroupUsers — exporta tipos `Group`, `GroupPermission`, `GroupUser`
+│   ├── use-my-permissions.ts # GET /modules/my-permissions — mapa { [moduleSlug]: string[] } para guards de ação
 │   └── use-org-profile.ts    # GET/PUT /users/:userId/org-profile
 │
 └── lib/
@@ -238,17 +239,6 @@ createFileRoute("/_dashboard/_pathlessLayout/<modulo>/sub-pagina")
 
 // depois (com guard)
 createFileRoute("/_dashboard/_pathlessLayout/<modulo>/_pathlessLayout/sub-pagina")
-```
-
-### Exemplo real: `dashboards-internos`
-
-```
-routes/_dashboard/_pathlessLayout/dashboards-internos/
-├── _pathlessLayout.tsx              ← verifica slug "dashboards-internos"
-└── _pathlessLayout/
-    ├── index.tsx
-    ├── atualizar-relatorios.tsx
-    └── formatar-planilha.tsx
 ```
 
 ### Por que não usar `beforeLoad`
@@ -481,27 +471,50 @@ export function useFeature() {
 
 ### `use-groups.ts`
 
-Hook para gerenciamento de grupos RBAC. Exporta três funções:
+Hook para gerenciamento de grupos RBAC. Grupos são **somente leitura** via API — criados exclusivamente via seed por devs. O único endpoint de escrita é atribuição de usuários.
 
 ```typescript
-// Busca módulos de um grupo específico (lazy — só executa quando groupId !== null)
-useGroupModules(groupId: string | null)
-// → { groupModules: GroupModule[], fetchingGroupModules }
+// Busca permissões de um grupo específico (lazy — só executa quando groupId !== null)
+useGroupPermissions(groupId: string | null)
+// → { groupPermissions: GroupPermission[], fetchingGroupPermissions }
+// Chama GET /groups/:id/permissions — retorna permissões com moduleSlug injetado
 
 // Busca usuários de um grupo específico (lazy)
 useGroupUsers(groupId: string | null)
 // → { groupUsers: GroupUser[], fetchingGroupUsers }
 
-// CRUD completo + atribuição de módulos e usuários
+// Listagem + atribuição de usuários
 useGroups()
-// → { groups, fetchingGroups, createGroup, creatingGroup,
-//     updateGroup, updatingGroup, removeGroup, removingGroup,
-//     setGroupModules, settingGroupModules, setGroupUsers, settingGroupUsers }
+// → { groups, fetchingGroups, setGroupUsers, settingGroupUsers }
 ```
 
-`setGroupModules({ groupId, moduleIds })` → `PUT /groups/:id/modules` — invalida `["groups"]`, `["groups", id, "modules"]` e `["modules", "active"]`.
-
 `setGroupUsers({ groupId, userIds })` → `PUT /groups/:id/users` — invalida `["groups"]` e `["groups", id, "users"]`.
+
+Tipos exportados:
+- `Group` — `{ id, name, description, createdAt, updatedAt }`
+- `GroupPermission` — `{ id, slug, name, description, moduleSlug, createdAt, updatedAt }`
+- `GroupUser` — `{ id, name, email }`
+
+---
+
+### `use-my-permissions.ts`
+
+Hook para obter o mapa de permissões do usuário autenticado por módulo.
+
+```typescript
+useMyPermissions()
+// → { permissions: Record<string, string[]> | null, isPending }
+// Chama GET /modules/my-permissions
+// Ex: { "dashboards-internos": ["view", "edit"] }
+// staleTime: 5 min
+```
+
+Usar para mostrar/ocultar ações dentro de um módulo com base nas permissões do usuário:
+
+```typescript
+const { permissions } = useMyPermissions()
+const canEdit = permissions?.["meu-modulo"]?.includes("edit") ?? false
+```
 
 ---
 
@@ -903,7 +916,6 @@ export interface ModulesProps {
 | Módulo | `url` | `slug` backend | `onSidebar` | `gated` | Itens de menu |
 |---|---|---|---|---|---|
 | Página Inicial | `/pagina-inicial` | — | `true` | `false` | — |
-| Dashboards Internos | `/dashboards-internos` | `dashboards-internos` | `true` | `true` | Atualizar Relatórios, Formatar Planilha |
 | Painel de Administração | `/administracao` | — | `false` | `false` | Usuários, Módulos, Agências, Setores, Funções, Grupos |
 
 > `onSidebar: false` significa que o módulo aparece no header mas não na sidebar principal. Os itens do menu são exibidos na `AdminHome` como cards acessíveis.
@@ -988,17 +1000,14 @@ O `formId` deve ser uma string fixa e única (ex: `"agency-edit-form"`), **não*
 
 ### Grupos RBAC
 
-A feature de grupos usa o mesmo padrão de 3 arquivos dos catálogos, com dialogs adicionais na tabela:
+Grupos são **somente leitura** — criados por seed, sem create/edit/delete na UI. A tabela tem 2 ações no dropdown de cada linha:
 
-- **`grupo-form.tsx`**: formulário create/edit com `name` (obrigatório) e `description` (opcional). Exporta `GrupoCreateButton` e `GrupoEditButton`.
-- **`grupos-table.tsx`**: tabela com 3 ações no dropdown de cada linha:
-  1. `GrupoEditButton` — editar nome/descrição
-  2. **Dialog "Gerenciar Módulos"** — checklist de todos os módulos (`useModulesAdmin`) com seleção atual do grupo (`useGroupModules`). Salva via `setGroupModules`.
-  3. **Dialog "Gerenciar Usuários"** — checklist de todos os usuários (`authClient.admin.listUsers`) com campo de busca e seleção atual do grupo (`useGroupUsers`). Salva via `setGroupUsers`.
+1. **Dialog "Ver Permissões"** (read-only) — exibe as permissões do grupo agrupadas por `moduleSlug`. Usa `useGroupPermissions(open ? group.id : null)` (lazy). Sem botão salvar.
+2. **Dialog "Gerenciar Usuários"** — checklist de todos os usuários (`authClient.admin.listUsers`) com campo de busca e seleção atual do grupo (`useGroupUsers`). Salva via `setGroupUsers`.
 
-Os dialogs de checklist usam `<form id="..." onSubmit={...} />` oculto para vincular o `LoadingButton` sem React Hook Form.
+O dialog de usuários usa `<form id="..." onSubmit={...} />` oculto para vincular o `LoadingButton` sem React Hook Form.
 
-Os dados de módulos e usuários do grupo são carregados de forma lazy — a query só é habilitada quando o dialog está aberto (`enabled: open`), via `useGroupModules(open ? group.id : null)`.
+Os dados são carregados de forma lazy — a query só é habilitada quando o dialog está aberto, via `useGroupPermissions(open ? group.id : null)`.
 
 ### Setores (com áreas)
 

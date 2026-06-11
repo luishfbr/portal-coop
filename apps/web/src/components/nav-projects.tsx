@@ -15,6 +15,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { Badge } from "@/components/ui/badge"
 import type { ModulesProps } from "@/lib/modules-types"
 import { MoreHorizontalIcon } from "lucide-react"
 
@@ -60,6 +61,11 @@ export function NavProjects({ modules }: { modules: ModulesProps[] }) {
                       >
                         <menu.icon className="text-muted-foreground" />
                         <span>{menu.label}</span>
+                        {menu.requiredPermission && (
+                          <Badge variant="outline" className="ml-auto px-1.5 py-0 text-[10px]">
+                            {menu.requiredPermission}
+                          </Badge>
+                        )}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>

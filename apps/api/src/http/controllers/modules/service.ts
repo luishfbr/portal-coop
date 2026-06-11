@@ -1,7 +1,7 @@
 import { status } from "elysia";
 import { eq, getTableColumns } from "drizzle-orm";
 import { db } from "@/db/client";
-import { modules, groupModules, userGroups } from "@/db/schema";
+import { modules, permissions, groupPermissions, userGroups } from "@/db/schema";
 
 export abstract class ModulesService {
   static findAll() {
@@ -21,8 +21,27 @@ export abstract class ModulesService {
     return db
       .selectDistinct(getTableColumns(modules))
       .from(modules)
-      .innerJoin(groupModules, eq(groupModules.moduleId, modules.id))
-      .innerJoin(userGroups, eq(userGroups.groupId, groupModules.groupId))
+      .innerJoin(permissions, eq(permissions.moduleId, modules.id))
+      .innerJoin(groupPermissions, eq(groupPermissions.permissionId, permissions.id))
+      .innerJoin(userGroups, eq(userGroups.groupId, groupPermissions.groupId))
       .where(eq(userGroups.userId, userId));
+  }
+
+  static async findMyPermissions(userId: string): Promise<Record<string, string[]>> {
+    const rows = await db
+      .selectDistinct({
+        moduleSlug: modules.slug,
+        permissionSlug: permissions.slug,
+      })
+      .from(permissions)
+      .innerJoin(modules, eq(modules.id, permissions.moduleId))
+      .innerJoin(groupPermissions, eq(groupPermissions.permissionId, permissions.id))
+      .innerJoin(userGroups, eq(userGroups.groupId, groupPermissions.groupId))
+      .where(eq(userGroups.userId, userId));
+
+    return rows.reduce<Record<string, string[]>>((acc, { moduleSlug, permissionSlug }) => {
+      (acc[moduleSlug] ??= []).push(permissionSlug);
+      return acc;
+    }, {});
   }
 }

@@ -94,6 +94,7 @@ export function makeGroup(overrides: Record<string, unknown> = {}) {
   return {
     id: "group-1",
     name: "Test Group",
+    slug: "test-group",
     description: null,
     createdAt: BASE_DATE,
     updatedAt: BASE_DATE,
@@ -101,12 +102,15 @@ export function makeGroup(overrides: Record<string, unknown> = {}) {
   };
 }
 
-export function makeGroupModule(overrides: Record<string, unknown> = {}) {
+export function makePermission(overrides: Record<string, unknown> = {}) {
   return {
-    id: "gm-1",
-    groupId: "group-1",
+    id: "perm-1",
     moduleId: "module-1",
+    slug: "view",
+    name: "Visualizar",
+    description: null,
     createdAt: BASE_DATE,
+    updatedAt: BASE_DATE,
     ...overrides,
   };
 }
@@ -120,3 +124,4 @@ export function makeUserGroup(overrides: Record<string, unknown> = {}) {
     ...overrides,
   };
 }
+

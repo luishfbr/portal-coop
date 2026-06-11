@@ -2,13 +2,10 @@ import {
   Briefcase,
   Building2,
   Cog,
-  Goal,
   Home,
   LayoutDashboard,
   Layers,
   Shield,
-  Shredder,
-  Upload,
   Users,
   type LucideIcon,
 } from "lucide-react"
@@ -26,6 +23,7 @@ export interface ModulesProps {
         url: string
         icon: LucideIcon
         description: string
+        requiredPermission?: string
         submenu?: {
           label: string
           pattern: RegExp
@@ -42,27 +40,6 @@ export const modules: ModulesProps[] = [
     onSidebar: true,
     gated: false,
     menu: null,
-  },
-  {
-    label: "Dashboards Internos",
-    url: "/dashboards-internos",
-    icon: Goal,
-    onSidebar: true,
-    gated: true,
-    menu: [
-      {
-        label: "Atualizar Relatórios",
-        url: "/dashboards-internos/atualizar-relatorios",
-        icon: Upload,
-        description: "",
-      },
-      {
-        label: "Formatar Planilha",
-        url: "/dashboards-internos/formatar-planilha",
-        icon: Shredder,
-        description: "",
-      },
-    ],
   },
   {
     label: "Painel de Administração",
@@ -89,7 +66,7 @@ export const modules: ModulesProps[] = [
         url: "/administracao/modulos",
         icon: LayoutDashboard,
         description:
-          "Ative ou desative módulos para controlar quais funcionalidades ficam visíveis no sistema.",
+          "Visualize o catálogo de módulos do sistema e as permissões disponíveis em cada um.",
       },
       {
         label: "Agências",
@@ -117,7 +94,7 @@ export const modules: ModulesProps[] = [
         url: "/administracao/grupos",
         icon: Shield,
         description:
-          "Gerencie grupos de acesso e controle quais módulos cada grupo pode acessar.",
+          "Visualize grupos de acesso e gerencie quais usuários pertencem a cada grupo.",
       },
     ],
   },

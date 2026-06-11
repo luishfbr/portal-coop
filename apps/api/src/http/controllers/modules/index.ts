@@ -9,6 +9,14 @@ export const modulesController = new Elysia({
   prefix: "/api/v1/modules",
 })
   .use(betterAuthPlugin)
+  .get("/my-permissions", ({ user }) => ModulesService.findMyPermissions(user.id), {
+    auth: true,
+    detail: { summary: "Get current user permission map by module slug", tags: ["Modules"] },
+    response: {
+      200: z.record(z.string(), z.array(z.string())),
+      401: ModulesModel.errorResponse,
+    },
+  })
   .get("/active", ({ user }) => ModulesService.findActive(user.id), {
     auth: true,
     detail: { summary: "List accessible modules for the current user", tags: ["Modules"] },

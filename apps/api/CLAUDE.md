@@ -81,12 +81,9 @@ src/
 | `*` | `/auth/*` | — | Rotas do Better Auth (login, 2FA, reset, admin) |
 | `GET` | `/api/v1/modules` | `auth` | Lista todos os módulos (catálogo completo) |
 | `GET` | `/api/v1/modules/active` | `auth` | Lista módulos acessíveis ao usuário logado (via grupos) |
-| `GET` | `/api/v1/groups` | `adminOnly` | Lista grupos |
-| `POST` | `/api/v1/groups` | `adminOnly` | Cria grupo |
-| `PATCH` | `/api/v1/groups/:id` | `adminOnly` | Atualiza grupo |
-| `DELETE` | `/api/v1/groups/:id` | `adminOnly` | Remove grupo (cascade nas junções) |
-| `GET` | `/api/v1/groups/:id/modules` | `adminOnly` | Lista módulos atribuídos ao grupo |
-| `PUT` | `/api/v1/groups/:id/modules` | `adminOnly` | Define módulos do grupo — body: `{ moduleIds }` |
+| `GET` | `/api/v1/modules/my-permissions` | `auth` | Mapa de permissões do usuário — `{ [moduleSlug]: string[] }` |
+| `GET` | `/api/v1/groups` | `adminOnly` | Lista grupos (seedados por devs) |
+| `GET` | `/api/v1/groups/:id/permissions` | `adminOnly` | Lista permissões do grupo (read-only) |
 | `GET` | `/api/v1/groups/:id/users` | `adminOnly` | Lista usuários do grupo |
 | `PUT` | `/api/v1/groups/:id/users` | `adminOnly` | Define usuários do grupo — body: `{ userIds }` |
 | `GET` | `/api/v1/agencies` | `adminOnly` | Lista agências |
@@ -203,13 +200,19 @@ Adicionar um novo macro em `src/http/plugins/better-auth.ts`:
   minhaRole: {
     async resolve({ status, request: { headers } }) {
       const session = await auth.api.getSession({ headers });
-      if (!session) return status(401, "Unauthorized");
-      if (session.user.role !== "minha-role") return status(403, "Forbidden");
+      if (!session) return status(401, { message: "Unauthorized" });
+      if (session.user.role !== "minha-role") return status(403, { message: "Forbidden" });
       return { user: session.user, session: session.session };
     },
   },
 })
 ```
+
+Para macros que permitem acesso a **admins OU membros de um grupo RBAC específico**, o resolve deve:
+1. Verificar sessão (`401` se ausente)
+2. Retornar direto se `role === "admin"`
+3. Fazer join `userGroups → groupPermissions → permissions → modules` filtrando por `userId`, `permissions.slug` e `modules.slug`
+4. Retornar `403` se não encontrar linha, ou retornar `session` se encontrar
 
 ---
 
@@ -247,8 +250,9 @@ Geradas por `bun run auth:generate`. Não editar. Tabelas atuais:
 | `areas` | `organizational-schema.ts` | Subdivisões de setores (FK → sectors, CASCADE delete) |
 | `job_functions` | `organizational-schema.ts` | Funções/cargos |
 | `user_profiles` | `organizational-schema.ts` | Vínculos organizacionais do usuário (1:1 com users) |
-| `groups` | `rbac-schema.ts` | Grupos de acesso (admin cria e gerencia) |
-| `group_modules` | `rbac-schema.ts` | Junção grupos ↔ módulos (CASCADE em ambos os lados) |
+| `groups` | `rbac-schema.ts` | Grupos de acesso (seedados por devs) |
+| `permissions` | `rbac-schema.ts` | Ações disponíveis por módulo (seedadas por devs) |
+| `group_permissions` | `rbac-schema.ts` | Junção grupos ↔ permissões (CASCADE em ambos os lados) |
 | `user_groups` | `rbac-schema.ts` | Junção usuários ↔ grupos (CASCADE em ambos os lados) |
 
 #### `modules`
@@ -258,7 +262,7 @@ Geradas por `bun run auth:generate`. Não editar. Tabelas atuais:
 | `id` | `text` PK | UUID v7 gerado em app |
 | `name` | `text` | Nome exibível do módulo |
 | `description` | `text` | Descrição do módulo |
-| `slug` | `text` UNIQUE | Chave de rota (ex: `dashboards-internos`) |
+| `slug` | `text` UNIQUE | Chave de rota (ex: `dashboards`) |
 | `icon` | `text` | Nome do ícone lucide-react (ex: `LayoutDashboard`) |
 | `created_at` | `timestamp` | Gerado em app via `$defaultFn` |
 | `updated_at` | `timestamp` | Atualizado via `$onUpdate` |
@@ -303,26 +307,45 @@ Vínculo 1:1 entre usuário e estrutura organizacional. Todas as FK são nullabl
 
 #### `groups`
 
+Seedados por devs. Admin apenas atribui usuários.
+
 | Coluna | Tipo | Observação |
 |---|---|---|
 | `id` | `text` PK | UUID v7 gerado em app |
-| `name` | `text` | Nome do grupo (ex: "Analítica", "Gestores") |
+| `slug` | `text` UNIQUE | Chave de idempotência no seed (ex: `dashboards-internos-visualizador`) |
+| `name` | `text` | Nome exibível (ex: "Dashboards Internos — Visualizador") |
+| `description` | `text` nullable | Descrição exibida no painel admin |
+| `created_at` | `timestamp` | Gerado em app via `$defaultFn` |
+| `updated_at` | `timestamp` | Atualizado via `$onUpdate` |
+
+#### `permissions`
+
+Ações disponíveis dentro de um módulo. Seedadas por devs junto com o módulo.
+
+| Coluna | Tipo | Observação |
+|---|---|---|
+| `id` | `text` PK | UUID v7 gerado em app |
+| `module_id` | `text` FK | Referência ao módulo — `onDelete: "cascade"` |
+| `slug` | `text` | Ação (ex: `view`, `edit`, `admin`) |
+| `name` | `text` | Nome exibível |
 | `description` | `text` nullable | Descrição opcional |
 | `created_at` | `timestamp` | Gerado em app via `$defaultFn` |
 | `updated_at` | `timestamp` | Atualizado via `$onUpdate` |
 
-#### `group_modules`
+> Índice único em `(module_id, slug)`.
 
-Junção grupos ↔ módulos. Sem `updatedAt` — join table é imutável (apenas insert/delete).
+#### `group_permissions`
+
+Junção grupos ↔ permissões. Sem `updatedAt` — join table é imutável.
 
 | Coluna | Tipo | Observação |
 |---|---|---|
 | `id` | `text` PK | UUID v7 |
 | `group_id` | `text` FK | Referência ao grupo — `onDelete: "cascade"` |
-| `module_id` | `text` FK | Referência ao módulo — `onDelete: "cascade"` |
+| `permission_id` | `text` FK | Referência à permissão — `onDelete: "cascade"` |
 | `created_at` | `timestamp` | Gerado em app via `$defaultFn` |
 
-> Índice único em `(group_id, module_id)`.
+> Índice único em `(group_id, permission_id)`.
 
 #### `user_groups`
 
@@ -337,13 +360,14 @@ Junção usuários ↔ grupos. Sem `updatedAt` — join table é imutável.
 
 > Índice único em `(user_id, group_id)`.
 
-#### Regras de acesso a módulos
+#### Regras de acesso a módulos e permissões
 
-- Acesso a módulos é **100% via grupos** — usuário sem grupo vê lista vazia em `GET /api/v1/modules/active`
-- Módulos são catálogo nativo do sistema (sem `isActive`) — admin não ativa/desativa, apenas distribui acesso via grupos
-- `PUT /api/v1/groups/:id/modules` substitui a atribuição completa (delete + insert em transação)
+- Acesso ao módulo é **implícito** — usuário precisa ter ≥1 permissão no módulo via grupos
+- Módulos, permissões e grupos são **seedados por devs** — admin não cria/edita/deleta nenhum deles
+- `GET /api/v1/modules/active` retorna módulos onde o usuário tem ≥1 permissão
+- `GET /api/v1/modules/my-permissions` retorna mapa `{ [moduleSlug]: string[] }` — usar no frontend para mostrar/ocultar ações dentro do módulo
 - `PUT /api/v1/groups/:id/users` substitui a lista completa de usuários do grupo (delete + insert em transação)
-- `relations` de `modules → groupModules` é definida em `rbac-schema.ts` para evitar dependência circular
+- `relations` de `modules → permissions` é definida em `rbac-schema.ts` para evitar dependência circular (modules-schema não pode importar rbac-schema)
 
 ### Padrões obrigatórios para toda tabela de negócio
 
@@ -593,10 +617,29 @@ O seed é idempotente — pode ser re-executado sem duplicar dados.
   description: "Descrição do módulo",
   slug: "slug-do-modulo",          // deve bater com a URL da rota no frontend
   icon: "NomeDoIconeLucide",        // string — mapeada para componente no frontend
+  permissions: [
+    { slug: "view",  name: "Visualizar" },
+    { slug: "edit",  name: "Editar" },
+    { slug: "admin", name: "Administrar" },
+  ],
+  groups: [
+    {
+      slug: "slug-do-modulo-visualizador",
+      name: "Nome do Módulo — Visualizador",
+      description: "Acesso de visualização.",
+      permissions: ["view"],
+    },
+    {
+      slug: "slug-do-modulo-administrador",
+      name: "Nome do Módulo — Administrador",
+      description: "Acesso completo.",
+      permissions: ["view", "edit", "admin"],
+    },
+  ],
 },
 ```
 
-Após editar, rodar `bun run db:seed`.
+Após editar, rodar `bun run db:seed` (idempotente — pode ser re-executado sem duplicar dados).
 
 ---
 
@@ -693,22 +736,22 @@ src/
     ├── modules/
     │   ├── service.test.ts
     │   └── index.test.ts
-    └── org/
-        ├── agencies/
-        │   ├── service.test.ts
-        │   └── index.test.ts
-        ├── sectors/
-        │   ├── service.test.ts
-        │   ├── index.test.ts
-        │   └── areas/
-        │       ├── service.test.ts
-        │       └── index.test.ts
-        ├── job-functions/
-        │   ├── service.test.ts
-        │   └── index.test.ts
-        └── user-profiles/
-            ├── service.test.ts
-            └── index.test.ts
+    ├── org/
+    │   ├── agencies/
+    │   │   ├── service.test.ts
+    │   │   └── index.test.ts
+    │   ├── sectors/
+    │   │   ├── service.test.ts
+    │   │   ├── index.test.ts
+    │   │   └── areas/
+    │   │       ├── service.test.ts
+    │   │       └── index.test.ts
+    │   ├── job-functions/
+    │   │   ├── service.test.ts
+    │   │   └── index.test.ts
+    │   └── user-profiles/
+    │       ├── service.test.ts
+    │       └── index.test.ts
 ```
 
 Cada feature tem dois arquivos de teste co-localizados com o código: `service.test.ts` e `index.test.ts`.
@@ -845,7 +888,7 @@ describe("MinhaController", () => {
 
 ### Fixtures (`src/tests/helpers/fixtures.ts`)
 
-Exporta fábricas para todos os domínios: `makeModule`, `makeAgency`, `makeSector`, `makeArea`, `makeJobFunction`, `makeUserProfile`, `makeUser`, `makeSession`, `makeAdminSession`.
+Exporta fábricas para todos os domínios: `makeModule`, `makeGroup`, `makePermission`, `makeAgency`, `makeSector`, `makeArea`, `makeJobFunction`, `makeUserProfile`, `makeUser`, `makeSession`, `makeAdminSession`.
 
 Todas aceitam `overrides` parciais:
 
@@ -883,7 +926,14 @@ import { betterAuthPlugin } from "@/http/plugins/better-auth";
 - **`users` não é re-exportado de `schema/index.ts`** — quando um service precisar da tabela `users`, importar diretamente: `import { users } from "@/db/schema/auth-schema"`
 - **2FA é somente TOTP** — não configurar OTP por e-mail (plugin não está ativo)
 - **Módulos não são criados/editados/excluídos por admins** — apenas seedados por devs e listados via API
-- **Módulos não possuem `isActive`** — acesso é controlado exclusivamente via grupos (`group_modules`)
+- **Módulos não possuem `isActive`** — acesso é controlado exclusivamente via permissões (`group_permissions`)
+- **Módulos, permissões e grupos não possuem endpoints de criação/edição/deleção via API** — são gerenciados exclusivamente pelo seed
 - **Catálogos organizacionais não possuem `isActive`** — a exclusão dos catálogos é bloqueada com `409 Conflict` quando houver usuários vinculados via `user_profiles`
 - **DELETE com vínculo via `user_profiles`**: verificar `userProfiles.<entityId>` antes de deletar; para setores, verificar também usuários vinculados às áreas do setor via `inArray(userProfiles.areaId, areaIds)`
 - **`modulesRelations` é definida em `rbac-schema.ts`**, não em `modules-schema.ts` — evita dependência circular (modules-schema não pode importar rbac-schema que importa modules-schema)
+- **`createUpdateSchema` com overrides explícitos NÃO adiciona `.optional()` automaticamente** — ao sobrescrever um campo em `createUpdateSchema`, sempre adicionar `.optional()` manualmente: `z.string().min(2).optional()`. Sem isso, o campo se torna obrigatório mesmo em PATCH, causando `422`.
+- **Conflito de parâmetros de rota (memoirist)**: todos os segmentos wildcard no mesmo nível de profundidade DEVEM usar o mesmo nome — nunca misturar `/:slug`, `/:id`, `/:entidadeId` no mesmo nível dentro de um controller.
+- **POST retornando 201**: para retornar status 201, usar o `status` do contexto Elysia, não o importado de `"elysia"`: `async ({ body, status }) => status(201, await Service.create(body))`.
+- **`numeric` columns no Drizzle**: retornam `string` no TypeScript — no model usar `z.coerce.string().nullable().optional()` para overrides.
+- **`date` columns sem `mode`**: retornam `string` (YYYY-MM-DD) por padrão — não precisa de `mode: "string"` explícito.
+- **Testes de service com `db.transaction()`**: o mock de `tx` dentro da transaction precisa retornar um objeto com os métodos encadeados, não a função mock diretamente: `transaction: mock(async (fn) => fn({ delete: mock(() => ...), insert: mock(() => ...) }))`.

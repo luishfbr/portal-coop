@@ -7,16 +7,14 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table"
-import { ChevronDownIcon, ChevronUpIcon, LayoutDashboard, MoreHorizontalIcon, Users } from "lucide-react"
+import { ChevronDownIcon, ChevronUpIcon, KeyRound, MoreHorizontalIcon, Users } from "lucide-react"
 import { useEffect, useState } from "react"
-import { type Group, useGroupModules, useGroupUsers } from "@/hooks/use-groups"
-import { useModulesAdmin } from "@/hooks/use-modules-admin"
+import { type Group, useGroupPermissions, useGroupUsers } from "@/hooks/use-groups"
 import { authClient } from "@/lib/auth-client"
-import type { GroupType } from "@/lib/validations"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { CardFrame } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { DeleteAlert } from "@/components/ui/delete-alert"
 import {
   Dialog,
   DialogContent,
@@ -29,7 +27,6 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { LoadingButton } from "@/components/ui/loading-button"
@@ -43,67 +40,27 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { useQuery } from "@tanstack/react-query"
-import { GrupoEditButton } from "./grupo-form"
 
 declare module "@tanstack/react-table" {
   interface TableMeta<_TData extends RowData> {
-    updateGroup: (args: { id: string; data: GroupType }) => Promise<unknown>
-    updatingGroup: boolean
-    removeGroup: (id: string) => Promise<unknown>
-    removingGroup: boolean
-    setGroupModules: (args: { groupId: string; moduleIds: string[] }) => Promise<unknown>
-    settingGroupModules: boolean
     setGroupUsers: (args: { groupId: string; userIds: string[] }) => Promise<unknown>
     settingGroupUsers: boolean
   }
 }
 
-// ── Dialog: Gerenciar Módulos ─────────────────────────────────────────────────
+// ── Dialog: Ver Permissões (read-only) ────────────────────────────────────────
 
-function GerenciarModulosDialog({
-  group,
-  setGroupModules,
-  settingGroupModules,
-}: {
-  group: Group
-  setGroupModules: (args: { groupId: string; moduleIds: string[] }) => Promise<unknown>
-  settingGroupModules: boolean
-}) {
+function VerPermissoesDialog({ group }: { group: Group }) {
   const [open, setOpen] = useState(false)
-  const { modules, fetchingModules } = useModulesAdmin()
-  const { groupModules, fetchingGroupModules } = useGroupModules(open ? group.id : null)
+  const { groupPermissions, fetchingGroupPermissions } = useGroupPermissions(open ? group.id : null)
 
-  const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [initialized, setInitialized] = useState(false)
-
-  useEffect(() => {
-    if (!open) {
-      setInitialized(false)
-      return
-    }
-    if (groupModules && !initialized) {
-      setSelected(new Set(groupModules.map((m) => m.id)))
-      setInitialized(true)
-    }
-  }, [open, groupModules, initialized])
-
-  function toggle(id: string) {
-    setSelected((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  const formId = `grupo-modulos-form-${group.id}`
-
-  async function handleSave() {
-    await setGroupModules({ groupId: group.id, moduleIds: Array.from(selected) })
-    setOpen(false)
-  }
-
-  const loading = fetchingModules || fetchingGroupModules
+  const permissionsByModule = groupPermissions?.reduce<Record<string, string[]>>(
+    (acc, perm) => {
+      ;(acc[perm.moduleSlug] ??= []).push(perm.name)
+      return acc
+    },
+    {},
+  )
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -113,60 +70,46 @@ function GerenciarModulosDialog({
             variant="ghost"
             className="flex w-full flex-row items-center justify-start gap-4"
           >
-            <LayoutDashboard />
-            Gerenciar Módulos
+            <KeyRound />
+            Ver Permissões
           </Button>
         }
       />
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Módulos — {group.name}</DialogTitle>
+          <DialogTitle>Permissões — {group.name}</DialogTitle>
           <DialogDescription>
-            Selecione quais módulos este grupo pode acessar.
+            Permissões concedidas a este grupo, agrupadas por módulo.
           </DialogDescription>
         </DialogHeader>
-        <form
-          id={formId}
-          onSubmit={(e) => {
-            e.preventDefault()
-            void handleSave()
-          }}
-        />
-        <div className="flex flex-col gap-2 py-2">
-          {loading ? (
-            Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-8 w-full" />
+        <div className="flex flex-col gap-3 py-2">
+          {fetchingGroupPermissions ? (
+            Array.from({ length: 2 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
             ))
+          ) : !permissionsByModule || Object.keys(permissionsByModule).length === 0 ? (
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              Este grupo não possui permissões.
+            </p>
           ) : (
-            (modules ?? []).map((mod) => (
-              <label
-                key={mod.id}
-                className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 hover:bg-accent"
-              >
-                <Checkbox
-                  checked={selected.has(mod.id)}
-                  onCheckedChange={() => toggle(mod.id)}
-                />
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">{mod.name}</span>
-                  {mod.description && (
-                    <span className="text-xs text-muted-foreground">{mod.description}</span>
-                  )}
+            Object.entries(permissionsByModule).map(([moduleSlug, perms]) => (
+              <div key={moduleSlug} className="rounded-md border p-3">
+                <p className="mb-2 text-sm font-medium">{moduleSlug}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {perms.map((p) => (
+                    <Badge key={p} variant="secondary" className="text-xs">
+                      {p}
+                    </Badge>
+                  ))}
                 </div>
-              </label>
+              </div>
             ))
           )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancelar
+            Fechar
           </Button>
-          <LoadingButton
-            form={formId}
-            label="Salvar"
-            loading={settingGroupModules}
-            disabled={settingGroupModules}
-          />
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -317,16 +260,7 @@ function GerenciarUsuariosDialog({
 // ── Cell de ações ─────────────────────────────────────────────────────────────
 
 function ActionsCell({ group, table }: { group: Group; table: ReturnType<typeof useReactTable<Group>> }) {
-  const {
-    updateGroup,
-    updatingGroup,
-    removeGroup,
-    removingGroup,
-    setGroupModules,
-    settingGroupModules,
-    setGroupUsers,
-    settingGroupUsers,
-  } = table.options.meta!
+  const { setGroupUsers, settingGroupUsers } = table.options.meta!
 
   return (
     <div className="text-end">
@@ -340,27 +274,11 @@ function ActionsCell({ group, table }: { group: Group; table: ReturnType<typeof 
           }
         />
         <DropdownMenuContent align="end">
-          <GrupoEditButton
-            defaultValues={{ name: group.name, description: group.description ?? "" }}
-            onSubmit={(data) => updateGroup({ id: group.id, data })}
-            loading={updatingGroup}
-          />
-          <GerenciarModulosDialog
-            group={group}
-            setGroupModules={setGroupModules}
-            settingGroupModules={settingGroupModules}
-          />
+          <VerPermissoesDialog group={group} />
           <GerenciarUsuariosDialog
             group={group}
             setGroupUsers={setGroupUsers}
             settingGroupUsers={settingGroupUsers}
-          />
-          <DropdownMenuSeparator />
-          <DeleteAlert
-            variant="destructive-outline"
-            disabled={removingGroup}
-            onAccept={() => removeGroup(group.id)}
-            label="Excluir grupo"
           />
         </DropdownMenuContent>
       </DropdownMenu>
@@ -402,22 +320,10 @@ const columns: ColumnDef<Group>[] = [
 
 export function GruposTable({
   groups,
-  updateGroup,
-  updatingGroup,
-  removeGroup,
-  removingGroup,
-  setGroupModules,
-  settingGroupModules,
   setGroupUsers,
   settingGroupUsers,
 }: {
   groups: Group[] | undefined
-  updateGroup: (args: { id: string; data: GroupType }) => Promise<unknown>
-  updatingGroup: boolean
-  removeGroup: (id: string) => Promise<unknown>
-  removingGroup: boolean
-  setGroupModules: (args: { groupId: string; moduleIds: string[] }) => Promise<unknown>
-  settingGroupModules: boolean
   setGroupUsers: (args: { groupId: string; userIds: string[] }) => Promise<unknown>
   settingGroupUsers: boolean
 }) {
@@ -429,16 +335,7 @@ export function GruposTable({
     enableSortingRemoval: false,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    meta: {
-      updateGroup,
-      updatingGroup,
-      removeGroup,
-      removingGroup,
-      setGroupModules,
-      settingGroupModules,
-      setGroupUsers,
-      settingGroupUsers,
-    },
+    meta: { setGroupUsers, settingGroupUsers },
     onSortingChange: setSorting,
     state: { sorting },
   })

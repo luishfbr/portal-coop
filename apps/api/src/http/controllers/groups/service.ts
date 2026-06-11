@@ -1,47 +1,15 @@
 import { status } from "elysia";
 import { eq, getTableColumns } from "drizzle-orm";
 import { db } from "@/db/client";
-import { groups, groupModules, userGroups, modules } from "@/db/schema";
+import { groups, permissions, groupPermissions, userGroups, modules } from "@/db/schema";
 import { users } from "@/db/schema/auth-schema";
-import type { CreateGroup, UpdateGroup } from "./model";
 
 export abstract class GroupsService {
   static findAll() {
     return db.query.groups.findMany();
   }
 
-  static async create(data: CreateGroup) {
-    const [group] = await db.insert(groups).values(data).returning();
-    return group;
-  }
-
-  static async update(id: string, data: UpdateGroup) {
-    const exists = await db.query.groups.findFirst({
-      where: eq(groups.id, id),
-      columns: { id: true },
-    });
-    if (!exists) return status(404, { message: "Group not found" });
-
-    const [updated] = await db
-      .update(groups)
-      .set(data)
-      .where(eq(groups.id, id))
-      .returning();
-    return updated;
-  }
-
-  static async remove(id: string) {
-    const exists = await db.query.groups.findFirst({
-      where: eq(groups.id, id),
-      columns: { id: true },
-    });
-    if (!exists) return status(404, { message: "Group not found" });
-
-    await db.delete(groups).where(eq(groups.id, id));
-    return { deleted: true };
-  }
-
-  static async findModules(groupId: string) {
+  static async findPermissions(groupId: string) {
     const exists = await db.query.groups.findFirst({
       where: eq(groups.id, groupId),
       columns: { id: true },
@@ -49,28 +17,11 @@ export abstract class GroupsService {
     if (!exists) return status(404, { message: "Group not found" });
 
     return db
-      .selectDistinct(getTableColumns(modules))
-      .from(modules)
-      .innerJoin(groupModules, eq(groupModules.moduleId, modules.id))
-      .where(eq(groupModules.groupId, groupId));
-  }
-
-  static async setModules(groupId: string, moduleIds: string[]) {
-    const exists = await db.query.groups.findFirst({
-      where: eq(groups.id, groupId),
-      columns: { id: true },
-    });
-    if (!exists) return status(404, { message: "Group not found" });
-
-    return db.transaction(async (tx) => {
-      await tx.delete(groupModules).where(eq(groupModules.groupId, groupId));
-      if (moduleIds.length > 0) {
-        await tx
-          .insert(groupModules)
-          .values(moduleIds.map((moduleId) => ({ groupId, moduleId })));
-      }
-      return { updated: true };
-    });
+      .select({ ...getTableColumns(permissions), moduleSlug: modules.slug })
+      .from(permissions)
+      .innerJoin(modules, eq(modules.id, permissions.moduleId))
+      .innerJoin(groupPermissions, eq(groupPermissions.permissionId, permissions.id))
+      .where(eq(groupPermissions.groupId, groupId));
   }
 
   static async findUsers(groupId: string) {

@@ -13,6 +13,7 @@ export const groups = pgTable("groups", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => randomUUIDv7()),
+  slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   description: text("description"),
   createdAt: timestamp("created_at")
@@ -24,8 +25,33 @@ export const groups = pgTable("groups", {
     .$onUpdate(() => new Date()),
 });
 
-export const groupModules = pgTable(
-  "group_modules",
+export const permissions = pgTable(
+  "permissions",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => randomUUIDv7()),
+    moduleId: text("module_id")
+      .notNull()
+      .references(() => modules.id, { onDelete: "cascade" }),
+    slug: text("slug").notNull(),
+    name: text("name").notNull(),
+    description: text("description"),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .$defaultFn(() => new Date())
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    uniqueIndex("uq_permissions_module_slug").on(table.moduleId, table.slug),
+  ]
+);
+
+export const groupPermissions = pgTable(
+  "group_permissions",
   {
     id: text("id")
       .primaryKey()
@@ -33,15 +59,15 @@ export const groupModules = pgTable(
     groupId: text("group_id")
       .notNull()
       .references(() => groups.id, { onDelete: "cascade" }),
-    moduleId: text("module_id")
+    permissionId: text("permission_id")
       .notNull()
-      .references(() => modules.id, { onDelete: "cascade" }),
+      .references(() => permissions.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at")
       .notNull()
       .$defaultFn(() => new Date()),
   },
   (table) => [
-    uniqueIndex("uq_group_modules").on(table.groupId, table.moduleId),
+    uniqueIndex("uq_group_permissions").on(table.groupId, table.permissionId),
   ]
 );
 
@@ -66,23 +92,32 @@ export const userGroups = pgTable(
   ]
 );
 
+// defined here (not modules-schema.ts) to avoid circular dependency
 export const modulesRelations = relations(modules, ({ many }) => ({
-  groupModules: many(groupModules),
+  permissions: many(permissions),
 }));
 
 export const groupsRelations = relations(groups, ({ many }) => ({
-  groupModules: many(groupModules),
+  groupPermissions: many(groupPermissions),
   userGroups: many(userGroups),
 }));
 
-export const groupModulesRelations = relations(groupModules, ({ one }) => ({
+export const permissionsRelations = relations(permissions, ({ one, many }) => ({
+  module: one(modules, {
+    fields: [permissions.moduleId],
+    references: [modules.id],
+  }),
+  groupPermissions: many(groupPermissions),
+}));
+
+export const groupPermissionsRelations = relations(groupPermissions, ({ one }) => ({
   group: one(groups, {
-    fields: [groupModules.groupId],
+    fields: [groupPermissions.groupId],
     references: [groups.id],
   }),
-  module: one(modules, {
-    fields: [groupModules.moduleId],
-    references: [modules.id],
+  permission: one(permissions, {
+    fields: [groupPermissions.permissionId],
+    references: [permissions.id],
   }),
 }));
 

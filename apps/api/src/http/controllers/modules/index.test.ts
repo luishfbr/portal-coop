@@ -59,6 +59,30 @@ describe("Modules Controller", () => {
     });
   });
 
+  describe("GET /api/v1/modules/my-permissions", () => {
+    test("returns 401 when unauthenticated", async () => {
+      mockGetSession.mockResolvedValueOnce(null);
+      const res = await get("/api/v1/modules/my-permissions");
+      expect(res.status).toBe(401);
+    });
+
+    test("returns 200 with permission map for authenticated user", async () => {
+      mockGetSession.mockResolvedValueOnce(USER_SESSION);
+      spyOn(ModulesService, "findMyPermissions").mockResolvedValue({
+        "dashboards-internos": ["view"],
+      });
+      const res = await get("/api/v1/modules/my-permissions");
+      expect(res.status).toBe(200);
+    });
+
+    test("delegates to ModulesService.findMyPermissions with user id", async () => {
+      mockGetSession.mockResolvedValueOnce(USER_SESSION);
+      const spy = spyOn(ModulesService, "findMyPermissions").mockResolvedValue({});
+      await get("/api/v1/modules/my-permissions");
+      expect(spy).toHaveBeenCalledWith(USER_SESSION.user.id);
+    });
+  });
+
   describe("GET /api/v1/modules/active", () => {
     test("returns 401 when unauthenticated", async () => {
       mockGetSession.mockResolvedValueOnce(null);

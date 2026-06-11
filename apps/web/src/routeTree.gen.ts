@@ -18,12 +18,9 @@ import { Route as AuthPathlessLayoutRedefinirSenhaRouteImport } from './routes/_
 import { Route as AuthPathlessLayoutRedefinicaoDeSenhaRouteImport } from './routes/_auth/_pathlessLayout/redefinicao-de-senha'
 import { Route as AuthPathlessLayoutLoginRouteImport } from './routes/_auth/_pathlessLayout/login'
 import { Route as AuthPathlessLayoutHabilitar2faRouteImport } from './routes/_auth/_pathlessLayout/habilitar-2fa'
-import { Route as DashboardPathlessLayoutDashboardsInternosPathlessLayoutRouteImport } from './routes/_dashboard/_pathlessLayout/dashboards-internos/_pathlessLayout'
+import { Route as DashboardPathlessLayoutPortalDeRelatoriosIndexRouteImport } from './routes/_dashboard/_pathlessLayout/portal-de-relatorios/index'
 import { Route as DashboardPathlessLayoutAdministracaoPathlessLayoutRouteImport } from './routes/_dashboard/_pathlessLayout/administracao/_pathlessLayout'
-import { Route as DashboardPathlessLayoutDashboardsInternosPathlessLayoutIndexRouteImport } from './routes/_dashboard/_pathlessLayout/dashboards-internos/_pathlessLayout/index'
 import { Route as DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRouteImport } from './routes/_dashboard/_pathlessLayout/administracao/_pathlessLayout/index'
-import { Route as DashboardPathlessLayoutDashboardsInternosPathlessLayoutFormatarPlanilhaRouteImport } from './routes/_dashboard/_pathlessLayout/dashboards-internos/_pathlessLayout/formatar-planilha'
-import { Route as DashboardPathlessLayoutDashboardsInternosPathlessLayoutAtualizarRelatoriosRouteImport } from './routes/_dashboard/_pathlessLayout/dashboards-internos/_pathlessLayout/atualizar-relatorios'
 import { Route as DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRouteImport } from './routes/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuarios'
 import { Route as DashboardPathlessLayoutAdministracaoPathlessLayoutSetoresRouteImport } from './routes/_dashboard/_pathlessLayout/administracao/_pathlessLayout/setores'
 import { Route as DashboardPathlessLayoutAdministracaoPathlessLayoutModulosRouteImport } from './routes/_dashboard/_pathlessLayout/administracao/_pathlessLayout/modulos'
@@ -80,10 +77,10 @@ const AuthPathlessLayoutHabilitar2faRoute =
     path: '/habilitar-2fa',
     getParentRoute: () => AuthPathlessLayoutRoute,
   } as any)
-const DashboardPathlessLayoutDashboardsInternosPathlessLayoutRoute =
-  DashboardPathlessLayoutDashboardsInternosPathlessLayoutRouteImport.update({
-    id: '/dashboards-internos/_pathlessLayout',
-    path: '/dashboards-internos',
+const DashboardPathlessLayoutPortalDeRelatoriosIndexRoute =
+  DashboardPathlessLayoutPortalDeRelatoriosIndexRouteImport.update({
+    id: '/portal-de-relatorios/',
+    path: '/portal-de-relatorios/',
     getParentRoute: () => DashboardPathlessLayoutRoute,
   } as any)
 const DashboardPathlessLayoutAdministracaoPathlessLayoutRoute =
@@ -92,15 +89,6 @@ const DashboardPathlessLayoutAdministracaoPathlessLayoutRoute =
     path: '/administracao',
     getParentRoute: () => DashboardPathlessLayoutRoute,
   } as any)
-const DashboardPathlessLayoutDashboardsInternosPathlessLayoutIndexRoute =
-  DashboardPathlessLayoutDashboardsInternosPathlessLayoutIndexRouteImport.update(
-    {
-      id: '/',
-      path: '/',
-      getParentRoute: () =>
-        DashboardPathlessLayoutDashboardsInternosPathlessLayoutRoute,
-    } as any,
-  )
 const DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRoute =
   DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRouteImport.update({
     id: '/',
@@ -108,24 +96,6 @@ const DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRoute =
     getParentRoute: () =>
       DashboardPathlessLayoutAdministracaoPathlessLayoutRoute,
   } as any)
-const DashboardPathlessLayoutDashboardsInternosPathlessLayoutFormatarPlanilhaRoute =
-  DashboardPathlessLayoutDashboardsInternosPathlessLayoutFormatarPlanilhaRouteImport.update(
-    {
-      id: '/formatar-planilha',
-      path: '/formatar-planilha',
-      getParentRoute: () =>
-        DashboardPathlessLayoutDashboardsInternosPathlessLayoutRoute,
-    } as any,
-  )
-const DashboardPathlessLayoutDashboardsInternosPathlessLayoutAtualizarRelatoriosRoute =
-  DashboardPathlessLayoutDashboardsInternosPathlessLayoutAtualizarRelatoriosRouteImport.update(
-    {
-      id: '/atualizar-relatorios',
-      path: '/atualizar-relatorios',
-      getParentRoute: () =>
-        DashboardPathlessLayoutDashboardsInternosPathlessLayoutRoute,
-    } as any,
-  )
 const DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRoute =
   DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRouteImport.update({
     id: '/usuarios',
@@ -187,17 +157,14 @@ export interface FileRoutesByFullPath {
   '/verificar-2fa': typeof AuthPathlessLayoutVerificar2faRoute
   '/pagina-inicial': typeof DashboardPathlessLayoutPaginaInicialRoute
   '/administracao': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutRouteWithChildren
-  '/dashboards-internos': typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutRouteWithChildren
+  '/portal-de-relatorios/': typeof DashboardPathlessLayoutPortalDeRelatoriosIndexRoute
   '/administracao/agencias': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutAgenciasRoute
   '/administracao/funcoes': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutFuncoesRoute
   '/administracao/grupos': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutGruposRoute
   '/administracao/modulos': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutModulosRoute
   '/administracao/setores': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutSetoresRoute
   '/administracao/usuarios': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRoute
-  '/dashboards-internos/atualizar-relatorios': typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutAtualizarRelatoriosRoute
-  '/dashboards-internos/formatar-planilha': typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutFormatarPlanilhaRoute
   '/administracao/': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRoute
-  '/dashboards-internos/': typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutIndexRoute
   '/administracao/usuario/$userId': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRoute
 }
 export interface FileRoutesByTo {
@@ -208,16 +175,14 @@ export interface FileRoutesByTo {
   '/redefinir-senha': typeof AuthPathlessLayoutRedefinirSenhaRoute
   '/verificar-2fa': typeof AuthPathlessLayoutVerificar2faRoute
   '/pagina-inicial': typeof DashboardPathlessLayoutPaginaInicialRoute
+  '/portal-de-relatorios': typeof DashboardPathlessLayoutPortalDeRelatoriosIndexRoute
   '/administracao/agencias': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutAgenciasRoute
   '/administracao/funcoes': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutFuncoesRoute
   '/administracao/grupos': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutGruposRoute
   '/administracao/modulos': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutModulosRoute
   '/administracao/setores': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutSetoresRoute
   '/administracao/usuarios': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRoute
-  '/dashboards-internos/atualizar-relatorios': typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutAtualizarRelatoriosRoute
-  '/dashboards-internos/formatar-planilha': typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutFormatarPlanilhaRoute
   '/administracao': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRoute
-  '/dashboards-internos': typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutIndexRoute
   '/administracao/usuario/$userId': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRoute
 }
 export interface FileRoutesById {
@@ -232,17 +197,14 @@ export interface FileRoutesById {
   '/_auth/_pathlessLayout/verificar-2fa': typeof AuthPathlessLayoutVerificar2faRoute
   '/_dashboard/_pathlessLayout/pagina-inicial': typeof DashboardPathlessLayoutPaginaInicialRoute
   '/_dashboard/_pathlessLayout/administracao/_pathlessLayout': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutRouteWithChildren
-  '/_dashboard/_pathlessLayout/dashboards-internos/_pathlessLayout': typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutRouteWithChildren
+  '/_dashboard/_pathlessLayout/portal-de-relatorios/': typeof DashboardPathlessLayoutPortalDeRelatoriosIndexRoute
   '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/agencias': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutAgenciasRoute
   '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/funcoes': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutFuncoesRoute
   '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/grupos': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutGruposRoute
   '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/modulos': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutModulosRoute
   '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/setores': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutSetoresRoute
   '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuarios': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuariosRoute
-  '/_dashboard/_pathlessLayout/dashboards-internos/_pathlessLayout/atualizar-relatorios': typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutAtualizarRelatoriosRoute
-  '/_dashboard/_pathlessLayout/dashboards-internos/_pathlessLayout/formatar-planilha': typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutFormatarPlanilhaRoute
   '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRoute
-  '/_dashboard/_pathlessLayout/dashboards-internos/_pathlessLayout/': typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutIndexRoute
   '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuario/$userId': typeof DashboardPathlessLayoutAdministracaoPathlessLayoutUsuarioUserIdRoute
 }
 export interface FileRouteTypes {
@@ -256,17 +218,14 @@ export interface FileRouteTypes {
     | '/verificar-2fa'
     | '/pagina-inicial'
     | '/administracao'
-    | '/dashboards-internos'
+    | '/portal-de-relatorios/'
     | '/administracao/agencias'
     | '/administracao/funcoes'
     | '/administracao/grupos'
     | '/administracao/modulos'
     | '/administracao/setores'
     | '/administracao/usuarios'
-    | '/dashboards-internos/atualizar-relatorios'
-    | '/dashboards-internos/formatar-planilha'
     | '/administracao/'
-    | '/dashboards-internos/'
     | '/administracao/usuario/$userId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -277,16 +236,14 @@ export interface FileRouteTypes {
     | '/redefinir-senha'
     | '/verificar-2fa'
     | '/pagina-inicial'
+    | '/portal-de-relatorios'
     | '/administracao/agencias'
     | '/administracao/funcoes'
     | '/administracao/grupos'
     | '/administracao/modulos'
     | '/administracao/setores'
     | '/administracao/usuarios'
-    | '/dashboards-internos/atualizar-relatorios'
-    | '/dashboards-internos/formatar-planilha'
     | '/administracao'
-    | '/dashboards-internos'
     | '/administracao/usuario/$userId'
   id:
     | '__root__'
@@ -300,17 +257,14 @@ export interface FileRouteTypes {
     | '/_auth/_pathlessLayout/verificar-2fa'
     | '/_dashboard/_pathlessLayout/pagina-inicial'
     | '/_dashboard/_pathlessLayout/administracao/_pathlessLayout'
-    | '/_dashboard/_pathlessLayout/dashboards-internos/_pathlessLayout'
+    | '/_dashboard/_pathlessLayout/portal-de-relatorios/'
     | '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/agencias'
     | '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/funcoes'
     | '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/grupos'
     | '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/modulos'
     | '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/setores'
     | '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuarios'
-    | '/_dashboard/_pathlessLayout/dashboards-internos/_pathlessLayout/atualizar-relatorios'
-    | '/_dashboard/_pathlessLayout/dashboards-internos/_pathlessLayout/formatar-planilha'
     | '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/'
-    | '/_dashboard/_pathlessLayout/dashboards-internos/_pathlessLayout/'
     | '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuario/$userId'
   fileRoutesById: FileRoutesById
 }
@@ -385,11 +339,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthPathlessLayoutHabilitar2faRouteImport
       parentRoute: typeof AuthPathlessLayoutRoute
     }
-    '/_dashboard/_pathlessLayout/dashboards-internos/_pathlessLayout': {
-      id: '/_dashboard/_pathlessLayout/dashboards-internos/_pathlessLayout'
-      path: '/dashboards-internos'
-      fullPath: '/dashboards-internos'
-      preLoaderRoute: typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutRouteImport
+    '/_dashboard/_pathlessLayout/portal-de-relatorios/': {
+      id: '/_dashboard/_pathlessLayout/portal-de-relatorios/'
+      path: '/portal-de-relatorios'
+      fullPath: '/portal-de-relatorios/'
+      preLoaderRoute: typeof DashboardPathlessLayoutPortalDeRelatoriosIndexRouteImport
       parentRoute: typeof DashboardPathlessLayoutRoute
     }
     '/_dashboard/_pathlessLayout/administracao/_pathlessLayout': {
@@ -399,33 +353,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutRouteImport
       parentRoute: typeof DashboardPathlessLayoutRoute
     }
-    '/_dashboard/_pathlessLayout/dashboards-internos/_pathlessLayout/': {
-      id: '/_dashboard/_pathlessLayout/dashboards-internos/_pathlessLayout/'
-      path: '/'
-      fullPath: '/dashboards-internos/'
-      preLoaderRoute: typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutIndexRouteImport
-      parentRoute: typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutRoute
-    }
     '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/': {
       id: '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/'
       path: '/'
       fullPath: '/administracao/'
       preLoaderRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutIndexRouteImport
       parentRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutRoute
-    }
-    '/_dashboard/_pathlessLayout/dashboards-internos/_pathlessLayout/formatar-planilha': {
-      id: '/_dashboard/_pathlessLayout/dashboards-internos/_pathlessLayout/formatar-planilha'
-      path: '/formatar-planilha'
-      fullPath: '/dashboards-internos/formatar-planilha'
-      preLoaderRoute: typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutFormatarPlanilhaRouteImport
-      parentRoute: typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutRoute
-    }
-    '/_dashboard/_pathlessLayout/dashboards-internos/_pathlessLayout/atualizar-relatorios': {
-      id: '/_dashboard/_pathlessLayout/dashboards-internos/_pathlessLayout/atualizar-relatorios'
-      path: '/atualizar-relatorios'
-      fullPath: '/dashboards-internos/atualizar-relatorios'
-      preLoaderRoute: typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutAtualizarRelatoriosRouteImport
-      parentRoute: typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutRoute
     }
     '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuarios': {
       id: '/_dashboard/_pathlessLayout/administracao/_pathlessLayout/usuarios'
@@ -535,31 +468,10 @@ const DashboardPathlessLayoutAdministracaoPathlessLayoutRouteWithChildren =
     DashboardPathlessLayoutAdministracaoPathlessLayoutRouteChildren,
   )
 
-interface DashboardPathlessLayoutDashboardsInternosPathlessLayoutRouteChildren {
-  DashboardPathlessLayoutDashboardsInternosPathlessLayoutAtualizarRelatoriosRoute: typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutAtualizarRelatoriosRoute
-  DashboardPathlessLayoutDashboardsInternosPathlessLayoutFormatarPlanilhaRoute: typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutFormatarPlanilhaRoute
-  DashboardPathlessLayoutDashboardsInternosPathlessLayoutIndexRoute: typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutIndexRoute
-}
-
-const DashboardPathlessLayoutDashboardsInternosPathlessLayoutRouteChildren: DashboardPathlessLayoutDashboardsInternosPathlessLayoutRouteChildren =
-  {
-    DashboardPathlessLayoutDashboardsInternosPathlessLayoutAtualizarRelatoriosRoute:
-      DashboardPathlessLayoutDashboardsInternosPathlessLayoutAtualizarRelatoriosRoute,
-    DashboardPathlessLayoutDashboardsInternosPathlessLayoutFormatarPlanilhaRoute:
-      DashboardPathlessLayoutDashboardsInternosPathlessLayoutFormatarPlanilhaRoute,
-    DashboardPathlessLayoutDashboardsInternosPathlessLayoutIndexRoute:
-      DashboardPathlessLayoutDashboardsInternosPathlessLayoutIndexRoute,
-  }
-
-const DashboardPathlessLayoutDashboardsInternosPathlessLayoutRouteWithChildren =
-  DashboardPathlessLayoutDashboardsInternosPathlessLayoutRoute._addFileChildren(
-    DashboardPathlessLayoutDashboardsInternosPathlessLayoutRouteChildren,
-  )
-
 interface DashboardPathlessLayoutRouteChildren {
   DashboardPathlessLayoutPaginaInicialRoute: typeof DashboardPathlessLayoutPaginaInicialRoute
   DashboardPathlessLayoutAdministracaoPathlessLayoutRoute: typeof DashboardPathlessLayoutAdministracaoPathlessLayoutRouteWithChildren
-  DashboardPathlessLayoutDashboardsInternosPathlessLayoutRoute: typeof DashboardPathlessLayoutDashboardsInternosPathlessLayoutRouteWithChildren
+  DashboardPathlessLayoutPortalDeRelatoriosIndexRoute: typeof DashboardPathlessLayoutPortalDeRelatoriosIndexRoute
 }
 
 const DashboardPathlessLayoutRouteChildren: DashboardPathlessLayoutRouteChildren =
@@ -568,8 +480,8 @@ const DashboardPathlessLayoutRouteChildren: DashboardPathlessLayoutRouteChildren
       DashboardPathlessLayoutPaginaInicialRoute,
     DashboardPathlessLayoutAdministracaoPathlessLayoutRoute:
       DashboardPathlessLayoutAdministracaoPathlessLayoutRouteWithChildren,
-    DashboardPathlessLayoutDashboardsInternosPathlessLayoutRoute:
-      DashboardPathlessLayoutDashboardsInternosPathlessLayoutRouteWithChildren,
+    DashboardPathlessLayoutPortalDeRelatoriosIndexRoute:
+      DashboardPathlessLayoutPortalDeRelatoriosIndexRoute,
   }
 
 const DashboardPathlessLayoutRouteWithChildren =

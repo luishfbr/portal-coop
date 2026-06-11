@@ -30,7 +30,7 @@ import { groupsController } from "./index";
 import { GroupsService } from "./service";
 import {
   makeGroup,
-  makeModule,
+  makePermission,
   makeUser,
   makeAdminSession,
   makeSession,
@@ -68,90 +68,22 @@ describe("Groups Controller", () => {
     });
   });
 
-  describe("POST /api/v1/groups", () => {
-    test("returns 201 and creates group", async () => {
+  describe("GET /api/v1/groups/:id/permissions", () => {
+    test("returns 200 with permissions for admin", async () => {
       mockGetSession.mockResolvedValueOnce(ADMIN);
-      spyOn(GroupsService, "create").mockResolvedValue(makeGroup());
-      expect((await req("POST", "/api/v1/groups", { name: "Test" })).status).toBe(200);
-    });
-
-    test("passes body to GroupsService.create", async () => {
-      mockGetSession.mockResolvedValueOnce(ADMIN);
-      const spy = spyOn(GroupsService, "create").mockResolvedValue(makeGroup());
-      await req("POST", "/api/v1/groups", { name: "Test Group" });
-      expect(spy).toHaveBeenCalledWith({ name: "Test Group" });
-    });
-  });
-
-  describe("PATCH /api/v1/groups/:id", () => {
-    test("returns 200 on successful update", async () => {
-      mockGetSession.mockResolvedValueOnce(ADMIN);
-      spyOn(GroupsService, "update").mockResolvedValue(makeGroup({ name: "New" }));
-      expect((await req("PATCH", "/api/v1/groups/group-1", { name: "New Name" })).status).toBe(200);
+      spyOn(GroupsService, "findPermissions").mockResolvedValue([
+        { ...makePermission(), moduleSlug: "test-module" },
+      ]);
+      expect((await req("GET", "/api/v1/groups/group-1/permissions")).status).toBe(200);
     });
 
     test("proxies 404 from service", async () => {
       mockGetSession.mockResolvedValueOnce(ADMIN);
       const { status } = await import("elysia");
-      spyOn(GroupsService, "update").mockResolvedValue(
+      spyOn(GroupsService, "findPermissions").mockResolvedValue(
         status(404, { message: "Group not found" }) as never
       );
-      expect((await req("PATCH", "/api/v1/groups/bad-id", { name: "New Name" })).status).toBe(404);
-    });
-  });
-
-  describe("DELETE /api/v1/groups/:id", () => {
-    test("returns 200 with { deleted: true }", async () => {
-      mockGetSession.mockResolvedValueOnce(ADMIN);
-      spyOn(GroupsService, "remove").mockResolvedValue({ deleted: true });
-      expect((await req("DELETE", "/api/v1/groups/group-1")).status).toBe(200);
-    });
-
-    test("proxies 404 from service", async () => {
-      mockGetSession.mockResolvedValueOnce(ADMIN);
-      const { status } = await import("elysia");
-      spyOn(GroupsService, "remove").mockResolvedValue(
-        status(404, { message: "Group not found" }) as never
-      );
-      expect((await req("DELETE", "/api/v1/groups/bad-id")).status).toBe(404);
-    });
-  });
-
-  describe("GET /api/v1/groups/:id/modules", () => {
-    test("returns 200 with modules for admin", async () => {
-      mockGetSession.mockResolvedValueOnce(ADMIN);
-      spyOn(GroupsService, "findModules").mockResolvedValue([makeModule()]);
-      expect((await req("GET", "/api/v1/groups/group-1/modules")).status).toBe(200);
-    });
-
-    test("proxies 404 from service", async () => {
-      mockGetSession.mockResolvedValueOnce(ADMIN);
-      const { status } = await import("elysia");
-      spyOn(GroupsService, "findModules").mockResolvedValue(
-        status(404, { message: "Group not found" }) as never
-      );
-      expect((await req("GET", "/api/v1/groups/bad-id/modules")).status).toBe(404);
-    });
-  });
-
-  describe("PUT /api/v1/groups/:id/modules", () => {
-    test("returns 200 on success", async () => {
-      mockGetSession.mockResolvedValueOnce(ADMIN);
-      spyOn(GroupsService, "setModules").mockResolvedValue({ updated: true });
-      expect(
-        (await req("PUT", "/api/v1/groups/group-1/modules", { moduleIds: ["m-1"] })).status
-      ).toBe(200);
-    });
-
-    test("proxies 404 from service", async () => {
-      mockGetSession.mockResolvedValueOnce(ADMIN);
-      const { status } = await import("elysia");
-      spyOn(GroupsService, "setModules").mockResolvedValue(
-        status(404, { message: "Group not found" }) as never
-      );
-      expect(
-        (await req("PUT", "/api/v1/groups/bad-id/modules", { moduleIds: ["m-1"] })).status
-      ).toBe(404);
+      expect((await req("GET", "/api/v1/groups/bad-id/permissions")).status).toBe(404);
     });
   });
 
