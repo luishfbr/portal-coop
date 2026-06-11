@@ -7,22 +7,10 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table"
-import { ChevronDownIcon, ChevronUpIcon, CircleCheck, CircleSlash, MoreHorizontalIcon, Pencil } from "lucide-react"
+import { ChevronDownIcon, ChevronUpIcon, MoreHorizontalIcon, Pencil } from "lucide-react"
 import { useState } from "react"
-import { cn } from "@/lib/utils"
 import type { JobFunction } from "@/hooks/use-job-functions"
 import type { CatalogType } from "@/lib/validations"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { CardFrame } from "@/components/ui/card"
 import { DeleteAlert } from "@/components/ui/delete-alert"
@@ -47,8 +35,6 @@ declare module "@tanstack/react-table" {
   interface TableMeta<_TData extends RowData> {
     updateJobFunction: (args: { id: string; data: CatalogType }) => Promise<unknown>
     updatingJobFunction: boolean
-    toggleJobFunction: (id: string) => Promise<unknown>
-    togglingJobFunction: boolean
     removeJobFunction: (id: string) => Promise<unknown>
     removingJobFunction: boolean
   }
@@ -58,35 +44,7 @@ const columns: ColumnDef<JobFunction>[] = [
   {
     accessorKey: "name",
     header: "Nome",
-    size: 200,
-  },
-  {
-    accessorKey: "description",
-    cell: ({ row }) => row.original.description ?? "—",
-    enableSorting: false,
-    header: "Descrição",
-    size: 280,
-  },
-  {
-    accessorKey: "isActive",
-    cell: ({ row }) => {
-      const active = row.original.isActive
-      return (
-        <Badge variant="outline">
-          <span
-            aria-hidden="true"
-            className={cn(
-              "size-1.5 rounded-full",
-              active ? "bg-emerald-500" : "bg-red-500"
-            )}
-          />
-          {active ? "Ativa" : "Inativa"}
-        </Badge>
-      )
-    },
-    enableSorting: false,
-    header: "Status",
-    size: 100,
+    size: 260,
   },
   {
     accessorKey: "createdAt",
@@ -107,8 +65,6 @@ const columns: ColumnDef<JobFunction>[] = [
       const {
         updateJobFunction,
         updatingJobFunction,
-        toggleJobFunction,
-        togglingJobFunction,
         removeJobFunction,
         removingJobFunction,
       } = table.options.meta!
@@ -117,8 +73,6 @@ const columns: ColumnDef<JobFunction>[] = [
           fn={row.original}
           updateJobFunction={updateJobFunction}
           updatingJobFunction={updatingJobFunction}
-          toggleJobFunction={toggleJobFunction}
-          togglingJobFunction={togglingJobFunction}
           removeJobFunction={removeJobFunction}
           removingJobFunction={removingJobFunction}
         />
@@ -135,54 +89,26 @@ function ActionsCell({
   fn,
   updateJobFunction,
   updatingJobFunction,
-  toggleJobFunction,
-  togglingJobFunction,
   removeJobFunction,
   removingJobFunction,
 }: {
   fn: JobFunction
   updateJobFunction: (args: { id: string; data: CatalogType }) => Promise<unknown>
   updatingJobFunction: boolean
-  toggleJobFunction: (id: string) => Promise<unknown>
-  togglingJobFunction: boolean
   removeJobFunction: (id: string) => Promise<unknown>
   removingJobFunction: boolean
 }) {
   const [editOpen, setEditOpen] = useState(false)
-  const [toggleOpen, setToggleOpen] = useState(false)
 
   return (
     <div className="text-end">
       <JobFunctionEditDialog
         open={editOpen}
         onOpenChange={setEditOpen}
-        defaultValues={{ name: fn.name, description: fn.description ?? "" }}
+        defaultValues={{ name: fn.name }}
         onSubmit={(data) => updateJobFunction({ id: fn.id, data })}
         loading={updatingJobFunction}
       />
-      <AlertDialog open={toggleOpen} onOpenChange={setToggleOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {fn.isActive ? "Desativar função" : "Ativar função"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {fn.isActive
-                ? `A função "${fn.name}" ficará indisponível para novos vínculos. Usuários já vinculados não serão afetados.`
-                : `A função "${fn.name}" voltará a estar disponível para vínculos.`}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={togglingJobFunction}
-              onClick={() => toggleJobFunction(fn.id)}
-            >
-              {fn.isActive ? "Desativar" : "Ativar"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
@@ -201,17 +127,6 @@ function ActionsCell({
             <Pencil />
             Editar
           </Button>
-          <Button
-            variant="ghost"
-            className={cn(
-              "flex w-full flex-row items-center justify-start gap-4",
-              fn.isActive && "text-destructive hover:text-destructive"
-            )}
-            onClick={() => setToggleOpen(true)}
-          >
-            {fn.isActive ? <CircleSlash /> : <CircleCheck />}
-            {fn.isActive ? "Desativar" : "Ativar"}
-          </Button>
           <DropdownMenuSeparator />
           <DeleteAlert
             variant="destructive-outline"
@@ -229,16 +144,12 @@ export function JobFunctionsTable({
   jobFunctions,
   updateJobFunction,
   updatingJobFunction,
-  toggleJobFunction,
-  togglingJobFunction,
   removeJobFunction,
   removingJobFunction,
 }: {
   jobFunctions: JobFunction[] | undefined
   updateJobFunction: (args: { id: string; data: CatalogType }) => Promise<unknown>
   updatingJobFunction: boolean
-  toggleJobFunction: (id: string) => Promise<unknown>
-  togglingJobFunction: boolean
   removeJobFunction: (id: string) => Promise<unknown>
   removingJobFunction: boolean
 }) {
@@ -252,7 +163,7 @@ export function JobFunctionsTable({
     enableSortingRemoval: false,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    meta: { updateJobFunction, updatingJobFunction, toggleJobFunction, togglingJobFunction, removeJobFunction, removingJobFunction },
+    meta: { updateJobFunction, updatingJobFunction, removeJobFunction, removingJobFunction },
     onSortingChange: setSorting,
     state: { sorting },
   })

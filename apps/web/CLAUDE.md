@@ -48,10 +48,11 @@ src/
 │               ├── index.tsx         # AdminHome — lista todas as ferramentas do admin
 │               ├── usuarios.tsx      # Gestão de usuários
 │               ├── usuario.$userId.tsx  # Edição de usuário (dados, status, senha, sessões, vínculo org)
-│               ├── modulos.tsx       # Ativar/desativar módulos do sistema
+│               ├── modulos.tsx       # Catálogo de módulos (somente leitura — acesso via grupos)
 │               ├── agencias.tsx      # CRUD de agências
 │               ├── setores.tsx       # CRUD de setores + áreas (expandable rows)
-│               └── funcoes.tsx       # CRUD de funções/cargos
+│               ├── funcoes.tsx       # CRUD de funções/cargos
+│               └── grupos.tsx        # CRUD de grupos RBAC
 │
 ├── components/
 │   ├── app-sidebar.tsx               # Sidebar principal — filtra módulos pelo status ativo do backend
@@ -66,7 +67,7 @@ src/
 │   │   │   ├── admin-home.tsx        # Página inicial do painel admin (grid de funcionalidades)
 │   │   │   ├── modulos/
 │   │   │   │   ├── modules-home.tsx
-│   │   │   │   └── modules-table.tsx
+│   │   │   │   └── modules-table.tsx  # Somente leitura — sem toggle
 │   │   │   ├── agencias/
 │   │   │   │   ├── agencies-home.tsx
 │   │   │   │   ├── agencies-table.tsx
@@ -81,6 +82,10 @@ src/
 │   │   │   │   ├── job-functions-table.tsx
 │   │   │   │   ├── job-function-form.tsx
 │   │   │   │   └── job-function-users-dialog.tsx  # Lista usuários com determinada função
+│   │   │   ├── grupos/
+│   │   │   │   ├── grupos-home.tsx
+│   │   │   │   ├── grupos-table.tsx  # Tabela com dialogs de módulos e usuários
+│   │   │   │   └── grupo-form.tsx    # Reutilizável: modo "create" e "edit"
 │   │   │   └── user/
 │   │   │       ├── user-home.tsx
 │   │   │       ├── users-table.tsx
@@ -105,10 +110,11 @@ src/
 │   ├── use-admin.ts          # Operações Better Auth (usuários, sessões, ban/unban)
 │   ├── use-mobile.ts         # Detecção de viewport mobile
 │   ├── use-active-modules.ts # GET /modules/active — slugs ativos para filtrar sidebar
-│   ├── use-modules-admin.ts  # GET /modules (todos) + PATCH toggle
-│   ├── use-agencies.ts       # CRUD /agencies — exporta tipo `Agency`
-│   ├── use-sectors.ts        # CRUD /sectors + CRUD /sectors/:id/areas — exporta tipos `Sector`, `Area`
-│   ├── use-job-functions.ts  # CRUD /job-functions
+│   ├── use-modules-admin.ts  # GET /modules (todos) — somente leitura, sem toggle
+│   ├── use-agencies.ts       # CRUD /agencies — exporta tipo `Agency` (sem isActive/description)
+│   ├── use-sectors.ts        # CRUD /sectors + /areas — exporta tipos `Sector`, `Area` (sem isActive/description)
+│   ├── use-job-functions.ts  # CRUD /job-functions (sem isActive/description)
+│   ├── use-groups.ts         # CRUD /groups + setGroupModules + setGroupUsers — exporta tipos `Group`, `GroupModule`, `GroupUser`
 │   └── use-org-profile.ts    # GET/PUT /users/:userId/org-profile
 │
 └── lib/
@@ -178,6 +184,85 @@ function RouteComponent() {
 ```
 
 > **Nunca editar** `routeTree.gen.ts` — é regenerado automaticamente pelo plugin Vite ao salvar qualquer arquivo de rota.
+
+---
+
+## Guards de Módulo (RBAC via grupos)
+
+Módulos marcados com `gated: true` em `modules-types.ts` exigem um **layout guard** que impede acesso direto via URL mesmo que o módulo não apareça na sidebar do usuário.
+
+### Padrão obrigatório para módulos `gated: true`
+
+Cada módulo gated deve ter um pathless layout intermediário que verifica se o usuário possui o módulo via `useActiveModules()`. A estrutura de pastas segue o mesmo padrão do guard de auth do dashboard:
+
+```
+routes/_dashboard/_pathlessLayout/<modulo>/
+├── _pathlessLayout.tsx       ← guard: verifica acesso ao módulo
+└── _pathlessLayout/          ← rotas do módulo (URLs não mudam)
+    ├── index.tsx
+    ├── sub-pagina-a.tsx
+    └── sub-pagina-b.tsx
+```
+
+### Como criar o guard
+
+```typescript
+// routes/_dashboard/_pathlessLayout/<modulo>/_pathlessLayout.tsx
+import { ForbiddenPage } from "@/components/customs-pages/errors-page"
+import { LoadingComponent } from "@/components/customs-pages/loading-page"
+import { useActiveModules } from "@/hooks/use-active-modules"
+import { createFileRoute, Outlet } from "@tanstack/react-router"
+
+export const Route = createFileRoute(
+  "/_dashboard/_pathlessLayout/<modulo>/_pathlessLayout"
+)({
+  component: RouteComponent,
+})
+
+function RouteComponent() {
+  const { activeSlugs, isPending } = useActiveModules()
+
+  if (isPending) return <LoadingComponent />
+  if (!activeSlugs?.includes("<slug-do-modulo>")) return <ForbiddenPage />
+  return <Outlet />
+}
+```
+
+### Atualizar `createFileRoute` nas rotas filhas
+
+Ao mover as rotas para `_pathlessLayout/`, o caminho do `createFileRoute` ganha o segmento `_pathlessLayout` antes do nome da rota — mas a URL pública **não muda** (segmento pathless):
+
+```typescript
+// antes (sem guard)
+createFileRoute("/_dashboard/_pathlessLayout/<modulo>/sub-pagina")
+
+// depois (com guard)
+createFileRoute("/_dashboard/_pathlessLayout/<modulo>/_pathlessLayout/sub-pagina")
+```
+
+### Exemplo real: `dashboards-internos`
+
+```
+routes/_dashboard/_pathlessLayout/dashboards-internos/
+├── _pathlessLayout.tsx              ← verifica slug "dashboards-internos"
+└── _pathlessLayout/
+    ├── index.tsx
+    ├── atualizar-relatorios.tsx
+    └── formatar-planilha.tsx
+```
+
+### Por que não usar `beforeLoad`
+
+O `beforeLoad` precisaria do `queryClient` no contexto do router. A abordagem de componente é mais simples, segue o mesmo padrão do guard de auth já existente em `_dashboard/_pathlessLayout.tsx`, e os dados de `useActiveModules` já estão em cache quando o sidebar os carregou (staleTime: 5 min).
+
+### Comportamento do guard
+
+| Estado | Resultado |
+|---|---|
+| `isPending = true` | Exibe `<LoadingComponent />` (spinner) |
+| `activeSlugs` não contém o slug | Exibe `<ForbiddenPage />` (403) |
+| `activeSlugs = null` (erro na query) | Exibe `<ForbiddenPage />` (fail closed — mais seguro) |
+| `activeSlugs` contém o slug | Renderiza `<Outlet />` normalmente |
 
 ---
 
@@ -394,6 +479,32 @@ export function useFeature() {
 - Para operações Better Auth (admin), usar `authClient.admin.*` com `onError` via callback — ver `src/hooks/use-admin.ts`
 - Usar `staleTime` adequado: módulos ativos → `5 * 60 * 1000`, dados de lista → `60_000`
 
+### `use-groups.ts`
+
+Hook para gerenciamento de grupos RBAC. Exporta três funções:
+
+```typescript
+// Busca módulos de um grupo específico (lazy — só executa quando groupId !== null)
+useGroupModules(groupId: string | null)
+// → { groupModules: GroupModule[], fetchingGroupModules }
+
+// Busca usuários de um grupo específico (lazy)
+useGroupUsers(groupId: string | null)
+// → { groupUsers: GroupUser[], fetchingGroupUsers }
+
+// CRUD completo + atribuição de módulos e usuários
+useGroups()
+// → { groups, fetchingGroups, createGroup, creatingGroup,
+//     updateGroup, updatingGroup, removeGroup, removingGroup,
+//     setGroupModules, settingGroupModules, setGroupUsers, settingGroupUsers }
+```
+
+`setGroupModules({ groupId, moduleIds })` → `PUT /groups/:id/modules` — invalida `["groups"]`, `["groups", id, "modules"]` e `["modules", "active"]`.
+
+`setGroupUsers({ groupId, userIds })` → `PUT /groups/:id/users` — invalida `["groups"]` e `["groups", id, "users"]`.
+
+---
+
 ### `use-active-modules.ts`
 
 Hook dedicado para a sidebar — consulta apenas os módulos com `isActive: true`:
@@ -602,7 +713,8 @@ Todos os schemas ficam em `src/lib/validations.ts`.
 | `userStatusSchema` / `UserStatusType` | Alterar situação (ban) |
 | `USER_STATUS_TYPES` | Array `{ value, label }[]` — opções de status em PT-BR |
 | `setPasswordSchema` / `SetPasswordType` | Redefinir senha |
-| `catalogSchema` / `CatalogType` | `{ name, description? }` — shared por agências, setores, áreas, funções |
+| `catalogSchema` / `CatalogType` | `{ name }` — shared por agências, setores, áreas, funções (sem description) |
+| `groupSchema` / `GroupType` | `{ name, description? }` — grupos RBAC |
 | `orgProfileSchema` / `OrgProfileType` | `{ agencyId, sectorId, areaId, jobFunctionId }` — todos nullable |
 
 ---
@@ -642,6 +754,25 @@ Todos os schemas ficam em `src/lib/validations.ts`.
   loading={form.formState.isSubmitting}  // NÃO usar isLoading
   disabled={form.formState.disabled}
 />
+```
+
+`LoadingButton` renderiza `type="submit"` e **não aceita `onClick`**. Precisa obrigatoriamente de um `<form>` com `id` correspondente.
+
+Em dialogs sem React Hook Form (ex: checklist de seleção), usar um `<form>` oculto:
+
+```typescript
+const formId = `minha-acao-form-${item.id}`  // id único por instância
+
+async function handleSave() {
+  await minhaAcao(...)
+  setOpen(false)
+}
+
+// No JSX — form vazio antes do conteúdo:
+<form id={formId} onSubmit={(e) => { e.preventDefault(); void handleSave() }} />
+
+// LoadingButton no footer, vinculado ao form:
+<LoadingButton form={formId} label="Salvar" loading={salvando} disabled={salvando} />
 ```
 
 ### Button variants
@@ -756,6 +887,7 @@ export interface ModulesProps {
   url: string            // URL base do módulo — deve corresponder ao slug no backend sem o "/"
   icon: LucideIcon       // Ícone lucide-react
   onSidebar: boolean     // true = aparece na sidebar principal; false = acessível só pelo header
+  gated: boolean         // true = visível apenas se o usuário tiver o módulo via grupo RBAC; false = sempre visível (ex: Página Inicial, Administração)
   menu: {
     label: string
     url: string
@@ -768,11 +900,11 @@ export interface ModulesProps {
 
 ### Módulos atuais
 
-| Módulo | `url` | `slug` backend | `onSidebar` | Itens de menu |
-|---|---|---|---|---|
-| Página Inicial | `/pagina-inicial` | `pagina-inicial` | `true` | — |
-| Governança Analítica | `/governanca-analitica` | `governanca-analitica` | `true` | Atualizar Relatórios, Formatar Planilha |
-| Painel de Administração | `/administracao` | `administracao` | `false` | Usuários, Módulos, Agências, Setores, Funções |
+| Módulo | `url` | `slug` backend | `onSidebar` | `gated` | Itens de menu |
+|---|---|---|---|---|---|
+| Página Inicial | `/pagina-inicial` | — | `true` | `false` | — |
+| Dashboards Internos | `/dashboards-internos` | `dashboards-internos` | `true` | `true` | Atualizar Relatórios, Formatar Planilha |
+| Painel de Administração | `/administracao` | — | `false` | `false` | Usuários, Módulos, Agências, Setores, Funções, Grupos |
 
 > `onSidebar: false` significa que o módulo aparece no header mas não na sidebar principal. Os itens do menu são exibidos na `AdminHome` como cards acessíveis.
 
@@ -854,6 +986,20 @@ O formulário expõe dois componentes auxiliares:
 
 O `formId` deve ser uma string fixa e única (ex: `"agency-edit-form"`), **não** derivado do `mode` — caso contrário o formulário sempre recebe o mesmo id independente do modo. Em componentes com múltiplas instâncias simultâneas (ex: um edit button por linha), usar `useId()` para gerar ids únicos.
 
+### Grupos RBAC
+
+A feature de grupos usa o mesmo padrão de 3 arquivos dos catálogos, com dialogs adicionais na tabela:
+
+- **`grupo-form.tsx`**: formulário create/edit com `name` (obrigatório) e `description` (opcional). Exporta `GrupoCreateButton` e `GrupoEditButton`.
+- **`grupos-table.tsx`**: tabela com 3 ações no dropdown de cada linha:
+  1. `GrupoEditButton` — editar nome/descrição
+  2. **Dialog "Gerenciar Módulos"** — checklist de todos os módulos (`useModulesAdmin`) com seleção atual do grupo (`useGroupModules`). Salva via `setGroupModules`.
+  3. **Dialog "Gerenciar Usuários"** — checklist de todos os usuários (`authClient.admin.listUsers`) com campo de busca e seleção atual do grupo (`useGroupUsers`). Salva via `setGroupUsers`.
+
+Os dialogs de checklist usam `<form id="..." onSubmit={...} />` oculto para vincular o `LoadingButton` sem React Hook Form.
+
+Os dados de módulos e usuários do grupo são carregados de forma lazy — a query só é habilitada quando o dialog está aberto (`enabled: open`), via `useGroupModules(open ? group.id : null)`.
+
 ### Setores (com áreas)
 
 A tabela de setores usa `getExpandedRowModel` para exibir uma sub-tabela de áreas inline. O `declare module TableMeta` inclui tanto as funções de setor quanto as de área, pois ambas são passadas via `meta`.
@@ -893,3 +1039,6 @@ A página `/administracao/usuario/$userId` renderiza um grid de 5 cards:
 | Omitir invalidação de `["modules", "active"]` ao alternar módulos | A sidebar não atualiza sem ela |
 | `<SelectValue placeholder="..." />` sem `children` quando o valor já está definido | O Base UI resolve o texto via `ItemText` apenas após o popup ser aberto — com valor pré-carregado exibe o valor bruto. Sempre passar o label computado como `children` |
 | Redeclarar `ROLE_LABELS` localmente nos componentes | Usar `ROLE_LABELS` de `validations.ts` |
+| Passar `onClick` para `LoadingButton` | `LoadingButton` não aceita `onClick` — renderiza `type="submit"` e exige `form` prop. Usar um `<form id="..." onSubmit={...} />` oculto |
+| Filtrar setores/áreas por `isActive` | Campo removido do backend — todos os setores e áreas são listados sem filtro de status |
+| Usar `toggleModule`, `toggleAgency`, `toggleSector`, `toggleArea`, `toggleJobFunction` | Endpoints `/toggle` foram removidos do backend; os hooks não exportam mais essas funções |

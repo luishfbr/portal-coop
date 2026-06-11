@@ -1,4 +1,4 @@
-﻿import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -80,25 +80,6 @@ function AreaEditForm({ defaultValues, onSubmit, loading }: AreaEditFormProps) {
                 </Field>
               )}
             />
-            <Controller
-              control={form.control}
-              name="description"
-              render={({ field, fieldState }) => (
-                <Field>
-                  <FieldLabel htmlFor={`${formId}-desc`}>
-                    Descrição{" "}
-                    <span className="text-muted-foreground font-normal">(opcional)</span>
-                  </FieldLabel>
-                  <Input
-                    id={`${formId}-desc`}
-                    placeholder="ex: Responsável pela seleção de talentos"
-                    {...field}
-                    value={field.value ?? ""}
-                  />
-                  {fieldState.error && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
           </FieldGroup>
         </form>
         <DialogFooter>
@@ -134,7 +115,7 @@ export function AreaCreateHeaderButton({ sectors, onSubmit, loading }: AreaCreat
 
   const form = useForm<AreaWithSectorType>({
     resolver: zodResolver(areaWithSectorSchema),
-    defaultValues: { sectorId: "", name: "", description: "" },
+    defaultValues: { sectorId: "", name: "" },
   })
 
   async function handleSubmit({ sectorId, ...data }: AreaWithSectorType) {
@@ -144,7 +125,7 @@ export function AreaCreateHeaderButton({ sectors, onSubmit, loading }: AreaCreat
     })
   }
 
-  const activeSectors = sectors?.filter((s) => s.isActive) ?? []
+  const allSectors = sectors ?? []
 
   return (
     <Dialog>
@@ -174,14 +155,14 @@ export function AreaCreateHeaderButton({ sectors, onSubmit, loading }: AreaCreat
                   <Select name={field.name} value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger id="area-create-sector" aria-invalid={fieldState.invalid}>
                       <SelectValue placeholder="Selecione um setor">
-                        {field.value ? (activeSectors.find(s => s.id === field.value)?.name ?? null) : null}
+                        {field.value ? (allSectors.find(s => s.id === field.value)?.name ?? null) : null}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectPopup>
-                      {activeSectors.length === 0 ? (
-                        <SelectItem value="" disabled>Nenhum setor ativo</SelectItem>
+                      {allSectors.length === 0 ? (
+                        <SelectItem value="" disabled>Nenhum setor cadastrado</SelectItem>
                       ) : (
-                        activeSectors.map((s) => (
+                        allSectors.map((s) => (
                           <SelectItem key={s.id} value={s.id}>
                             {s.name}
                           </SelectItem>
@@ -200,25 +181,6 @@ export function AreaCreateHeaderButton({ sectors, onSubmit, loading }: AreaCreat
                 <Field>
                   <FieldLabel htmlFor="area-create-name">Nome</FieldLabel>
                   <Input id="area-create-name" placeholder="ex: Recrutamento e Seleção" {...field} />
-                  {fieldState.error && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="description"
-              render={({ field, fieldState }) => (
-                <Field>
-                  <FieldLabel htmlFor="area-create-desc">
-                    Descrição{" "}
-                    <span className="text-muted-foreground font-normal">(opcional)</span>
-                  </FieldLabel>
-                  <Input
-                    id="area-create-desc"
-                    placeholder="ex: Responsável pela seleção de talentos"
-                    {...field}
-                    value={field.value ?? ""}
-                  />
                   {fieldState.error && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
@@ -283,25 +245,6 @@ export function AreaEditDialog({
                 <Field>
                   <FieldLabel htmlFor={`${formId}-name`}>Nome</FieldLabel>
                   <Input id={`${formId}-name`} placeholder="ex: Recrutamento e Seleção" {...field} />
-                  {fieldState.error && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="description"
-              render={({ field, fieldState }) => (
-                <Field>
-                  <FieldLabel htmlFor={`${formId}-desc`}>
-                    Descrição{" "}
-                    <span className="text-muted-foreground font-normal">(opcional)</span>
-                  </FieldLabel>
-                  <Input
-                    id={`${formId}-desc`}
-                    placeholder="ex: Responsável pela seleção de talentos"
-                    {...field}
-                    value={field.value ?? ""}
-                  />
                   {fieldState.error && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}

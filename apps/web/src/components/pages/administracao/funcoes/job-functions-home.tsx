@@ -12,8 +12,6 @@ export function JobFunctionsHome() {
     creatingJobFunction,
     updateJobFunction,
     updatingJobFunction,
-    toggleJobFunction,
-    togglingJobFunction,
     removeJobFunction,
     removingJobFunction,
   } = useJobFunctions()
@@ -34,8 +32,6 @@ export function JobFunctionsHome() {
           jobFunctions={jobFunctions}
           updateJobFunction={updateJobFunction}
           updatingJobFunction={updatingJobFunction}
-          toggleJobFunction={toggleJobFunction}
-          togglingJobFunction={togglingJobFunction}
           removeJobFunction={removeJobFunction}
           removingJobFunction={removingJobFunction}
         />

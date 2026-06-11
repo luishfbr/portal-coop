@@ -113,10 +113,18 @@ export type SetPasswordType = z.infer<typeof setPasswordSchema>
 
 export const catalogSchema = z.object({
   name,
-  description: z.string().trim().optional(),
 })
 
 export type CatalogType = z.infer<typeof catalogSchema>
+
+// ── Grupos RBAC ──────────────────────────────────────────────────────────────
+
+export const groupSchema = z.object({
+  name,
+  description: z.string().trim().optional(),
+})
+
+export type GroupType = z.infer<typeof groupSchema>
 
 // ── Perfil organizacional do usuário ────────────────────────────────────────
 

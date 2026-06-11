@@ -13,16 +13,12 @@ export function SectorsHome() {
     creatingSector,
     updateSector,
     updatingSector,
-    toggleSector,
-    togglingSector,
     removeSector,
     removingSector,
     createArea,
     creatingArea,
     updateArea,
     updatingArea,
-    toggleArea,
-    togglingArea,
     removeArea,
     removingArea,
   } = useSectors()
@@ -48,14 +44,10 @@ export function SectorsHome() {
           sectors={sectors}
           updateSector={updateSector}
           updatingSector={updatingSector}
-          toggleSector={toggleSector}
-          togglingSector={togglingSector}
           removeSector={removeSector}
           removingSector={removingSector}
           updateArea={updateArea}
           updatingArea={updatingArea}
-          toggleArea={toggleArea}
-          togglingArea={togglingArea}
           removeArea={removeArea}
           removingArea={removingArea}
         />

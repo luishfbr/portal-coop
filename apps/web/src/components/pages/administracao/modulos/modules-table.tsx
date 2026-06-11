@@ -3,16 +3,12 @@ import {
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
-  type RowData,
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table"
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react"
 import { useState } from "react"
-import { cn } from "@/lib/utils"
 import type { ModuleItem } from "@/hooks/use-modules-admin"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { CardFrame } from "@/components/ui/card"
 import {
   Table,
@@ -22,13 +18,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-
-declare module "@tanstack/react-table" {
-  interface TableMeta<_TData extends RowData> {
-    toggleModule: (id: string) => Promise<unknown>
-    togglingModule: boolean
-  }
-}
 
 const columns: ColumnDef<ModuleItem>[] = [
   {
@@ -54,65 +43,18 @@ const columns: ColumnDef<ModuleItem>[] = [
     ),
   },
   {
-    accessorKey: "isActive",
-    cell: ({ row }) => {
-      const active = row.original.isActive
-      return (
-        <Badge variant="outline">
-          <span
-            aria-hidden="true"
-            className={cn(
-              "size-1.5 rounded-full",
-              active ? "bg-emerald-500" : "bg-red-500"
-            )}
-          />
-          {active ? "Ativo" : "Inativo"}
-        </Badge>
-      )
-    },
-    enableSorting: false,
-    header: "Status",
-    size: 100,
-  },
-  {
     accessorKey: "createdAt",
     cell: ({ row }) =>
       new Date(row.original.createdAt).toLocaleDateString("pt-BR"),
     header: "Criado em",
     size: 120,
   },
-  {
-    cell: ({ row, table }) => {
-      const { toggleModule, togglingModule } = table.options.meta!
-      const active = row.original.isActive
-      return (
-        <div className="text-end">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={togglingModule}
-            onClick={() => toggleModule(row.original.id)}
-          >
-            {active ? "Desativar" : "Ativar"}
-          </Button>
-        </div>
-      )
-    },
-    enableSorting: false,
-    header: "",
-    id: "actions",
-    size: 100,
-  },
 ]
 
 export function ModulesTable({
   modules,
-  toggleModule,
-  togglingModule,
 }: {
   modules: ModuleItem[] | undefined
-  toggleModule: (id: string) => Promise<unknown>
-  togglingModule: boolean
 }) {
   const [sorting, setSorting] = useState<SortingState>([
     { desc: false, id: "name" },
@@ -124,7 +66,6 @@ export function ModulesTable({
     enableSortingRemoval: false,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    meta: { toggleModule, togglingModule },
     onSortingChange: setSorting,
     state: { sorting },
   })

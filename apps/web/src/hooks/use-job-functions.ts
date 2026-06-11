@@ -6,8 +6,6 @@ import { toast } from "sonner"
 export type JobFunction = {
   id: string
   name: string
-  description: string | null
-  isActive: boolean
   userCount: number
   createdAt: string
   updatedAt: string
@@ -60,17 +58,6 @@ export function useJobFunctions() {
       onError: (err) => toast.error(err.message),
     })
 
-  const { mutateAsync: toggleJobFunction, isPending: togglingJobFunction } =
-    useMutation({
-      mutationFn: (id: string) =>
-        api.patch(`/job-functions/${id}/toggle`).then((r) => r.data),
-      onSuccess: () => {
-        toast.success("Status da função atualizado!")
-        queryClient.invalidateQueries({ queryKey: ["job-functions"] })
-      },
-      onError: (err) => toast.error(err.message),
-    })
-
   const { mutateAsync: removeJobFunction, isPending: removingJobFunction } =
     useMutation({
       mutationFn: (id: string) =>
@@ -89,8 +76,6 @@ export function useJobFunctions() {
     creatingJobFunction,
     updateJobFunction,
     updatingJobFunction,
-    toggleJobFunction,
-    togglingJobFunction,
     removeJobFunction,
     removingJobFunction,
   }

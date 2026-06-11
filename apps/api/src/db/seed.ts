@@ -44,9 +44,9 @@ async function main() {
   const initialModules = [
     {
       name: "Dashboards Internos",
-      description: "Criação, edição e visualização de dashboards internos",
+      description: "Criação, edição e visualização de dashboards.",
       slug: "dashboards-internos",
-      icon: "LayoutDashboard",
+      icon: "Goal",
     },
   ];
 

@@ -7,8 +7,6 @@ export type Area = {
   id: string
   sectorId: string
   name: string
-  description: string | null
-  isActive: boolean
   userCount: number
   createdAt: string
   updatedAt: string
@@ -17,8 +15,6 @@ export type Area = {
 export type Sector = {
   id: string
   name: string
-  description: string | null
-  isActive: boolean
   userCount: number
   createdAt: string
   updatedAt: string
@@ -86,16 +82,6 @@ export function useSectors() {
     onError: (err) => toast.error(err.message),
   })
 
-  const { mutateAsync: toggleSector, isPending: togglingSector } = useMutation({
-    mutationFn: (id: string) =>
-      api.patch(`/sectors/${id}/toggle`).then((r) => r.data),
-    onSuccess: () => {
-      toast.success("Status do setor atualizado!")
-      queryClient.invalidateQueries({ queryKey: ["sectors"] })
-    },
-    onError: (err) => toast.error(err.message),
-  })
-
   const { mutateAsync: removeSector, isPending: removingSector } = useMutation({
     mutationFn: (id: string) =>
       api.delete(`/sectors/${id}`).then((r) => r.data),
@@ -136,18 +122,6 @@ export function useSectors() {
     onError: (err) => toast.error(err.message),
   })
 
-  const { mutateAsync: toggleArea, isPending: togglingArea } = useMutation({
-    mutationFn: ({ sectorId, id }: { sectorId: string; id: string }) =>
-      api
-        .patch(`/sectors/${sectorId}/areas/${id}/toggle`)
-        .then((r) => r.data),
-    onSuccess: () => {
-      toast.success("Status da área atualizado!")
-      queryClient.invalidateQueries({ queryKey: ["sectors"] })
-    },
-    onError: (err) => toast.error(err.message),
-  })
-
   const { mutateAsync: removeArea, isPending: removingArea } = useMutation({
     mutationFn: ({ sectorId, id }: { sectorId: string; id: string }) =>
       api.delete(`/sectors/${sectorId}/areas/${id}`).then((r) => r.data),
@@ -165,16 +139,12 @@ export function useSectors() {
     creatingSector,
     updateSector,
     updatingSector,
-    toggleSector,
-    togglingSector,
     removeSector,
     removingSector,
     createArea,
     creatingArea,
     updateArea,
     updatingArea,
-    toggleArea,
-    togglingArea,
     removeArea,
     removingArea,
   }

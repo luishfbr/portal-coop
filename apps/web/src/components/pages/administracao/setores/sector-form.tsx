@@ -1,7 +1,6 @@
-﻿import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -14,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { catalogSchema, type CatalogType } from "@/lib/validations"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Layers } from "lucide-react"
+import { Layers, Pencil } from "lucide-react"
 import { useId, useRef } from "react"
 import { Controller, useForm } from "react-hook-form"
 
@@ -38,7 +37,7 @@ function SectorForm(props: SectorFormProps) {
   const form = useForm<CatalogType>({
     resolver: zodResolver(catalogSchema),
     defaultValues:
-      props.mode === "edit" ? props.defaultValues : { name: "", description: "" },
+      props.mode === "edit" ? props.defaultValues : { name: "" },
   })
 
   async function onSubmit(data: CatalogType) {
@@ -93,36 +92,16 @@ function SectorForm(props: SectorFormProps) {
                 </Field>
               )}
             />
-            <Controller
-              control={form.control}
-              name="description"
-              render={({ field, fieldState }) => (
-                <Field>
-                  <FieldLabel htmlFor={`${formId}-desc`}>
-                    Descrição{" "}
-                    <span className="text-muted-foreground font-normal">(opcional)</span>
-                  </FieldLabel>
-                  <Input
-                    id={`${formId}-desc`}
-                    placeholder="ex: Gestão de pessoas e benefícios"
-                    {...field}
-                    value={field.value ?? ""}
-                  />
-                  {fieldState.error && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
           </FieldGroup>
         </form>
         <DialogFooter>
-          <DialogClose
+          <Button
             ref={closeRef}
-            render={
-              <Button type="button" variant="outline">
-                Cancelar
-              </Button>
-            }
-          />
+            type="button"
+            variant="outline"
+          >
+            Cancelar
+          </Button>
           <LoadingButton
             disabled={form.formState.disabled}
             form={formId}
@@ -192,25 +171,6 @@ export function SectorEditDialog({
                     id={`${formId}-name`}
                     placeholder="ex: Recursos Humanos"
                     {...field}
-                  />
-                  {fieldState.error && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="description"
-              render={({ field, fieldState }) => (
-                <Field>
-                  <FieldLabel htmlFor={`${formId}-desc`}>
-                    Descrição{" "}
-                    <span className="text-muted-foreground font-normal">(opcional)</span>
-                  </FieldLabel>
-                  <Input
-                    id={`${formId}-desc`}
-                    placeholder="ex: Gestão de pessoas e benefícios"
-                    {...field}
-                    value={field.value ?? ""}
                   />
                   {fieldState.error && <FieldError errors={[fieldState.error]} />}
                 </Field>

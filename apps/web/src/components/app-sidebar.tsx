@@ -45,7 +45,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
   const { activeSlugs, isPending } = useActiveModules()
 
   const visibleModules = activeSlugs
-    ? modules.filter((m) => activeSlugs.includes(m.url.slice(1)))
+    ? modules.filter((m) => !m.gated || activeSlugs.includes(m.url.slice(1)))
     : modules
 
   return (

@@ -6,8 +6,7 @@ import { toast } from "sonner"
 export type Agency = {
   id: string
   name: string
-  description: string | null
-  isActive: boolean
+  userCount: number
   createdAt: string
   updatedAt: string
 }
@@ -40,16 +39,6 @@ export function useAgencies() {
     onError: (err) => toast.error(err.message),
   })
 
-  const { mutateAsync: toggleAgency, isPending: togglingAgency } = useMutation({
-    mutationFn: (id: string) =>
-      api.patch(`/agencies/${id}/toggle`).then((r) => r.data),
-    onSuccess: () => {
-      toast.success("Status da agência atualizado!")
-      queryClient.invalidateQueries({ queryKey: ["agencies"] })
-    },
-    onError: (err) => toast.error(err.message),
-  })
-
   const { mutateAsync: removeAgency, isPending: removingAgency } = useMutation({
     mutationFn: (id: string) =>
       api.delete(`/agencies/${id}`).then((r) => r.data),
@@ -67,8 +56,6 @@ export function useAgencies() {
     creatingAgency,
     updateAgency,
     updatingAgency,
-    toggleAgency,
-    togglingAgency,
     removeAgency,
     removingAgency,
   }

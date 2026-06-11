@@ -12,8 +12,6 @@ export function AgenciesHome() {
     creatingAgency,
     updateAgency,
     updatingAgency,
-    toggleAgency,
-    togglingAgency,
     removeAgency,
     removingAgency,
   } = useAgencies()
@@ -34,8 +32,6 @@ export function AgenciesHome() {
           agencies={agencies}
           updateAgency={updateAgency}
           updatingAgency={updatingAgency}
-          toggleAgency={toggleAgency}
-          togglingAgency={togglingAgency}
           removeAgency={removeAgency}
           removingAgency={removingAgency}
         />

@@ -4,22 +4,18 @@ import { LoadingComponent } from "@/components/customs-pages/loading-page"
 import { ModulesTable } from "./modules-table"
 
 export function ModulesHome() {
-  const { modules, fetchingModules, toggleModule, togglingModule } = useModulesAdmin()
+  const { modules, fetchingModules } = useModulesAdmin()
 
   return (
     <div className="flex h-full w-full flex-col gap-4">
       <DefaultHeader
         title="Módulos do sistema"
-        description="Ative ou desative módulos para controlar o acesso dos usuários às funcionalidades."
+        description="Catálogo de módulos disponíveis. O acesso é controlado via grupos de usuários."
       />
       {fetchingModules ? (
         <LoadingComponent />
       ) : (
-        <ModulesTable
-          modules={modules}
-          toggleModule={toggleModule}
-          togglingModule={togglingModule}
-        />
+        <ModulesTable modules={modules} />
       )}
     </div>
   )

@@ -9,10 +9,8 @@ import {
 } from "@tanstack/react-table"
 import { ChevronDownIcon, ChevronUpIcon, MoreHorizontalIcon } from "lucide-react"
 import { useState } from "react"
-import { cn } from "@/lib/utils"
 import type { Agency } from "@/hooks/use-agencies"
 import type { CatalogType } from "@/lib/validations"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { CardFrame } from "@/components/ui/card"
 import { DeleteAlert } from "@/components/ui/delete-alert"
@@ -36,8 +34,6 @@ declare module "@tanstack/react-table" {
   interface TableMeta<_TData extends RowData> {
     updateAgency: (args: { id: string; data: CatalogType }) => Promise<unknown>
     updatingAgency: boolean
-    toggleAgency: (id: string) => Promise<unknown>
-    togglingAgency: boolean
     removeAgency: (id: string) => Promise<unknown>
     removingAgency: boolean
   }
@@ -47,35 +43,14 @@ const columns: ColumnDef<Agency>[] = [
   {
     accessorKey: "name",
     header: "Nome",
-    size: 200,
+    size: 260,
   },
   {
-    accessorKey: "description",
-    cell: ({ row }) => row.original.description ?? "—",
+    accessorKey: "userCount",
     enableSorting: false,
-    header: "Descrição",
-    size: 280,
-  },
-  {
-    accessorKey: "isActive",
-    cell: ({ row }) => {
-      const active = row.original.isActive
-      return (
-        <Badge variant="outline">
-          <span
-            aria-hidden="true"
-            className={cn(
-              "size-1.5 rounded-full",
-              active ? "bg-emerald-500" : "bg-red-500"
-            )}
-          />
-          {active ? "Ativa" : "Inativa"}
-        </Badge>
-      )
-    },
-    enableSorting: false,
-    header: "Status",
+    header: "Usuários",
     size: 100,
+    cell: ({ row }) => row.original.userCount,
   },
   {
     accessorKey: "createdAt",
@@ -86,7 +61,7 @@ const columns: ColumnDef<Agency>[] = [
   },
   {
     cell: ({ row, table }) => {
-      const { updateAgency, updatingAgency, toggleAgency, togglingAgency, removeAgency, removingAgency } =
+      const { updateAgency, updatingAgency, removeAgency, removingAgency } =
         table.options.meta!
       const agency = row.original
       return (
@@ -102,18 +77,10 @@ const columns: ColumnDef<Agency>[] = [
             />
             <DropdownMenuContent align="end">
               <AgencyEditButton
-                defaultValues={{ name: agency.name, description: agency.description ?? "" }}
+                defaultValues={{ name: agency.name }}
                 onSubmit={(data) => updateAgency({ id: agency.id, data })}
                 loading={updatingAgency}
               />
-              <Button
-                variant="ghost"
-                className="flex w-full flex-row items-center justify-start gap-4"
-                disabled={togglingAgency}
-                onClick={() => toggleAgency(agency.id)}
-              >
-                {agency.isActive ? "Desativar" : "Ativar"}
-              </Button>
               <DropdownMenuSeparator />
               <DeleteAlert
                 variant="destructive-outline"
@@ -137,16 +104,12 @@ export function AgenciesTable({
   agencies,
   updateAgency,
   updatingAgency,
-  toggleAgency,
-  togglingAgency,
   removeAgency,
   removingAgency,
 }: {
   agencies: Agency[] | undefined
   updateAgency: (args: { id: string; data: CatalogType }) => Promise<unknown>
   updatingAgency: boolean
-  toggleAgency: (id: string) => Promise<unknown>
-  togglingAgency: boolean
   removeAgency: (id: string) => Promise<unknown>
   removingAgency: boolean
 }) {
@@ -160,7 +123,7 @@ export function AgenciesTable({
     enableSortingRemoval: false,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    meta: { updateAgency, updatingAgency, toggleAgency, togglingAgency, removeAgency, removingAgency },
+    meta: { updateAgency, updatingAgency, removeAgency, removingAgency },
     onSortingChange: setSorting,
     state: { sorting },
   })

@@ -2,10 +2,11 @@ import {
   Briefcase,
   Building2,
   Cog,
+  Goal,
   Home,
   LayoutDashboard,
   Layers,
-  Sheet,
+  Shield,
   Shredder,
   Upload,
   Users,
@@ -17,6 +18,8 @@ export interface ModulesProps {
   url: string
   icon: LucideIcon
   onSidebar: boolean
+  /** false = sempre visível (não depende de grupo); true = controlado por RBAC */
+  gated: boolean
   menu:
     | {
         label: string
@@ -37,23 +40,25 @@ export const modules: ModulesProps[] = [
     url: "/pagina-inicial",
     icon: Home,
     onSidebar: true,
+    gated: false,
     menu: null,
   },
   {
-    label: "Governança Analítica",
-    url: "/governanca-analitica",
-    icon: Sheet,
+    label: "Dashboards Internos",
+    url: "/dashboards-internos",
+    icon: Goal,
     onSidebar: true,
+    gated: true,
     menu: [
       {
         label: "Atualizar Relatórios",
-        url: "/governanca-analitica/atualizar-relatorios",
+        url: "/dashboards-internos/atualizar-relatorios",
         icon: Upload,
         description: "",
       },
       {
         label: "Formatar Planilha",
-        url: "/governanca-analitica/formatar-planilha",
+        url: "/dashboards-internos/formatar-planilha",
         icon: Shredder,
         description: "",
       },
@@ -64,6 +69,7 @@ export const modules: ModulesProps[] = [
     url: "/administracao",
     icon: Cog,
     onSidebar: false,
+    gated: false,
     menu: [
       {
         label: "Usuários",
@@ -105,6 +111,13 @@ export const modules: ModulesProps[] = [
         icon: Briefcase,
         description:
           "Gerencie as funções e cargos disponíveis na cooperativa.",
+      },
+      {
+        label: "Grupos",
+        url: "/administracao/grupos",
+        icon: Shield,
+        description:
+          "Gerencie grupos de acesso e controle quais módulos cada grupo pode acessar.",
       },
     ],
   },

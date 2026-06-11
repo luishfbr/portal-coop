@@ -58,13 +58,13 @@ export function OrgProfileCard({ userId }: { userId: string }) {
 
   // Reseta areaId quando sectorId muda para um setor que não contém a área atual
   const watchedSectorId = useWatch({ control: form.control, name: "sectorId" })
-  const activeSectors = useMemo(() => sectors?.filter((s) => s.isActive) ?? [], [sectors])
+  const allSectors = useMemo(() => sectors ?? [], [sectors])
   const selectedSector = useMemo(
-    () => activeSectors.find((s) => s.id === watchedSectorId),
-    [activeSectors, watchedSectorId],
+    () => allSectors.find((s) => s.id === watchedSectorId),
+    [allSectors, watchedSectorId],
   )
   const availableAreas = useMemo(
-    () => selectedSector?.areas.filter((a) => a.isActive) ?? [],
+    () => selectedSector?.areas ?? [],
     [selectedSector],
   )
 
@@ -152,12 +152,12 @@ export function OrgProfileCard({ userId }: { userId: string }) {
                     >
                       <SelectTrigger id="org-sector">
                         <SelectValue placeholder="Nenhum">
-                          {field.value ? (activeSectors.find(s => s.id === field.value)?.name ?? null) : null}
+                          {field.value ? (allSectors.find(s => s.id === field.value)?.name ?? null) : null}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectPopup>
                         <SelectItem value={NONE}>Nenhum</SelectItem>
-                        {activeSectors.map((s) => (
+                        {allSectors.map((s) => (
                           <SelectItem key={s.id} value={s.id}>
                             {s.name}
                           </SelectItem>

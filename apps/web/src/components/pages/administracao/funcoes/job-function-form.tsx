@@ -1,4 +1,4 @@
-﻿import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -31,7 +31,7 @@ export function JobFunctionCreateButton({
 
   const form = useForm<CatalogType>({
     resolver: zodResolver(catalogSchema),
-    defaultValues: { name: "", description: "" },
+    defaultValues: { name: "" },
   })
 
   async function handleSubmit(data: CatalogType) {
@@ -70,25 +70,6 @@ export function JobFunctionCreateButton({
                     id={`${formId}-name`}
                     placeholder="ex: Analista de TI"
                     {...field}
-                  />
-                  {fieldState.error && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="description"
-              render={({ field, fieldState }) => (
-                <Field>
-                  <FieldLabel htmlFor={`${formId}-desc`}>
-                    Descrição{" "}
-                    <span className="text-muted-foreground font-normal">(opcional)</span>
-                  </FieldLabel>
-                  <Input
-                    id={`${formId}-desc`}
-                    placeholder="ex: Suporte e desenvolvimento de sistemas"
-                    {...field}
-                    value={field.value ?? ""}
                   />
                   {fieldState.error && <FieldError errors={[fieldState.error]} />}
                 </Field>
@@ -160,25 +141,6 @@ export function JobFunctionEditDialog({
                     id={`${formId}-name`}
                     placeholder="ex: Analista de TI"
                     {...field}
-                  />
-                  {fieldState.error && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="description"
-              render={({ field, fieldState }) => (
-                <Field>
-                  <FieldLabel htmlFor={`${formId}-desc`}>
-                    Descrição{" "}
-                    <span className="text-muted-foreground font-normal">(opcional)</span>
-                  </FieldLabel>
-                  <Input
-                    id={`${formId}-desc`}
-                    placeholder="ex: Suporte e desenvolvimento de sistemas"
-                    {...field}
-                    value={field.value ?? ""}
                   />
                   {fieldState.error && <FieldError errors={[fieldState.error]} />}
                 </Field>

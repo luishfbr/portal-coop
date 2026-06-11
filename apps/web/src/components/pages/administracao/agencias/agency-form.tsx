@@ -1,4 +1,4 @@
-﻿import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { catalogSchema, type CatalogType } from "@/lib/validations"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Building2, Pencil, Plus } from "lucide-react"
+import { Building2, Pencil } from "lucide-react"
 import { useRef } from "react"
 import { Controller, useForm } from "react-hook-form"
 
@@ -37,9 +37,7 @@ export function AgencyForm(props: AgencyFormProps) {
   const form = useForm<CatalogType>({
     resolver: zodResolver(catalogSchema),
     defaultValues:
-      props.mode === "edit"
-        ? props.defaultValues
-        : { name: "", description: "" },
+      props.mode === "edit" ? props.defaultValues : { name: "" },
   })
 
   async function onSubmit(data: CatalogType) {
@@ -91,27 +89,6 @@ export function AgencyForm(props: AgencyFormProps) {
                     id={`${formId}-name`}
                     placeholder="ex: Agência Centro"
                     {...field}
-                  />
-                  {fieldState.error && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="description"
-              render={({ field, fieldState }) => (
-                <Field>
-                  <FieldLabel htmlFor={`${formId}-desc`}>
-                    Descrição{" "}
-                    <span className="text-muted-foreground font-normal">(opcional)</span>
-                  </FieldLabel>
-                  <Input
-                    id={`${formId}-desc`}
-                    placeholder="ex: Agência do centro da cidade"
-                    {...field}
-                    value={field.value ?? ""}
                   />
                   {fieldState.error && (
                     <FieldError errors={[fieldState.error]} />
