@@ -7,7 +7,7 @@ Backend da aplicação Portal Coop. API REST construída com ElysiaJS + Bun, Pos
 | Tecnologia | Versão | Função |
 |---|---|---|
 | **Bun** | latest | Runtime + package manager |
-| **ElysiaJS** | latest | Framework HTTP |
+| **ElysiaJS** | ^1.4.28 | Framework HTTP |
 | **Drizzle ORM** | ^0.45 | ORM + query builder |
 | **drizzle-zod** | ^0.8 | Geração de schemas Zod a partir das tabelas Drizzle |
 | **Zod** | ^4 | Validação de schemas |
@@ -38,7 +38,7 @@ src/
 │       └── <feature>-schema.ts       # Uma por feature de negócio
 └── http/
     ├── plugins/
-    │   └── better-auth.ts            # Plugin Elysia com macros auth e adminOnly
+    │   └── better-auth.ts            # Plugin Elysia com macros auth/adminOnly + makePermissionMacro
     └── controllers/
         ├── modules/                  # Módulos do sistema (listagem)
         │   ├── index.ts
@@ -107,6 +107,14 @@ src/
 | `GET` | `/api/v1/job-functions/:id/users` | `adminOnly` | Lista usuários vinculados à função |
 | `GET` | `/api/v1/users/:userId/org-profile` | `adminOnly` | Lê perfil organizacional do usuário |
 | `PUT` | `/api/v1/users/:userId/org-profile` | `adminOnly` | Define/atualiza vínculos organizacionais do usuário |
+| `GET` | `/api/v1/reports/dashboards/active` | `auth` | Lista dashboards ativos visíveis ao usuário |
+| `GET` | `/api/v1/reports/dashboards` | `adminOnly` | Lista todos os dashboards com status de configuração |
+| `PATCH` | `/api/v1/reports/dashboards/:slug` | `adminOnly` | Configura dashboard (ativo/visibilidade/setores) |
+| `GET` | `/api/v1/reports/visao-geral` | `auth` | Dados processados do dashboard Visão Geral (`?year&month`) |
+| `GET` | `/api/v1/reports/visao-geral/targets/:indicatorSlug/:year` | `adminOnly` | Metas do indicador no ano |
+| `PUT` | `/api/v1/reports/visao-geral/targets/:indicatorSlug/:year` | `adminOnly` | Upsert bulk de 12 meses de meta |
+| `GET` | `/api/v1/reports/visao-geral/realized/:indicatorSlug/:year` | `adminOnly` | Realizados do indicador no ano |
+| `PUT` | `/api/v1/reports/visao-geral/realized/:indicatorSlug/:year` | `adminOnly` | Upsert bulk de 12 meses de realizado |
 
 > Ao adicionar novas features, registrar as rotas nesta tabela.
 
@@ -174,6 +182,8 @@ Definidos em `src/http/plugins/better-auth.ts`:
 | `auth: true` | Qualquer usuário autenticado | `user`, `session` |
 | `adminOnly: true` | Usuários com `role === "admin"` | `user`, `session` |
 
+> Para criar macros baseados em permissão RBAC granular, usar `makePermissionMacro` (ver seção abaixo).
+
 ### Uso das macros
 
 ```typescript
@@ -188,31 +198,41 @@ Definidos em `src/http/plugins/better-auth.ts`:
 )
 ```
 
-### Adicionar novo nível de acesso
+### Adicionar novo nível de acesso baseado em permissão RBAC
 
-Adicionar um novo macro em `src/http/plugins/better-auth.ts`:
+Para macros que verificam permissão granular (admin passa direto OU usuário tem a permissão via grupo), usar a factory `makePermissionMacro` exportada de `src/http/plugins/better-auth.ts`:
+
+```typescript
+import { betterAuthPlugin, makePermissionMacro } from "@/http/plugins/better-auth";
+
+export const meuController = new Elysia({ name: "meu-modulo", prefix: "/api/v1/meu-modulo" })
+  .use(betterAuthPlugin)
+  .macro({ canView: makePermissionMacro("meu-modulo", "view") })
+  .guard({ canView: true }, (app) =>
+    app.get("/", ({ user }) => MeuService.findAll(user.id), { ... })
+  );
+```
+
+`makePermissionMacro(moduleSlug, permissionSlug)` implementa o fluxo:
+1. Verifica sessão (`401` se ausente)
+2. Retorna direto se `role === "admin"`
+3. Faz join `userGroups → groupPermissions → permissions → modules` filtrando por `userId`, `permissionSlug` e `moduleSlug`
+4. Retorna `403` se não encontrar linha, ou retorna `session` se encontrar
+
+Para macros baseados em **role do Better Auth** (não em permissão RBAC), adicionar o resolve manualmente ao chamar `.macro()`:
 
 ```typescript
 .macro({
-  auth: { ... },       // já existe
-  adminOnly: { ... },  // já existe
-
   minhaRole: {
     async resolve({ status, request: { headers } }) {
       const session = await auth.api.getSession({ headers });
       if (!session) return status(401, { message: "Unauthorized" });
       if (session.user.role !== "minha-role") return status(403, { message: "Forbidden" });
-      return { user: session.user, session: session.session };
+      return session;
     },
   },
 })
 ```
-
-Para macros que permitem acesso a **admins OU membros de um grupo RBAC específico**, o resolve deve:
-1. Verificar sessão (`401` se ausente)
-2. Retornar direto se `role === "admin"`
-3. Fazer join `userGroups → groupPermissions → permissions → modules` filtrando por `userId`, `permissions.slug` e `modules.slug`
-4. Retornar `403` se não encontrar linha, ou retornar `session` se encontrar
 
 ---
 
@@ -686,6 +706,7 @@ const envSchema = z.object({
   PORT: z.string().transform((e) => Number(e)),
   NODE_ENV: z.string().trim().min(1),
   DATABASE_URL: z.url().startsWith("postgresql://"),
+  DATABASE_SSL: z.enum(["true", "false"]).transform((v) => v === "true").default("false"),
   BETTER_AUTH_SECRET: z.string().min(32),  // mínimo 32 chars — gerar com: openssl rand -base64 32
   BETTER_AUTH_URL: z.url(),                // URL base da API (ex: http://localhost:8080)
   SMTP_HOST: z.string().trim().min(1),
@@ -699,6 +720,8 @@ const envSchema = z.object({
   VITE_URL: z.url(),
 });
 ```
+
+> `DATABASE_SSL="true"` ativa SSL no pool do PostgreSQL — necessário para Neon e outros bancos remotos em staging/produção. Em desenvolvimento local, manter `"false"`.
 
 Usar via `import { env } from "@/lib/env"` — nunca `process.env` diretamente.
 
@@ -826,6 +849,7 @@ mock.module("@/lib/env", () => ({
   env: {
     PORT: 8080, NODE_ENV: "test",
     DATABASE_URL: "postgresql://test:test@localhost/test",
+    DATABASE_SSL: false,
     BETTER_AUTH_SECRET: "a".repeat(32), BETTER_AUTH_URL: "http://localhost:8080",
     SMTP_HOST: "localhost", SMTP_PORT: 587, SMTP_USER: "u",
     SMTP_PASS: "p", SMTP_MAIL_FROM: "test@example.com",
@@ -933,7 +957,9 @@ import { betterAuthPlugin } from "@/http/plugins/better-auth";
 - **`modulesRelations` é definida em `rbac-schema.ts`**, não em `modules-schema.ts` — evita dependência circular (modules-schema não pode importar rbac-schema que importa modules-schema)
 - **`createUpdateSchema` com overrides explícitos NÃO adiciona `.optional()` automaticamente** — ao sobrescrever um campo em `createUpdateSchema`, sempre adicionar `.optional()` manualmente: `z.string().min(2).optional()`. Sem isso, o campo se torna obrigatório mesmo em PATCH, causando `422`.
 - **Conflito de parâmetros de rota (memoirist)**: todos os segmentos wildcard no mesmo nível de profundidade DEVEM usar o mesmo nome — nunca misturar `/:slug`, `/:id`, `/:entidadeId` no mesmo nível dentro de um controller.
-- **POST retornando 201**: para retornar status 201, usar o `status` do contexto Elysia, não o importado de `"elysia"`: `async ({ body, status }) => status(201, await Service.create(body))`.
+- **POST retornando 201**: para retornar status 201, usar o `status` do contexto Elysia, não o importado de `"elysia"`: `async ({ body, status }) => status(201, await Service.create(body))`. Este padrão funciona apenas quando o service **nunca** retorna um status de erro — se o service pode retornar `status(4xx, ...)` (ex: 404), retornar o resultado direto e usar `200` no response schema.
 - **`numeric` columns no Drizzle**: retornam `string` no TypeScript — no model usar `z.coerce.string().nullable().optional()` para overrides.
 - **`date` columns sem `mode`**: retornam `string` (YYYY-MM-DD) por padrão — não precisa de `mode: "string"` explícito.
 - **Testes de service com `db.transaction()`**: o mock de `tx` dentro da transaction precisa retornar um objeto com os métodos encadeados, não a função mock diretamente: `transaction: mock(async (fn) => fn({ delete: mock(() => ...), insert: mock(() => ...) }))`.
+- **Request ID**: toda requisição recebe um UUID v7 gerado em `src/index.ts` via `.derive()`. O ID é incluído nos logs de erro (`requestId`) e retornado no header `X-Request-Id` de toda resposta. Não é necessário propagar manualmente nos controllers.
+- **Startup health check**: ao iniciar, o servidor testa a conexão com o banco (`SELECT 1` via pool) e o SMTP (`transporter.verify()`), logando `[startup] Database connection OK` / `[startup] SMTP connection OK` ou um JSON de erro estruturado. Falhas não derrubam o servidor.

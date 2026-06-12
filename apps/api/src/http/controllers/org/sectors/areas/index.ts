@@ -35,11 +35,7 @@ export const areasController = new Elysia({
           404: AreasModel.errorResponse,
         },
       })
-      .post("/", async ({ params: { id }, body, status }) => {
-        const result = await AreasService.create(id, body);
-        if ("code" in (result as object)) return result;
-        return status(201, result);
-      }, {
+      .post("/", ({ params: { id }, body }) => AreasService.create(id, body), {
         params: AreasModel.sectorParams,
         body: AreasModel.create,
         detail: {
@@ -48,7 +44,7 @@ export const areasController = new Elysia({
           tags: ["Areas"],
         },
         response: {
-          201: AreasModel.response,
+          200: AreasModel.response,
           401: AreasModel.errorResponse,
           403: AreasModel.errorResponse,
           404: AreasModel.errorResponse,

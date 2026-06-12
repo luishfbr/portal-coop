@@ -26,7 +26,8 @@
       "Bash(Remove-Item -Recurse -Force \"c:\\\\programming\\\\portal-coop\\\\apps\\\\web\\\\src\\\\components\\\\pages\\\\administracao\\\\indicadores\" -ErrorAction SilentlyContinue)",
       "Bash(Remove-Item -Recurse -Force \"c:\\\\programming\\\\portal-coop\\\\apps\\\\web\\\\src\\\\components\\\\pages\\\\administracao\\\\categorias-indicadores\" -ErrorAction SilentlyContinue)",
       "Bash(Remove-Item -Recurse -Force \"c:\\\\programming\\\\portal-coop\\\\apps\\\\web\\\\src\\\\routes\\\\_dashboard\\\\_pathlessLayout\\\\dashboards\" -ErrorAction SilentlyContinue)",
-      "Bash(Remove-Item -Force \"c:\\\\programming\\\\portal-coop\\\\apps\\\\web\\\\src\\\\routes\\\\_dashboard\\\\_pathlessLayout\\\\administracao\\\\_pathlessLayout\\\\indicadores.tsx\" -ErrorAction SilentlyContinue)"
+      "Bash(Remove-Item -Force \"c:\\\\programming\\\\portal-coop\\\\apps\\\\web\\\\src\\\\routes\\\\_dashboard\\\\_pathlessLayout\\\\administracao\\\\_pathlessLayout\\\\indicadores.tsx\" -ErrorAction SilentlyContinue)",
+      "Bash(bun pm *)"
     ]
   }
 }

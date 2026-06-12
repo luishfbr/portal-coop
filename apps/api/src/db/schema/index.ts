@@ -10,8 +10,6 @@ import {
   verifications,
   rateLimits,
 } from "./auth-schema";
-export * from "./modules-schema";
-import { modules } from "./modules-schema";
 
 export * from "./organizational-schema";
 import {
@@ -27,19 +25,6 @@ import {
   userProfilesRelations,
 } from "./organizational-schema";
 
-export * from "./rbac-schema";
-import {
-  groups,
-  groupsRelations,
-  permissions,
-  permissionsRelations,
-  groupPermissions,
-  groupPermissionsRelations,
-  userGroups,
-  userGroupsRelations,
-  modulesRelations,
-} from "./rbac-schema";
-
 export const schema = {
   users,
   usersRelations,
@@ -51,8 +36,6 @@ export const schema = {
   twoFactorsRelations,
   verifications,
   rateLimits,
-  modules,
-  modulesRelations,
   agencies,
   agenciesRelations,
   sectors,
@@ -63,12 +46,4 @@ export const schema = {
   jobFunctionsRelations,
   userProfiles,
   userProfilesRelations,
-  groups,
-  groupsRelations,
-  permissions,
-  permissionsRelations,
-  groupPermissions,
-  groupPermissionsRelations,
-  userGroups,
-  userGroupsRelations,
 };

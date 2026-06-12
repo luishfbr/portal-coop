@@ -3,6 +3,7 @@ import z from "zod";
 const envSchema = z.object({
   PORT: z.string().transform((e) => Number(e)),
   DATABASE_URL: z.url().startsWith("postgresql://"),
+  DATABASE_SSL: z.enum(["true", "false"]).transform((v) => v === "true").default("false"),
   NODE_ENV: z.string().trim().min(1),
   BETTER_AUTH_SECRET: z.string().min(32),
   BETTER_AUTH_URL: z.url(),
