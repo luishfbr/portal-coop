@@ -6,6 +6,7 @@ import cors from "@elysiajs/cors";
 import openapi from "@elysiajs/openapi";
 import { betterAuthPlugin, OpenAPI } from "./http/plugins/better-auth";
 import { orgController } from "./http/controllers/org";
+import { indicatorsController } from "./http/controllers/indicators";
 import { pool } from "./db/client";
 import { transporter } from "./lib/transporter";
 
@@ -49,6 +50,7 @@ const app = new Elysia()
   )
   .use(betterAuthPlugin)
   .use(orgController)
+  .use(indicatorsController)
   .listen(env.PORT);
 
 console.log(

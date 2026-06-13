@@ -29,21 +29,16 @@ src/
 │   └── transporter.ts                # Configuração Nodemailer (SMTP)
 ├── db/
 │   ├── client.ts                     # Instância do Drizzle (db)
-│   ├── seed.ts                       # Seed: admin inicial + módulos iniciais
+│   ├── seed.ts                       # Seed: admin inicial
 │   └── schema/
 │       ├── index.ts                  # Importa tabelas + exporta schema combinado
 │       ├── auth-schema.ts            # Tabelas do Better Auth (não editar manualmente)
-│       ├── modules-schema.ts         # Tabela de módulos do sistema
 │       ├── organizational-schema.ts  # Agências, setores, áreas, funções, perfis de usuário
 │       └── <feature>-schema.ts       # Uma por feature de negócio
 └── http/
     ├── plugins/
-    │   └── better-auth.ts            # Plugin Elysia com macros auth/adminOnly + makePermissionMacro
+    │   └── better-auth.ts            # Plugin Elysia com macros auth/adminOnly
     └── controllers/
-        ├── modules/                  # Módulos do sistema (listagem)
-        │   ├── index.ts
-        │   ├── model.ts
-        │   └── service.ts
         ├── org/                      # Domínio organizacional
         │   ├── index.ts              # Root controller — agrega sub-controllers do domínio
         │   ├── agencies/             # Agências/Unidades/PAs
@@ -79,13 +74,6 @@ src/
 |---|---|---|---|
 | `GET` | `/health` | público | Health check — retorna `{ status, uptime }` |
 | `*` | `/auth/*` | — | Rotas do Better Auth (login, 2FA, reset, admin) |
-| `GET` | `/api/v1/modules` | `auth` | Lista todos os módulos (catálogo completo) |
-| `GET` | `/api/v1/modules/active` | `auth` | Lista módulos acessíveis ao usuário logado (via grupos) |
-| `GET` | `/api/v1/modules/my-permissions` | `auth` | Mapa de permissões do usuário — `{ [moduleSlug]: string[] }` |
-| `GET` | `/api/v1/groups` | `adminOnly` | Lista grupos (seedados por devs) |
-| `GET` | `/api/v1/groups/:id/permissions` | `adminOnly` | Lista permissões do grupo (read-only) |
-| `GET` | `/api/v1/groups/:id/users` | `adminOnly` | Lista usuários do grupo |
-| `PUT` | `/api/v1/groups/:id/users` | `adminOnly` | Define usuários do grupo — body: `{ userIds }` |
 | `GET` | `/api/v1/agencies` | `adminOnly` | Lista agências |
 | `POST` | `/api/v1/agencies` | `adminOnly` | Cria agência |
 | `PATCH` | `/api/v1/agencies/:id` | `adminOnly` | Atualiza agência |
@@ -107,14 +95,6 @@ src/
 | `GET` | `/api/v1/job-functions/:id/users` | `adminOnly` | Lista usuários vinculados à função |
 | `GET` | `/api/v1/users/:userId/org-profile` | `adminOnly` | Lê perfil organizacional do usuário |
 | `PUT` | `/api/v1/users/:userId/org-profile` | `adminOnly` | Define/atualiza vínculos organizacionais do usuário |
-| `GET` | `/api/v1/reports/dashboards/active` | `auth` | Lista dashboards ativos visíveis ao usuário |
-| `GET` | `/api/v1/reports/dashboards` | `adminOnly` | Lista todos os dashboards com status de configuração |
-| `PATCH` | `/api/v1/reports/dashboards/:slug` | `adminOnly` | Configura dashboard (ativo/visibilidade/setores) |
-| `GET` | `/api/v1/reports/visao-geral` | `auth` | Dados processados do dashboard Visão Geral (`?year&month`) |
-| `GET` | `/api/v1/reports/visao-geral/targets/:indicatorSlug/:year` | `adminOnly` | Metas do indicador no ano |
-| `PUT` | `/api/v1/reports/visao-geral/targets/:indicatorSlug/:year` | `adminOnly` | Upsert bulk de 12 meses de meta |
-| `GET` | `/api/v1/reports/visao-geral/realized/:indicatorSlug/:year` | `adminOnly` | Realizados do indicador no ano |
-| `PUT` | `/api/v1/reports/visao-geral/realized/:indicatorSlug/:year` | `adminOnly` | Upsert bulk de 12 meses de realizado |
 
 > Ao adicionar novas features, registrar as rotas nesta tabela.
 
@@ -182,8 +162,6 @@ Definidos em `src/http/plugins/better-auth.ts`:
 | `auth: true` | Qualquer usuário autenticado | `user`, `session` |
 | `adminOnly: true` | Usuários com `role === "admin"` | `user`, `session` |
 
-> Para criar macros baseados em permissão RBAC granular, usar `makePermissionMacro` (ver seção abaixo).
-
 ### Uso das macros
 
 ```typescript
@@ -197,27 +175,6 @@ Definidos em `src/http/plugins/better-auth.ts`:
     .delete("/:id", ...)
 )
 ```
-
-### Adicionar novo nível de acesso baseado em permissão RBAC
-
-Para macros que verificam permissão granular (admin passa direto OU usuário tem a permissão via grupo), usar a factory `makePermissionMacro` exportada de `src/http/plugins/better-auth.ts`:
-
-```typescript
-import { betterAuthPlugin, makePermissionMacro } from "@/http/plugins/better-auth";
-
-export const meuController = new Elysia({ name: "meu-modulo", prefix: "/api/v1/meu-modulo" })
-  .use(betterAuthPlugin)
-  .macro({ canView: makePermissionMacro("meu-modulo", "view") })
-  .guard({ canView: true }, (app) =>
-    app.get("/", ({ user }) => MeuService.findAll(user.id), { ... })
-  );
-```
-
-`makePermissionMacro(moduleSlug, permissionSlug)` implementa o fluxo:
-1. Verifica sessão (`401` se ausente)
-2. Retorna direto se `role === "admin"`
-3. Faz join `userGroups → groupPermissions → permissions → modules` filtrando por `userId`, `permissionSlug` e `moduleSlug`
-4. Retorna `403` se não encontrar linha, ou retorna `session` se encontrar
 
 Para macros baseados em **role do Better Auth** (não em permissão RBAC), adicionar o resolve manualmente ao chamar `.macro()`:
 
@@ -241,7 +198,7 @@ Para macros baseados em **role do Better Auth** (não em permissão RBAC), adici
 ### Localização
 
 - `src/db/schema/auth-schema.ts` — tabelas gerenciadas pelo Better Auth (**não editar manualmente**)
-- `src/db/schema/modules-schema.ts` — tabela de módulos do sistema
+- `src/db/schema/organizational-schema.ts` — tabelas do domínio organizacional
 - `src/db/schema/<feature>-schema.ts` — tabelas de negócio (uma por feature)
 - `src/db/schema/index.ts` — registra todas as tabelas no objeto `schema`
 
@@ -264,30 +221,11 @@ Geradas por `bun run auth:generate`. Não editar. Tabelas atuais:
 
 | Tabela | Arquivo | Propósito |
 |---|---|---|
-| `modules` | `modules-schema.ts` | Módulos do sistema (seedados por devs, listados via API) |
 | `agencies` | `organizational-schema.ts` | Agências/Unidades/PAs |
 | `sectors` | `organizational-schema.ts` | Setores |
 | `areas` | `organizational-schema.ts` | Subdivisões de setores (FK → sectors, CASCADE delete) |
 | `job_functions` | `organizational-schema.ts` | Funções/cargos |
 | `user_profiles` | `organizational-schema.ts` | Vínculos organizacionais do usuário (1:1 com users) |
-| `groups` | `rbac-schema.ts` | Grupos de acesso (seedados por devs) |
-| `permissions` | `rbac-schema.ts` | Ações disponíveis por módulo (seedadas por devs) |
-| `group_permissions` | `rbac-schema.ts` | Junção grupos ↔ permissões (CASCADE em ambos os lados) |
-| `user_groups` | `rbac-schema.ts` | Junção usuários ↔ grupos (CASCADE em ambos os lados) |
-
-#### `modules`
-
-| Coluna | Tipo | Observação |
-|---|---|---|
-| `id` | `text` PK | UUID v7 gerado em app |
-| `name` | `text` | Nome exibível do módulo |
-| `description` | `text` | Descrição do módulo |
-| `slug` | `text` UNIQUE | Chave de rota (ex: `dashboards`) |
-| `icon` | `text` | Nome do ícone lucide-react (ex: `LayoutDashboard`) |
-| `created_at` | `timestamp` | Gerado em app via `$defaultFn` |
-| `updated_at` | `timestamp` | Atualizado via `$onUpdate` |
-
-> Módulos são injetados via seed pelos desenvolvedores. Apenas leitura via API.
 
 #### Catálogos organizacionais (`agencies`, `sectors`, `job_functions`)
 
@@ -324,70 +262,6 @@ Vínculo 1:1 entre usuário e estrutura organizacional. Todas as FK são nullabl
 | `updated_at` | `timestamp` | Atualizado via `$onUpdate` |
 
 > Regra de negócio: se `areaId` for informado no `PUT /api/v1/users/:userId/org-profile`, o service valida que a área pertence ao `sectorId` informado. Retorna `400` se inconsistente.
-
-#### `groups`
-
-Seedados por devs. Admin apenas atribui usuários.
-
-| Coluna | Tipo | Observação |
-|---|---|---|
-| `id` | `text` PK | UUID v7 gerado em app |
-| `slug` | `text` UNIQUE | Chave de idempotência no seed (ex: `dashboards-internos-visualizador`) |
-| `name` | `text` | Nome exibível (ex: "Dashboards Internos — Visualizador") |
-| `description` | `text` nullable | Descrição exibida no painel admin |
-| `created_at` | `timestamp` | Gerado em app via `$defaultFn` |
-| `updated_at` | `timestamp` | Atualizado via `$onUpdate` |
-
-#### `permissions`
-
-Ações disponíveis dentro de um módulo. Seedadas por devs junto com o módulo.
-
-| Coluna | Tipo | Observação |
-|---|---|---|
-| `id` | `text` PK | UUID v7 gerado em app |
-| `module_id` | `text` FK | Referência ao módulo — `onDelete: "cascade"` |
-| `slug` | `text` | Ação (ex: `view`, `edit`, `admin`) |
-| `name` | `text` | Nome exibível |
-| `description` | `text` nullable | Descrição opcional |
-| `created_at` | `timestamp` | Gerado em app via `$defaultFn` |
-| `updated_at` | `timestamp` | Atualizado via `$onUpdate` |
-
-> Índice único em `(module_id, slug)`.
-
-#### `group_permissions`
-
-Junção grupos ↔ permissões. Sem `updatedAt` — join table é imutável.
-
-| Coluna | Tipo | Observação |
-|---|---|---|
-| `id` | `text` PK | UUID v7 |
-| `group_id` | `text` FK | Referência ao grupo — `onDelete: "cascade"` |
-| `permission_id` | `text` FK | Referência à permissão — `onDelete: "cascade"` |
-| `created_at` | `timestamp` | Gerado em app via `$defaultFn` |
-
-> Índice único em `(group_id, permission_id)`.
-
-#### `user_groups`
-
-Junção usuários ↔ grupos. Sem `updatedAt` — join table é imutável.
-
-| Coluna | Tipo | Observação |
-|---|---|---|
-| `id` | `text` PK | UUID v7 |
-| `user_id` | `text` FK | Referência ao usuário — `onDelete: "cascade"` |
-| `group_id` | `text` FK | Referência ao grupo — `onDelete: "cascade"` |
-| `created_at` | `timestamp` | Gerado em app via `$defaultFn` |
-
-> Índice único em `(user_id, group_id)`.
-
-#### Regras de acesso a módulos e permissões
-
-- Acesso ao módulo é **implícito** — usuário precisa ter ≥1 permissão no módulo via grupos
-- Módulos, permissões e grupos são **seedados por devs** — admin não cria/edita/deleta nenhum deles
-- `GET /api/v1/modules/active` retorna módulos onde o usuário tem ≥1 permissão
-- `GET /api/v1/modules/my-permissions` retorna mapa `{ [moduleSlug]: string[] }` — usar no frontend para mostrar/ocultar ações dentro do módulo
-- `PUT /api/v1/groups/:id/users` substitui a lista completa de usuários do grupo (delete + insert em transação)
-- `relations` de `modules → permissions` é definida em `rbac-schema.ts` para evitar dependência circular (modules-schema não pode importar rbac-schema)
 
 ### Padrões obrigatórios para toda tabela de negócio
 
@@ -626,40 +500,7 @@ O seed é idempotente — pode ser re-executado sem duplicar dados.
 
 1. **Usuário admin** — lido de `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` no `.env`. Cria via `auth.api.signUpEmail()` e eleva `role` para `"admin"`. Verifica existência antes de criar.
 
-2. **Módulos do sistema** — inseridos com `onConflictDoNothing({ target: modules.slug })`. Adicionar novos módulos ao array `initialModules` no seed e re-executar.
-
-**Para adicionar um novo módulo ao sistema:**
-
-```typescript
-// Em src/db/seed.ts — adicionar ao array initialModules:
-{
-  name: "Nome do Módulo",
-  description: "Descrição do módulo",
-  slug: "slug-do-modulo",          // deve bater com a URL da rota no frontend
-  icon: "NomeDoIconeLucide",        // string — mapeada para componente no frontend
-  permissions: [
-    { slug: "view",  name: "Visualizar" },
-    { slug: "edit",  name: "Editar" },
-    { slug: "admin", name: "Administrar" },
-  ],
-  groups: [
-    {
-      slug: "slug-do-modulo-visualizador",
-      name: "Nome do Módulo — Visualizador",
-      description: "Acesso de visualização.",
-      permissions: ["view"],
-    },
-    {
-      slug: "slug-do-modulo-administrador",
-      name: "Nome do Módulo — Administrador",
-      description: "Acesso completo.",
-      permissions: ["view", "edit", "admin"],
-    },
-  ],
-},
-```
-
-Após editar, rodar `bun run db:seed` (idempotente — pode ser re-executado sem duplicar dados).
+Rodar com `bun run db:seed`.
 
 ---
 
@@ -945,16 +786,12 @@ import { betterAuthPlugin } from "@/http/plugins/better-auth";
 - **Nunca declarar tipos separados dos schemas** — usar `z.infer<typeof Model.campo>`
 - **Sempre nomear plugins Elysia** — `new Elysia({ name: "..." })` para deduplicação
 - **Sempre usar `columns: { id: true }`** em verificações de existência antes de update/delete
-- **Nomes de tabelas SQL sem hífen** — usar underscore (`user_groups`, não `user-groups`)
+- **Nomes de tabelas SQL sem hífen** — usar underscore (`user_profiles`, não `user-profiles`)
 - **Nunca editar `auth-schema.ts` manualmente** — regenerar com `bun run auth:generate`
 - **`users` não é re-exportado de `schema/index.ts`** — quando um service precisar da tabela `users`, importar diretamente: `import { users } from "@/db/schema/auth-schema"`
 - **2FA é somente TOTP** — não configurar OTP por e-mail (plugin não está ativo)
-- **Módulos não são criados/editados/excluídos por admins** — apenas seedados por devs e listados via API
-- **Módulos não possuem `isActive`** — acesso é controlado exclusivamente via permissões (`group_permissions`)
-- **Módulos, permissões e grupos não possuem endpoints de criação/edição/deleção via API** — são gerenciados exclusivamente pelo seed
 - **Catálogos organizacionais não possuem `isActive`** — a exclusão dos catálogos é bloqueada com `409 Conflict` quando houver usuários vinculados via `user_profiles`
 - **DELETE com vínculo via `user_profiles`**: verificar `userProfiles.<entityId>` antes de deletar; para setores, verificar também usuários vinculados às áreas do setor via `inArray(userProfiles.areaId, areaIds)`
-- **`modulesRelations` é definida em `rbac-schema.ts`**, não em `modules-schema.ts` — evita dependência circular (modules-schema não pode importar rbac-schema que importa modules-schema)
 - **`createUpdateSchema` com overrides explícitos NÃO adiciona `.optional()` automaticamente** — ao sobrescrever um campo em `createUpdateSchema`, sempre adicionar `.optional()` manualmente: `z.string().min(2).optional()`. Sem isso, o campo se torna obrigatório mesmo em PATCH, causando `422`.
 - **Conflito de parâmetros de rota (memoirist)**: todos os segmentos wildcard no mesmo nível de profundidade DEVEM usar o mesmo nome — nunca misturar `/:slug`, `/:id`, `/:entidadeId` no mesmo nível dentro de um controller.
 - **POST retornando 201**: para retornar status 201, usar o `status` do contexto Elysia, não o importado de `"elysia"`: `async ({ body, status }) => status(201, await Service.create(body))`. Este padrão funciona apenas quando o service **nunca** retorna um status de erro — se o service pode retornar `status(4xx, ...)` (ex: 404), retornar o resultado direto e usar `200` no response schema.

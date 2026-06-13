@@ -25,6 +25,14 @@ import {
   userProfilesRelations,
 } from "./organizational-schema";
 
+export * from "./indicators-schema";
+import {
+  indicators,
+  indicatorsRelations,
+  indicatorValues,
+  indicatorValuesRelations,
+} from "./indicators-schema";
+
 export const schema = {
   users,
   usersRelations,
@@ -46,4 +54,8 @@ export const schema = {
   jobFunctionsRelations,
   userProfiles,
   userProfilesRelations,
+  indicators,
+  indicatorsRelations,
+  indicatorValues,
+  indicatorValuesRelations,
 };

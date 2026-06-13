@@ -125,3 +125,37 @@ export function makeUserGroup(overrides: Record<string, unknown> = {}) {
   };
 }
 
+export function makeIndicator(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "indicator-1",
+    name: "Test Indicator",
+    slug: "test-indicator",
+    description: null,
+    sectorId: null,
+    sector: null,
+    categoria: "metas_comerciais" as const,
+    direcao: "crescente" as const,
+    periodicidade: "mensal" as const,
+    defasagem: 0,
+    metodoConsolidacao: "acumulado" as const,
+    unidadeMedida: "inteiro" as const,
+    isActive: true,
+    createdAt: BASE_DATE,
+    updatedAt: BASE_DATE,
+    ...overrides,
+  };
+}
+
+export function makeIndicatorValue(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "value-1",
+    indicatorId: "indicator-1",
+    type: "realizado" as const,
+    value: 100,
+    referenceDate: "2024-01-01",
+    createdAt: BASE_DATE,
+    updatedAt: BASE_DATE,
+    ...overrides,
+  };
+}
+

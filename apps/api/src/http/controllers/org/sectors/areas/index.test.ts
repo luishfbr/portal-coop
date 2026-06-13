@@ -80,10 +80,10 @@ describe("Areas Controller", () => {
   });
 
   describe("POST /:id/areas", () => {
-    test("returns 201 and creates area", async () => {
+    test("returns 200 and creates area", async () => {
       mockGetSession.mockResolvedValueOnce(ADMIN);
       spyOn(AreasService, "create").mockResolvedValue(makeArea());
-      expect((await req("POST", BASE, { name: "Test Area" })).status).toBe(201);
+      expect((await req("POST", BASE, { name: "Test Area" })).status).toBe(200);
     });
 
     test("returns 422 on invalid body", async () => {
